@@ -9,6 +9,59 @@ import type {
 } from "../lib/types";
 import type { AppState } from "../hooks/useAppState";
 import { CategoryChip, Kbd } from "../components/Primitives";
+import { ItemBody } from "../components/Primitives";
+
+function ImagePreview({
+  t,
+  item,
+  getImage,
+}: {
+  t: Theme;
+  item: ClipItem;
+  getImage: (id: string) => Promise<{ width: number; height: number; data: Uint8Array } | null>;
+}) {
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    getImage(item.id).then((img) => {
+      if (cancelled || !img) return;
+      const canvas = document.createElement("canvas");
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        const imgData = new ImageData(new Uint8ClampedArray(img.data), img.width, img.height);
+        ctx.putImageData(imgData, 0, 0);
+        setImageUrl(canvas.toDataURL());
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [item.id, getImage]);
+
+  if (!imageUrl) {
+    return (
+      <div style={{ color: t.fgFaint, fontSize: 13 }}>
+        Loading image...
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={imageUrl}
+      alt={item.preview}
+      style={{
+        maxWidth: "100%",
+        maxHeight: 280,
+        borderRadius: 8,
+        background: t.bgSurfaceAlt,
+      }}
+    />
+  );
+}
 
 interface PaletteProps {
   t: Theme;
@@ -105,6 +158,7 @@ export function Palette({
   const MAX_VISIBLE = 8;
   const displayResults = results.slice(0, MAX_VISIBLE);
   const lastIdx = Math.max(0, displayResults.length - 1);
+  const selectedItem = displayResults[selected] ?? null;
 
   useEffect(() => {
     setSelected(0);
@@ -191,93 +245,101 @@ export function Palette({
           color: t.fg,
           fontFamily: t.fontUi,
           display: "flex",
-          flexDirection: "column",
           animation: "paletteScaleIn 180ms cubic-bezier(.2,.9,.3,1.1)",
         }}
       >
+        {/* Left pane - Search and List */}
         <div
           style={{
+            flex: "0 0 380",
             display: "flex",
-            alignItems: "center",
-            padding: "0 16px",
-            height: 56,
-            gap: 12,
-            borderBottom: `1px solid ${t.borderSoft}`,
+            flexDirection: "column",
+            borderRight: `1px solid ${t.borderSoft}`,
           }}
         >
-          <span
-            style={{
-              fontFamily: t.fontMono,
-              fontSize: 15,
-              color: mode === "semantic" ? t.accent : t.fgFaint,
-              fontWeight: 600,
-              width: 18,
-              textAlign: "center",
-              transition: "color 150ms",
-            }}
-          >
-            ⌕
-          </span>
-          <input
-            ref={inputRef}
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder={
-              mode === "semantic"
-                ? "Describe what you need…"
-                : "Search clipboard history"
-            }
-            style={{
-              flex: 1,
-              fontFamily: t.fontUi,
-              fontSize: 18,
-              fontWeight: 400,
-              background: "transparent",
-              border: "none",
-              outline: "none",
-              color: t.fg,
-              letterSpacing: -0.2,
-            }}
-          />
-          <button
-            onClick={() =>
-              setMode((m) => (m === "fuzzy" ? "semantic" : "fuzzy"))
-            }
-            title="Tab to toggle"
+          <div
             style={{
               display: "flex",
               alignItems: "center",
-              gap: 6,
-              padding: "4px 9px",
-              fontFamily: t.fontMono,
-              fontSize: 10.5,
-              fontWeight: 500,
-              background: mode === "semantic" ? t.accentSoft : "transparent",
-              color: mode === "semantic" ? t.accentInk : t.fgMuted,
-              border: `1px solid ${mode === "semantic" ? t.accentSoft : t.borderSoft}`,
-              borderRadius: 5,
-              cursor: "pointer",
-              letterSpacing: 0.5,
-              textTransform: "uppercase",
+              padding: "0 16px",
+              height: 56,
+              gap: 12,
+              borderBottom: `1px solid ${t.borderSoft}`,
             }}
           >
             <span
               style={{
-                width: 5,
-                height: 5,
-                borderRadius: 999,
-                background: mode === "semantic" ? t.accent : t.fgFaint,
+                fontFamily: t.fontMono,
+                fontSize: 15,
+                color: mode === "semantic" ? t.accent : t.fgFaint,
+                fontWeight: 600,
+                width: 18,
+                textAlign: "center",
+                transition: "color 150ms",
+              }}
+            >
+              ⌕
+            </span>
+            <input
+              ref={inputRef}
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder={
+                mode === "semantic"
+                  ? "Describe what you need…"
+                  : "Search clipboard history"
+              }
+              style={{
+                flex: 1,
+                fontFamily: t.fontUi,
+                fontSize: 18,
+                fontWeight: 400,
+                background: "transparent",
+                border: "none",
+                outline: "none",
+                color: t.fg,
+                letterSpacing: -0.2,
               }}
             />
-            {mode}
-            <Kbd t={t}>Tab</Kbd>
-          </button>
-        </div>
+            <button
+              onClick={() =>
+                setMode((m) => (m === "fuzzy" ? "semantic" : "fuzzy"))
+              }
+              title="Tab to toggle"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                padding: "4px 9px",
+                fontFamily: t.fontMono,
+                fontSize: 10.5,
+                fontWeight: 500,
+                background: mode === "semantic" ? t.accentSoft : "transparent",
+                color: mode === "semantic" ? t.accentInk : t.fgMuted,
+                border: `1px solid ${mode === "semantic" ? t.accentSoft : t.borderSoft}`,
+                borderRadius: 5,
+                cursor: "pointer",
+                letterSpacing: 0.5,
+                textTransform: "uppercase",
+              }}
+            >
+              <span
+                style={{
+                  width: 5,
+                  height: 5,
+                  borderRadius: 999,
+                  background: mode === "semantic" ? t.accent : t.fgFaint,
+                }}
+              />
+              {mode}
+              <Kbd t={t}>Tab</Kbd>
+            </button>
+          </div>
 
-        <div
-          ref={listRef}
-          style={{ flex: 1, overflow: "auto", padding: 6, minHeight: 120 }}
-        >
+          <div
+            ref={listRef}
+            style={{ flex: 1, overflow: "auto", padding: 6, minHeight: 120 }}
+          >
           {results.length === 0 && (
             <div
               style={{
@@ -528,6 +590,199 @@ export function Palette({
               SMART CLIPBOARD
             </span>
           </div>
+        </div>
+        </div>
+
+        {/* Right pane - Preview */}
+        <div
+          style={{
+            flex: 1,
+            display: "flex",
+            flexDirection: "column",
+            background: t.bgSurfaceAlt,
+            minWidth: 0,
+          }}
+        >
+          {selectedItem ? (
+            <>
+              <div
+                style={{
+                  padding: "12px 16px",
+                  borderBottom: `1px solid ${t.borderSoft}`,
+                  background: t.bgSurface,
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    marginBottom: 6,
+                  }}
+                >
+                  <CategoryChip t={t} cat={selectedItem.category} mode="chip" />
+                  <span
+                    style={{
+                      fontSize: 11,
+                      color: t.fgFaint,
+                      fontFamily: t.fontMono,
+                    }}
+                  >
+                    {selectedItem.source} · {relTime(selectedItem.minutesAgo)}
+                  </span>
+                  {selectedItem.pinned && (
+                    <span style={{ color: t.accent, fontSize: 11 }}>★</span>
+                  )}
+                </div>
+                <div
+                  style={{
+                    fontSize: 15,
+                    fontWeight: 600,
+                    letterSpacing: -0.2,
+                    color: t.fg,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                  }}
+                >
+                  {selectedItem.label}
+                  {!selectedItem.labelGenerated && (
+                    <span
+                      style={{
+                        fontSize: 10,
+                        fontWeight: 500,
+                        color: t.fgFaint,
+                        fontFamily: t.fontMono,
+                        letterSpacing: 1,
+                        textTransform: "uppercase",
+                        border: `1px solid ${t.borderSoft}`,
+                        padding: "2px 5px",
+                        borderRadius: 3,
+                      }}
+                    >
+                      Pending
+                    </span>
+                  )}
+                </div>
+              </div>
+              <div
+                style={{
+                  flex: 1,
+                  overflow: "auto",
+                  padding: 16,
+                  display: "flex",
+                  alignItems: "flex-start",
+                  justifyContent: "center",
+                }}
+              >
+                {selectedItem.category === "image" ? (
+                  <ImagePreview
+                    t={t}
+                    item={selectedItem}
+                    getImage={app.getImage}
+                  />
+                ) : (
+                  <div
+                    style={{
+                      width: "100%",
+                      maxWidth: 400,
+                      whiteSpace: "pre-wrap",
+                      wordBreak: "break-all",
+                      fontFamily: t.fontMono,
+                      fontSize: 13,
+                      color: t.fg,
+                      lineHeight: 1.5,
+                    }}
+                  >
+                    <ItemBody t={t} item={selectedItem} />
+                  </div>
+                )}
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  gap: 8,
+                  padding: "10px 14px",
+                  borderTop: `1px solid ${t.borderSoft}`,
+                  background: t.bgSurface,
+                }}
+              >
+                <button
+                  onClick={() => {
+                    app.copyItem(selectedItem.id);
+                    onClose();
+                  }}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                    padding: "6px 12px",
+                    fontSize: 12,
+                    fontWeight: 500,
+                    color: "#fff",
+                    background: t.accent,
+                    border: `1px solid ${t.accent}`,
+                    borderRadius: 5,
+                    cursor: "pointer",
+                  }}
+                >
+                  Copy <Kbd t={t} accent>↵</Kbd>
+                </button>
+                <button
+                  onClick={() => app.pinItem(selectedItem.id)}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                    padding: "6px 12px",
+                    fontSize: 12,
+                    fontWeight: 500,
+                    color: t.fgMuted,
+                    background: "transparent",
+                    border: `1px solid ${t.borderSoft}`,
+                    borderRadius: 5,
+                    cursor: "pointer",
+                  }}
+                >
+                  {selectedItem.pinned ? "Unpin" : "Pin"} <Kbd t={t}>⌘P</Kbd>
+                </button>
+                <button
+                  onClick={() => {
+                    app.deleteItem(selectedItem.id);
+                    setSelected((s) => Math.max(0, s - 1));
+                  }}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                    padding: "6px 12px",
+                    fontSize: 12,
+                    fontWeight: 500,
+                    color: t.fgMuted,
+                    background: "transparent",
+                    border: `1px solid ${t.borderSoft}`,
+                    borderRadius: 5,
+                    cursor: "pointer",
+                  }}
+                >
+                  Delete <Kbd t={t}>⌘⌫</Kbd>
+                </button>
+              </div>
+            </>
+          ) : (
+            <div
+              style={{
+                flex: 1,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: t.fgFaint,
+                fontSize: 13,
+              }}
+            >
+              Select an item to preview
+            </div>
+          )}
         </div>
       </div>
 
