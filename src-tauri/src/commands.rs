@@ -190,7 +190,7 @@ pub fn copy_image(id: String, db: State<'_, Arc<Db>>) -> Result<(), String> {
             let img = arboard::ImageData {
                 width,
                 height,
-                bytes,
+                bytes: bytes.into(),
             };
             cb.set_image(img).map_err(|e| e.to_string())?;
             Ok(())

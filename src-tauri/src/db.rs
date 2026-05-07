@@ -112,3 +112,18 @@ pub fn insert_item(
     )?;
     Ok(conn.last_insert_rowid())
 }
+
+pub fn insert_image_item(
+    conn: &Connection,
+    image_data: &[u8],
+    preview: &str,
+    source: Option<&str>,
+) -> rusqlite::Result<i64> {
+    let now = chrono::Utc::now().timestamp_millis();
+    conn.execute(
+        "INSERT INTO items (content, category, label, preview, source, pinned, deleted, created_at, last_used_at, image_data)
+         VALUES ('', 'image', NULL, ?1, ?2, 0, 0, ?3, ?3, ?4)",
+        params![preview, source, now, image_data],
+    )?;
+    Ok(conn.last_insert_rowid())
+}
