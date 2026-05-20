@@ -1,7 +1,7 @@
-import { IconButton } from "ember-design-system";
-import { X } from "lucide-react";
-import type { Theme } from "../lib/types";
-import { Kbd } from "./Primitives";
+import { IconButton } from 'ember-design-system';
+import { LuX } from 'react-icons/lu';
+import type { Theme } from '../lib/types';
+import { Kbd } from './Primitives';
 
 interface ShortcutHintProps {
   t: Theme;
@@ -10,26 +10,8 @@ interface ShortcutHintProps {
 
 export function ShortcutHint({ t, onDismiss }: ShortcutHintProps) {
   return (
-    <div
-      style={{
-        position: "absolute",
-        top: 52,
-        right: 20,
-        padding: "14px 20px",
-        background: t.bgSurface,
-        color: t.fg,
-        border: `1px solid ${t.border}`,
-        borderRadius: 10,
-        fontSize: 13,
-        fontFamily: t.fontUi,
-        display: "flex",
-        alignItems: "center",
-        gap: 10,
-        boxShadow: "var(--shadow-md)",
-        zIndex: 400,
-      }}
-    >
-      <span style={{ color: t.fgMuted }}>Press</span>
+    <div className="absolute right-5 top-[52px] z-[400] flex items-center gap-2.5 rounded-[10px] border border-border bg-surface px-5 py-3.5 font-sans text-[13px] text-fg shadow-ember-md">
+      <span className="text-fg-muted">Press</span>
       <Kbd t={t} accent>
         Ctrl
       </Kbd>
@@ -39,10 +21,10 @@ export function ShortcutHint({ t, onDismiss }: ShortcutHintProps) {
       <Kbd t={t} accent>
         V
       </Kbd>
-      <span style={{ color: t.fgMuted }}>anywhere to open</span>
+      <span className="text-fg-muted">anywhere to open</span>
       <IconButton
         aria-label="Dismiss"
-        icon={<X size={14} />}
+        icon={<LuX size={14} />}
         variant="ghost"
         size="sm"
         onClick={onDismiss}

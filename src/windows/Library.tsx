@@ -18,6 +18,17 @@ import type {
 } from '../lib/types';
 import type { AppState } from '../hooks/useAppState';
 import { Button } from 'ember-design-system';
+import {
+  LuClock,
+  LuList,
+  LuMaximize2,
+  LuMinus,
+  LuEllipsis,
+  LuPin,
+  LuSearch,
+  LuSparkles,
+  LuX,
+} from 'react-icons/lu';
 import { CategoryChip, Kbd } from '../components/Primitives';
 import { PreviewPane } from '../components/PreviewPane';
 import { SidebarRow } from '../components/SidebarRow';
@@ -59,153 +70,70 @@ interface SemanticBannerProps {
   loading: boolean;
 }
 
-/**
- * Top-of-list banner that explains the state of semantic search. Four states:
- * - not configured → red-ish warning pointing at the AI button
- * - loading → pulse dot, "thinking" copy
- * - error → failure text with the underlying message
- * - success → count + "ranked by intent"
- */
 function SemanticBanner({ t, count, available, error, loading }: SemanticBannerProps) {
-  const base = {
-    padding: '6px 12px',
-    fontSize: 11,
-    fontFamily: t.fontMono,
-    display: 'flex' as const,
-    alignItems: 'center' as const,
-    gap: 8,
-    borderBottom: `1px solid ${t.borderSoft}`,
-  };
   if (!available) {
     return (
-      <div style={{ ...base, background: t.bgSurfaceAlt, color: t.fgMuted }}>
-        <span
-          style={{
-            width: 5,
-            height: 5,
-            borderRadius: 999,
-            background: '#c94b3a',
-          }}
-        />
-        <span style={{ fontWeight: 500 }}>Semantic search is off</span>
-        <span style={{ opacity: 0.7 }}>configure a provider in the AI panel</span>
+      <div className="flex items-center gap-2 border-b border-border-subtle bg-subtle px-3 py-1.5 font-mono text-[11px] text-fg-muted">
+        <span className="h-[5px] w-[5px] rounded-full" style={{ background: '#c94b3a' }} />
+        <span className="font-medium">Semantic search is off</span>
+        <span className="opacity-70">configure a provider in the AI panel</span>
       </div>
     );
   }
   if (error) {
     return (
-      <div style={{ ...base, background: t.bgSurfaceAlt, color: t.fgMuted }}>
-        <span
-          style={{
-            width: 5,
-            height: 5,
-            borderRadius: 999,
-            background: '#c94b3a',
-          }}
-        />
-        <span style={{ fontWeight: 500 }}>Semantic search failed</span>
-        <span
-          style={{
-            opacity: 0.75,
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-          }}
-        >
-          {error}
-        </span>
+      <div className="flex items-center gap-2 border-b border-border-subtle bg-subtle px-3 py-1.5 font-mono text-[11px] text-fg-muted">
+        <span className="h-[5px] w-[5px] rounded-full" style={{ background: '#c94b3a' }} />
+        <span className="font-medium">Semantic search failed</span>
+        <span className="overflow-hidden text-ellipsis whitespace-nowrap opacity-75">{error}</span>
       </div>
     );
   }
   if (loading) {
     return (
-      <div style={{ ...base, background: t.accentSoft, color: t.accentInk }}>
-        <span
-          style={{
-            width: 5,
-            height: 5,
-            borderRadius: 999,
-            background: t.accent,
-            opacity: 0.6,
-          }}
-        />
-        <span style={{ fontWeight: 500 }}>Thinking…</span>
-        <span style={{ opacity: 0.6 }}>embedding query</span>
+      <div className="flex items-center gap-2 border-b border-border-subtle bg-accent-soft px-3 py-1.5 font-mono text-[11px] text-accent-ink">
+        <span className="h-[5px] w-[5px] rounded-full bg-accent opacity-60" />
+        <span className="font-medium">Thinking…</span>
+        <span className="opacity-60">embedding query</span>
       </div>
     );
   }
+  // theme arg kept for prop-stable signature; no longer needed at render.
+  void t;
   return (
-    <div style={{ ...base, background: t.accentSoft, color: t.accentInk }}>
-      <span
-        style={{
-          width: 5,
-          height: 5,
-          borderRadius: 999,
-          background: t.accent,
-        }}
-      />
-      <span style={{ fontWeight: 500 }}>
+    <div className="flex items-center gap-2 border-b border-border-subtle bg-accent-soft px-3 py-1.5 font-mono text-[11px] text-accent-ink">
+      <span className="h-[5px] w-[5px] rounded-full bg-accent" />
+      <span className="font-medium">
         {count} semantic match{count === 1 ? '' : 'es'}
       </span>
-      <span style={{ opacity: 0.6 }}>ranked by intent</span>
+      <span className="opacity-60">ranked by intent</span>
     </div>
   );
 }
 
-// Stable no-op so useImageUrl's effect deps stay stable for non-image rows.
 const NO_IMAGE = (): Promise<Blob | null> => Promise.resolve(null);
 
-function SidebarIcon({ t, active, children }: { t: Theme; active: boolean; children: ReactNode }) {
+function SidebarIcon({ active, children }: { t: Theme; active: boolean; children: ReactNode }) {
   return (
     <span
-      style={{
-        width: 16,
-        height: 16,
-        display: 'inline-flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        flexShrink: 0,
-        color: active ? t.accent : t.fgFaint,
-        fontSize: 12,
-        lineHeight: 1,
-      }}
+      className={`inline-flex h-4 w-4 shrink-0 items-center justify-center text-xs leading-none ${
+        active ? 'text-accent' : 'text-fg-faint'
+      }`}
     >
       {children}
     </span>
   );
 }
 
-function SidebarCount({ t, children }: { t: Theme; children: ReactNode }) {
+function SidebarCount({ children }: { t: Theme; children: ReactNode }) {
   return (
-    <span
-      style={{
-        fontSize: 11,
-        color: t.fgFaint,
-        fontFamily: t.fontMono,
-        fontVariantNumeric: 'tabular-nums',
-        flexShrink: 0,
-      }}
-    >
-      {children}
-    </span>
+    <span className="shrink-0 font-mono text-[11px] tabular-nums text-fg-faint">{children}</span>
   );
 }
 
-function SidebarHeading({ t, children }: { t: Theme; children: ReactNode }) {
+function SidebarHeading({ children }: { t: Theme; children: ReactNode }) {
   return (
-    <div
-      style={{
-        marginTop: 16,
-        marginBottom: 6,
-        padding: '0 10px',
-        fontSize: 10,
-        letterSpacing: 1.4,
-        textTransform: 'uppercase',
-        color: t.fgFaint,
-        fontWeight: 600,
-        fontFamily: t.fontMono,
-      }}
-    >
+    <div className="mb-1.5 mt-4 px-2.5 font-mono text-[10px] font-semibold uppercase tracking-[1.4px] text-fg-faint">
       {children}
     </div>
   );
@@ -231,7 +159,6 @@ function ListRow({
     item.category === 'phone' ||
     item.category === 'number';
   const isImage = item.category === 'image';
-  // Pass empty string for non-image items — useImageUrl skips fetching.
   const imageUrl = useImageUrl(isImage ? item.id : '', getImage ?? NO_IMAGE);
 
   return (
@@ -239,117 +166,51 @@ function ListRow({
       data-id={item.id}
       onClick={onClick}
       onDoubleClick={onDouble}
-      style={{
-        padding: `${t.dense ? 8 : 10}px 12px`,
-        borderRadius: 6,
-        background: selected ? t.bgSelected : 'transparent',
-        cursor: 'pointer',
-        position: 'relative',
-        boxShadow: 'none',
-        transition:
-          'background var(--duration-fast) var(--easing-standard), box-shadow var(--duration-fast) var(--easing-standard)',
-      }}
+      className={`relative cursor-pointer rounded-md px-3 transition-colors duration-150 ${
+        t.dense ? 'py-2' : 'py-2.5'
+      } ${selected ? 'bg-accent-soft' : 'bg-transparent'}`}
     >
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 8,
-          marginBottom: 4,
-          minHeight: 16,
-        }}
-      >
+      <div className="mb-1 flex min-h-4 items-center gap-2">
         {categoryMode === 'chip' && <CategoryChip t={t} cat={item.category} mode="mono" />}
         {categoryMode === 'icon' && <CategoryChip t={t} cat={item.category} mode="icon" />}
         {categoryMode === 'dot' && <CategoryChip t={t} cat={item.category} mode="dot" />}
         {item.pinned && (
-          <span
-            style={{
-              color: t.accent,
-              fontSize: 11,
-              lineHeight: 1,
-            }}
-            aria-label="pinned"
-          >
-            ★
-          </span>
+          <LuPin size={11} className="shrink-0 fill-current text-accent" aria-label="pinned" />
         )}
-        <span style={{ flex: 1 }} />
-        <span
-          style={{
-            fontSize: 10.5,
-            color: t.fgFaint,
-            fontFamily: t.fontMono,
-            fontVariantNumeric: 'tabular-nums',
-            lineHeight: 1,
-          }}
-        >
+        <span className="flex-1" />
+        <span className="font-mono text-[10.5px] leading-none tabular-nums text-fg-faint">
           {relTime(item.minutesAgo)}
         </span>
       </div>
       {showLabels && (
         <div
-          style={{
-            fontSize: t.dense ? 12.5 : 13.5,
-            fontWeight: item.labelGenerated ? 500 : 400,
-            fontStyle: item.labelGenerated ? 'normal' : 'italic',
-            color: item.labelGenerated ? t.fg : t.fgMuted,
-            marginBottom: 4,
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-            letterSpacing: -0.1,
-            lineHeight: 1.3,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6,
-          }}
+          className={`mb-1 flex items-center gap-1.5 overflow-hidden text-ellipsis whitespace-nowrap leading-[1.3] tracking-[-0.1px] ${
+            t.dense ? 'text-[12.5px]' : 'text-[13.5px]'
+          } ${item.labelGenerated ? 'font-medium not-italic text-fg' : 'font-normal italic text-fg-muted'}`}
           title={item.labelGenerated ? undefined : 'Awaiting AI label'}
         >
-          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          <span className="overflow-hidden text-ellipsis">
             {highlightMatch(t, item.label, query)}
           </span>
           {!item.labelGenerated && (
-            <span
-              aria-hidden="true"
-              style={{
-                fontSize: 9,
-                color: t.fgFaint,
-                letterSpacing: 1,
-                flexShrink: 0,
-                lineHeight: 1,
-              }}
-            >
-              ···
-            </span>
+            <LuEllipsis size={11} aria-hidden="true" className="shrink-0 text-fg-faint" />
           )}
         </div>
       )}
       <div
-        style={{
-          fontFamily: isMono ? t.fontMono : t.fontUi,
-          fontSize: 11.5,
-          color: t.fgMuted,
-          lineHeight: 1.4,
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap',
-        }}
+        className={`overflow-hidden text-ellipsis whitespace-nowrap text-[11.5px] leading-[1.4] text-fg-muted ${
+          isMono ? 'font-mono' : 'font-sans'
+        }`}
       >
         {isImage ? (
           imageUrl ? (
             <img
               src={imageUrl}
               alt={item.preview}
-              style={{
-                height: 40,
-                borderRadius: 4,
-                objectFit: 'contain',
-                background: t.bgSurfaceAlt,
-              }}
+              className="h-10 rounded-sm bg-subtle object-contain"
             />
           ) : (
-            <span style={{ color: t.fgFaint }}>Loading...</span>
+            <span className="text-fg-faint">Loading...</span>
           )
         ) : (
           item.preview
@@ -389,9 +250,6 @@ export function Library({
     setLocalPreview(previewMode);
   }, [previewMode]);
 
-  // Tray and other backend triggers can ask the library to jump to a specific
-  // filter (e.g. "Show Pinned"). We accept any known Filter string; unknown
-  // payloads are ignored so future expansion can't crash the UI.
   useEffect(() => {
     const unlisten = listen<string>('library-filter', (ev) => {
       const payload = ev.payload;
@@ -464,9 +322,6 @@ export function Library({
       setSemanticError(null);
       return;
     }
-    // Skip the backend round-trip when the provider is known-off. The banner
-    // + empty state already explain what to do; hitting the Rust command just
-    // to get a predictable error wastes a tick and flashes a scary banner.
     if (!semanticAvailable) {
       setSemanticResults([]);
       setSemanticError(null);
@@ -591,98 +446,57 @@ export function Library({
     <div
       tabIndex={0}
       onKeyDown={onKey}
-      style={{
-        width: '100%',
-        height: '100%',
-        outline: 'none',
-        display: 'flex',
-        flexDirection: 'column',
-        background: t.bgWindow,
-        fontFamily: t.fontUi,
-        color: t.fg,
-      }}
+      className="flex h-full w-full flex-col bg-surface font-sans text-fg outline-none"
     >
       {/* Title bar */}
       <div
         data-tauri-drag-region
-        style={{
-          height: 40,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '0 0 0 14px',
-          borderBottom: `1px solid ${t.borderSoft}`,
-          flexShrink: 0,
-          userSelect: 'none',
-        }}
+        className="flex h-10 shrink-0 select-none items-center justify-between border-b border-border-subtle pl-3.5"
       >
-        <div data-tauri-drag-region style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div data-tauri-drag-region className="flex items-center gap-2.5">
           <div
             data-tauri-drag-region
+            className="grid h-[18px] w-[18px] place-items-center rounded text-fg-inverse"
             style={{
-              width: 18,
-              height: 18,
-              borderRadius: 4,
               background:
                 'linear-gradient(135deg, var(--accent-ember-500) 0%, var(--accent-ember-700) 100%)',
-              display: 'grid',
-              placeItems: 'center',
-              color: 'var(--text-inverse)',
-              fontSize: 11,
-              fontWeight: 700,
-              fontFamily: t.fontUi,
               boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.18), 0 1px 2px rgba(0,0,0,0.15)',
             }}
           >
-            ✦
+            <LuSparkles size={11} />
           </div>
           <div
             data-tauri-drag-region
-            style={{
-              fontSize: 13,
-              color: t.fg,
-              fontWeight: 600,
-              letterSpacing: -0.2,
-              fontFamily: t.fontUi,
-            }}
+            className="font-sans text-[13px] font-semibold tracking-[-0.2px] text-fg"
           >
-            Recall
+            Yank
           </div>
           <span
             data-tauri-drag-region
-            style={{
-              fontSize: 9.5,
-              fontFamily: t.fontMono,
-              color: t.fgFaint,
-              letterSpacing: 1.4,
-              textTransform: 'uppercase',
-              padding: '2px 6px',
-              border: `1px solid ${t.borderSoft}`,
-              borderRadius: 3,
-            }}
+            className="rounded-[3px] border border-border-subtle px-1.5 py-0.5 font-mono text-[9.5px] uppercase tracking-[1.4px] text-fg-faint"
           >
             v0.6.4
           </span>
         </div>
-        <div style={{ display: 'flex', alignSelf: 'stretch' }}>
+        <div className="flex self-stretch">
           {(
             [
               [
-                '—',
+                <LuMinus size={12} />,
                 'Minimize',
                 async () => {
                   await getCurrentWindow().minimize();
                 },
               ],
               [
-                '◻',
+                <LuMaximize2 size={11} />,
                 'Maximize',
                 async () => {
                   await getCurrentWindow().toggleMaximize();
                 },
               ],
               [
-                '✕',
+                <LuX size={12} />,
                 'Close',
                 async () => {
                   await getCurrentWindow().close();
@@ -702,30 +516,29 @@ export function Library({
                   e.stopPropagation();
                   action();
                 }}
-                style={{
-                  width: 46,
-                  height: 40,
-                  display: 'grid',
-                  placeItems: 'center',
-                  color: t.fgMuted,
-                  fontSize: 11,
-                  background: 'transparent',
-                  border: 'none',
-                  cursor: 'pointer',
-                  transition:
-                    'background var(--duration-fast) var(--easing-standard), color var(--duration-fast) var(--easing-standard)',
-                }}
+                className={`grid h-10 w-[46px] cursor-pointer place-items-center border-none bg-transparent text-[11px] text-fg-muted transition-colors duration-150 ${
+                  isClose ? 'hover:bg-danger hover:text-fg-inverse' : 'hover:text-fg'
+                }`}
+                style={
+                  !isClose
+                    ? {
+                        // Tailwind alpha utility on a CSS-var color is finicky; this
+                        // matches the original "primary text at 8% over canvas" wash.
+                        ['--hover-bg' as string]:
+                          'color-mix(in oklab, var(--text-primary) 8%, transparent)',
+                      }
+                    : undefined
+                }
                 onMouseEnter={(e) => {
-                  const el = e.currentTarget as HTMLElement;
-                  el.style.background = isClose
-                    ? 'var(--status-danger)'
-                    : 'color-mix(in oklab, var(--text-primary) 8%, transparent)';
-                  el.style.color = isClose ? 'var(--text-inverse)' : t.fg;
+                  if (!isClose) {
+                    (e.currentTarget as HTMLElement).style.background =
+                      'color-mix(in oklab, var(--text-primary) 8%, transparent)';
+                  }
                 }}
                 onMouseLeave={(e) => {
-                  const el = e.currentTarget as HTMLElement;
-                  el.style.background = 'transparent';
-                  el.style.color = t.fgMuted;
+                  if (!isClose) {
+                    (e.currentTarget as HTMLElement).style.background = 'transparent';
+                  }
                 }}
               >
                 {g}
@@ -736,32 +549,21 @@ export function Library({
       </div>
 
       {/* Main body */}
-      <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
+      <div className="flex min-h-0 flex-1">
         {/* Sidebar */}
-        <div
-          style={{
-            width: 200,
-            flexShrink: 0,
-            borderRight: `1px solid ${t.borderSoft}`,
-            padding: '12px 8px',
-            overflow: 'auto',
-            fontSize: 13,
-            display: 'flex',
-            flexDirection: 'column',
-          }}
-        >
+        <div className="flex w-[200px] shrink-0 flex-col overflow-auto border-r border-border-subtle p-2 px-2 py-3 text-[13px]">
           <SidebarRow t={t} active={filter === 'all'} onClick={() => setFilter('all')}>
             <SidebarIcon t={t} active={filter === 'all'}>
-              ≡
+              <LuList size={12} />
             </SidebarIcon>
-            <span style={{ flex: 1, minWidth: 0 }}>All items</span>
+            <span className="min-w-0 flex-1">All items</span>
             <SidebarCount t={t}>{counts.all}</SidebarCount>
           </SidebarRow>
           <SidebarRow t={t} active={filter === 'pinned'} onClick={() => setFilter('pinned')}>
             <SidebarIcon t={t} active={filter === 'pinned'}>
-              ★
+              <LuPin size={12} className={filter === 'pinned' ? 'fill-current' : ''} />
             </SidebarIcon>
-            <span style={{ flex: 1, minWidth: 0 }}>Pinned</span>
+            <span className="min-w-0 flex-1">Pinned</span>
             <SidebarCount t={t}>{counts.pinned}</SidebarCount>
           </SidebarRow>
 
@@ -782,9 +584,9 @@ export function Library({
               onClick={() => setTimeFilter(value)}
             >
               <SidebarIcon t={t} active={timeFilter === value}>
-                ⌚
+                <LuClock size={12} />
               </SidebarIcon>
-              <span style={{ flex: 1, minWidth: 0 }}>{label}</span>
+              <span className="min-w-0 flex-1">{label}</span>
             </SidebarRow>
           ))}
 
@@ -793,48 +595,27 @@ export function Library({
             const meta = CATEGORY_META[cat];
             return (
               <SidebarRow key={cat} t={t} active={filter === cat} onClick={() => setFilter(cat)}>
-                <span
-                  style={{
-                    width: 16,
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
-                  }}
-                >
+                <span className="inline-flex w-4 shrink-0 items-center justify-center">
                   <CategoryChip t={t} cat={cat} mode="dot" />
                 </span>
-                <span style={{ flex: 1, minWidth: 0 }}>{meta.label}</span>
+                <span className="min-w-0 flex-1">{meta.label}</span>
                 <SidebarCount t={t}>{counts[cat] || 0}</SidebarCount>
               </SidebarRow>
             );
           })}
 
-          <div
-            style={{
-              marginTop: 'auto',
-              padding: '16px 10px 4px',
-              fontSize: 10.5,
-              color: t.fgFaint,
-              lineHeight: 1,
-              fontFamily: t.fontMono,
-              letterSpacing: 0.3,
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 8,
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+          <div className="mt-auto flex flex-col gap-2 px-2.5 pb-1 pt-4 font-mono text-[10.5px] leading-none tracking-[0.3px] text-fg-faint">
+            <div className="flex flex-wrap items-center gap-1.5">
               <Kbd t={t}>/</Kbd>
               <span>search</span>
-              <span style={{ flex: 1 }} />
+              <span className="flex-1" />
               <Kbd t={t}>1–9</Kbd>
               <span>filter</span>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+            <div className="flex flex-wrap items-center gap-1.5">
               <Kbd t={t}>E</Kbd>
               <span>rename</span>
-              <span style={{ flex: 1 }} />
+              <span className="flex-1" />
               <Kbd t={t}>⌘I</Kbd>
               <span>preview</span>
             </div>
@@ -843,65 +624,25 @@ export function Library({
 
         {/* List column */}
         <div
-          style={{
-            width: localPreview === 'split' ? 340 : 'auto',
-            flex: localPreview === 'split' ? 'none' : 1,
-            flexShrink: 0,
-            borderRight: localPreview === 'split' ? `1px solid ${t.borderSoft}` : 'none',
-            display: 'flex',
-            flexDirection: 'column',
-            minHeight: 0,
-            minWidth: 320,
-          }}
+          className={`flex min-h-0 min-w-[320px] shrink-0 flex-col ${
+            localPreview === 'split' ? 'w-[340px] border-r border-border-subtle' : 'w-auto flex-1'
+          }`}
         >
           {/* Search row */}
-          <div
-            style={{
-              padding: '10px 12px',
-              borderBottom: `1px solid ${t.borderSoft}`,
-            }}
-          >
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 10,
-                height: 32,
-                padding: '0 6px 0 10px',
-                background: 'var(--bg-subtle)',
-                border: `1px solid ${t.borderSoft}`,
-                borderRadius: 8,
-                transition:
-                  'border-color var(--duration-fast) var(--easing-standard), box-shadow var(--duration-fast) var(--easing-standard)',
-              }}
-            >
-              <span
-                style={{
-                  color: mode === 'semantic' ? t.accent : t.fgFaint,
-                  fontSize: 13,
-                  fontFamily: t.fontMono,
-                  transition: 'color 150ms',
-                  display: 'inline-flex',
-                }}
-              >
-                ⌕
-              </span>
+          <div className="border-b border-border-subtle px-3 py-2.5">
+            <div className="flex h-8 items-center gap-2.5 rounded-lg border border-border-subtle bg-subtle pl-2.5 pr-1.5">
+              <LuSearch
+                size={13}
+                className={`shrink-0 transition-colors duration-150 ${
+                  mode === 'semantic' ? 'text-accent' : 'text-fg-faint'
+                }`}
+              />
               <input
                 ref={searchRef}
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder={mode === 'semantic' ? 'Describe what you need…' : 'Search history…'}
-                style={{
-                  flex: 1,
-                  minWidth: 0,
-                  fontSize: 13.5,
-                  fontFamily: t.fontUi,
-                  background: 'transparent',
-                  border: 'none',
-                  outline: 'none',
-                  color: t.fg,
-                  letterSpacing: -0.1,
-                }}
+                className="min-w-0 flex-1 border-none bg-transparent font-sans text-[13.5px] tracking-[-0.1px] text-fg outline-none"
               />
               <Button
                 size="sm"
@@ -909,12 +650,9 @@ export function Library({
                 onClick={() => setMode((m) => (m === 'fuzzy' ? 'semantic' : 'fuzzy'))}
                 leadingIcon={
                   <span
-                    style={{
-                      width: 5,
-                      height: 5,
-                      borderRadius: 999,
-                      background: mode === 'semantic' ? t.accentTextOn : t.fgFaint,
-                    }}
+                    className={`h-[5px] w-[5px] rounded-full ${
+                      mode === 'semantic' ? 'bg-fg-inverse' : 'bg-fg-faint'
+                    }`}
                   />
                 }
               >
@@ -933,17 +671,9 @@ export function Library({
             />
           )}
 
-          <div ref={listRef} style={{ flex: 1, overflow: 'auto', padding: 4 }}>
+          <div ref={listRef} className="flex-1 overflow-auto p-1">
             {searched.length === 0 && (
-              <div
-                style={{
-                  padding: '48px 20px',
-                  textAlign: 'center',
-                  color: t.fgFaint,
-                  fontSize: 12.5,
-                  lineHeight: 1.6,
-                }}
-              >
+              <div className="px-5 py-12 text-center text-[12.5px] leading-[1.6] text-fg-faint">
                 {app.items.length === 0 ? (
                   <>
                     No clips yet.
@@ -963,7 +693,7 @@ export function Library({
                     <>
                       Semantic search failed.
                       <br />
-                      <span style={{ color: t.fgMuted }}>{semanticError}</span>
+                      <span className="text-fg-muted">{semanticError}</span>
                       <br />
                       Press <Kbd t={t}>Tab</Kbd> to fall back to fuzzy.
                     </>
@@ -983,18 +713,8 @@ export function Library({
             {showGroups
               ? Object.entries(groups).map(([g, items]) =>
                   items.length === 0 ? null : (
-                    <div key={g} style={{ marginBottom: 8 }}>
-                      <div
-                        style={{
-                          fontSize: 10,
-                          fontFamily: t.fontMono,
-                          fontWeight: 600,
-                          color: t.fgFaint,
-                          letterSpacing: 1.5,
-                          textTransform: 'uppercase',
-                          padding: '8px 10px 4px',
-                        }}
-                      >
+                    <div key={g} className="mb-2">
+                      <div className="px-2.5 pb-1 pt-2 font-mono text-[10px] font-semibold uppercase tracking-[1.5px] text-fg-faint">
                         {g} · {items.length}
                       </div>
                       {items.map((item) => (
@@ -1030,43 +750,19 @@ export function Library({
                 ))}
           </div>
 
-          <div
-            style={{
-              padding: '8px 12px',
-              borderTop: `1px solid ${t.borderSoft}`,
-              background: 'var(--bg-subtle)',
-              fontSize: 10.5,
-              color: t.fgFaint,
-              fontFamily: t.fontMono,
-              fontVariantNumeric: 'tabular-nums',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              letterSpacing: 0.2,
-            }}
-          >
+          <div className="flex items-center justify-between border-t border-border-subtle bg-subtle px-3 py-2 font-mono text-[10.5px] tracking-[0.2px] tabular-nums text-fg-faint">
             <span>
-              <span style={{ color: t.fgMuted }}>{searched.length}</span>
-              <span style={{ opacity: 0.6 }}> / {app.items.length}</span>
+              <span className="text-fg-muted">{searched.length}</span>
+              <span className="opacity-60"> / {app.items.length}</span>
             </span>
-            <span
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 6,
-              }}
-            >
+            <span className="inline-flex items-center gap-1.5">
               <span
-                style={{
-                  width: 5,
-                  height: 5,
-                  borderRadius: 999,
-                  background: 'var(--status-success)',
-                }}
+                className="h-[5px] w-[5px] rounded-full"
+                style={{ background: 'var(--status-success)' }}
                 aria-hidden
               />
-              <span style={{ textTransform: 'uppercase', letterSpacing: 1 }}>local</span>
-              <span style={{ opacity: 0.5 }}>·</span>
+              <span className="uppercase tracking-widest">local</span>
+              <span className="opacity-50">·</span>
               <span>{(app.items.length * 0.4).toFixed(1)} KB</span>
             </span>
           </div>

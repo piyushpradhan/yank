@@ -1,14 +1,14 @@
 <div align="center">
 
-# Recall
+# Yank
 
-**Your clipboard, with natural-language recall.**
+**Your clipboard, with natural-language search.**
 
 <sub>"that CSS snippet from yesterday" · "the phone number I copied last week" · "the error from the terminal earlier"</sub>
 
 ---
 
-**Recall is in early development** — we're building in public. Try it, break it, tell us what to fix next.
+**Yank is in early development** — we're building in public. Try it, break it, tell us what to fix next.
 
 </div>
 
@@ -16,7 +16,7 @@
 
 ## Image Copy & Paste
 
-Copy any image — screenshots, photos, diagrams — and Recall captures it automatically. Open the palette, find it by description, and paste it back in one keystroke.
+Copy any image — screenshots, photos, diagrams — and Yank captures it automatically. Open the palette, find it by description, and paste it back in one keystroke.
 
 <video src="public/recordings/image-copy-paste.webm" autoplay loop muted playsinline width="100%"></video>
 
@@ -25,7 +25,7 @@ Copy any image — screenshots, photos, diagrams — and Recall captures it auto
 Press `Ctrl+Shift+Space`, type a description, and your image appears instantly in the preview pane — full resolution, ready to paste.
 
 <p align="center">
-  <img src="public/screenshots/palette-image-preview.png" alt="Recall palette showing an aurora borealis image selected with full preview" width="760">
+  <img src="public/screenshots/palette-image-preview.png" alt="Yank palette showing an aurora borealis image selected with full preview" width="760">
 </p>
 
 ### Library view with image category filter
@@ -33,20 +33,20 @@ Press `Ctrl+Shift+Space`, type a description, and your image appears instantly i
 Browse and manage all your captured images in one place. Filter by the **Image** category, see thumbnails at a glance, and open any image full-size in the preview pane.
 
 <p align="center">
-  <img src="public/screenshots/library-image-filter.png" alt="Recall library filtered to the Image category, showing thumbnail list and full preview" width="920">
+  <img src="public/screenshots/library-image-filter.png" alt="Yank library filtered to the Image category, showing thumbnail list and full preview" width="920">
 </p>
 
 ---
 
-## What's Recall?
+## What's Yank?
 
-Recall is a local-first clipboard history manager for **Windows, Linux, and macOS**. It captures everything you copy, categorizes it automatically, and lets you find it again with either fuzzy search or AI-powered semantic search.
+Yank is a local-first clipboard history manager for **Windows, Linux, and macOS**. It captures everything you copy, categorizes it automatically, and lets you find it again with either fuzzy search or AI-powered semantic search.
 
 The entire "find → paste" loop takes under five seconds. Semantic search works out of the box — no API key, no cloud, no account, no telemetry.
 
-## Why Recall?
+## Why Yank?
 
-| Problem | Recall's Solution |
+| Problem | Yank's Solution |
 |--------|-------------------|
 | "I know I copied that link but can't find it" | Semantic search — describe what you remember, not what you copied |
 | "Clipboard managers are cluttered / slow" | 500ms capture, SQLite+FTS5, keyboard-first UI |
@@ -77,21 +77,21 @@ Pre-built installers are attached to every [GitHub Release](../../releases). mac
 
 | File | What it is |
 |---|---|
-| `Recall_<version>_x64-setup.exe` | NSIS installer — recommended |
-| `Recall_<version>_x64_en-US.msi`  | MSI installer — for managed environments |
+| `Yank_<version>_x64-setup.exe` | NSIS installer — recommended |
+| `Yank_<version>_x64_en-US.msi`  | MSI installer — for managed environments |
 
 ### Linux
 
 | File | What it is |
 |---|---|
-| `recall_<version>_amd64.AppImage` | Portable binary — works on most distros |
-| `recall_<version>_amd64.deb`      | Debian/Ubuntu/PopOS package |
+| `yank_<version>_amd64.AppImage` | Portable binary — works on most distros |
+| `yank_<version>_amd64.deb`      | Debian/Ubuntu/PopOS package |
 
 ### macOS
 
 Build from source: `make build` (produces `.dmg`)
 
-> **Wayland note:** Global shortcuts restricted on Wayland. Bind your DE's shortcut to `recall --palette` instead.
+> **Wayland note:** Global shortcuts restricted on Wayland. Bind your DE's shortcut to `yank --palette` instead.
 
 ## Quick Start
 
@@ -122,7 +122,7 @@ Click the **AI** button in the top-right. Two independent features:
 
 ## Status: Early Alpha
 
-Recall is being built in public. Things may break. Features may change. We're shipping fast and listening to feedback.
+Yank is being built in public. Things may break. Features may change. We're shipping fast and listening to feedback.
 
 **Current limitations:**
 - macOS builds require building from source
@@ -172,4 +172,4 @@ make install && make build
 - 💡 Request features
 - 🗣️ Spread the word
 
-**Recall** — find anything you ever copied.
+**Yank** — find anything you ever copied.

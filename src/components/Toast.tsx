@@ -1,11 +1,18 @@
-import { Button } from "ember-design-system";
-import type { Theme, Toast as ToastType, ToastKind } from "../lib/types";
+import type { ComponentType } from 'react';
+import { Button } from 'ember-design-system';
+import {
+  LuCheck,
+  LuInfo,
+  LuPin,
+  LuTrash2,
+} from 'react-icons/lu';
+import type { Theme, Toast as ToastType, ToastKind } from '../lib/types';
 
-const ICON: Record<ToastKind, string> = {
-  copy: "✓",
-  pin: "★",
-  delete: "⌫",
-  info: "·",
+const ICON: Record<ToastKind, ComponentType<{ size?: number }>> = {
+  copy: LuCheck,
+  pin: LuPin,
+  delete: LuTrash2,
+  info: LuInfo,
 };
 
 interface ToastProps {
@@ -13,44 +20,15 @@ interface ToastProps {
   toast: ToastType;
 }
 
-export function Toast({ t, toast }: ToastProps) {
+export function Toast({ toast }: ToastProps) {
+  const Icon = ICON[toast.kind];
   return (
     <div
-      style={{
-        position: "fixed",
-        bottom: 24,
-        left: "50%",
-        transform: "translateX(-50%)",
-        padding: "10px 16px",
-        background: t.bgSurface,
-        color: t.fg,
-        borderRadius: 999,
-        fontSize: 12.5,
-        fontWeight: 500,
-        display: "flex",
-        alignItems: "center",
-        gap: 10,
-        boxShadow: "var(--shadow-md)",
-        fontFamily: t.fontUi,
-        border: `1px solid ${t.border}`,
-        zIndex: 1000,
-        animation: "toastIn 180ms var(--easing-standard)",
-      }}
+      className="fixed bottom-6 left-1/2 z-[1000] flex -translate-x-1/2 items-center gap-2.5 rounded-full border border-border bg-surface px-4 py-2.5 font-sans text-[12.5px] font-medium text-fg shadow-ember-md"
+      style={{ animation: 'toastIn 180ms var(--easing-standard)' }}
     >
-      <span
-        style={{
-          width: 18,
-          height: 18,
-          borderRadius: 999,
-          background: t.accent,
-          color: t.accentTextOn,
-          display: "grid",
-          placeItems: "center",
-          fontSize: 11,
-          fontWeight: 700,
-        }}
-      >
-        {ICON[toast.kind]}
+      <span className="grid h-[18px] w-[18px] place-items-center rounded-full bg-accent text-fg-inverse">
+        <Icon size={11} />
       </span>
       <span>{toast.msg}</span>
       {toast.undo && (

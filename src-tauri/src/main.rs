@@ -2,5 +2,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
-    smart_clipboard_app_lib::run()
+    yank_lib::run()
 }

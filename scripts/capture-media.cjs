@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Generates high-quality screenshots and a screen recording for the
- * Recall image copy-paste feature using Playwright + Chromium.
+ * Yank image copy-paste feature using Playwright + Chromium.
  *
  * Outputs:
  *   public/screenshots/palette-image-preview.png
@@ -229,7 +229,7 @@ function buildDemoImage(canvas) {
 function buildPaletteHTML(selectedIdx = 2) {
   const items = [
     { id: "1", cat: "code",  chip: "CODE", label: "SQL query — user analytics join",      preview: "SELECT u.id, u.name, COUNT(e.id) FROM users u LEFT…", time: "5 min ago",  pinned: false },
-    { id: "2", cat: "url",   chip: "URL",  label: "Vercel dashboard — recall-app",         preview: "https://vercel.com/piyush/recall/deployments",          time: "12 min ago", pinned: true  },
+    { id: "2", cat: "url",   chip: "URL",  label: "Vercel dashboard — yank-app",           preview: "https://vercel.com/piyush/yank/deployments",            time: "12 min ago", pinned: true  },
     { id: "3", cat: "image", chip: "IMG",  label: "Aurora borealis — Iceland trip",         preview: "Image · 1440 × 900",                                   time: "23 min ago", pinned: false },
     { id: "4", cat: "text",  chip: "TEXT", label: "Meeting notes — design review",          preview: "Discussed new onboarding flow. Action items: 1) Upd…",  time: "1 hr ago",   pinned: false },
     { id: "5", cat: "code",  chip: "CODE", label: "Rust snippet — clipboard watcher",       preview: "fn watch_clipboard(interval: Duration) -> Result<()>…", time: "2 hrs ago",  pinned: false },
@@ -273,7 +273,7 @@ function buildPaletteHTML(selectedIdx = 2) {
 <html>
 <head>
 <meta charset="utf-8">
-<title>Recall — Palette</title>
+<title>Yank — Palette</title>
 <style>
 ${BASE_STYLES}
 
@@ -586,7 +586,7 @@ function buildLibraryHTML() {
 <html>
 <head>
 <meta charset="utf-8">
-<title>Recall — Library</title>
+<title>Yank — Library</title>
 <style>
 ${BASE_STYLES}
 
@@ -787,7 +787,7 @@ body {
       <div class="tl tl-yellow"></div>
       <div class="tl tl-green"></div>
     </div>
-    <span class="title-text">Recall</span>
+    <span class="title-text">Yank</span>
     <div style="margin-left:auto;display:flex;gap:10px;align-items:center;">
       <div style="
         display:flex;align-items:center;gap:6px;
@@ -941,7 +941,7 @@ function buildRecordingHTML() {
 <html>
 <head>
 <meta charset="utf-8">
-<title>Recall — Demo</title>
+<title>Yank — Demo</title>
 <style>
 ${BASE_STYLES}
 
@@ -1149,7 +1149,7 @@ body {
       <div><span class="kw">import</span> <span class="str">'./App.css'</span></div>
       <div><span class="kw">import</span> { useState } <span class="kw">from</span> <span class="str">'react'</span></div>
       <div>&nbsp;</div>
-      <div><span class="cm">// Copy the aurora image and open Recall</span></div>
+      <div><span class="cm">// Copy the aurora image and open Yank</span></div>
       <div><span class="kw">export function</span> <span class="fn">App</span>() {</div>
       <div>&nbsp;&nbsp;<span class="kw">const</span> [img, setImg] = <span class="fn">useState</span>(<span class="kw">null</span>)</div>
       <div>&nbsp;</div>
@@ -1195,8 +1195,8 @@ body {
         <div class="list-item" id="item1">
           <span class="chip chip-url">URL</span>
           <div style="flex:1;min-width:0;">
-            <div style="font-size:13px;color:var(--fg-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Vercel dashboard — recall-app</div>
-            <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--fg-faint);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">https://vercel.com/piyush/recall</div>
+            <div style="font-size:13px;color:var(--fg-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Vercel dashboard — yank-app</div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--fg-faint);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">https://vercel.com/piyush/yank</div>
           </div>
           <span style="font-size:11px;color:var(--fg-faint);">12m ago</span>
         </div>

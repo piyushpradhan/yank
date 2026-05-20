@@ -1,4 +1,4 @@
-# Recall — PowerShell build wrapper for Windows users without make.
+# Yank — PowerShell build wrapper for Windows users without make.
 #
 # Usage:
 #   .\build.ps1            # same as `.\build.ps1 build`
@@ -17,7 +17,7 @@ $ErrorActionPreference = 'Stop'
 $DistDir = 'dist-installers'
 
 function Invoke-Build {
-    Write-Host "==> Building Recall for Windows" -ForegroundColor Cyan
+    Write-Host "==> Building Yank for Windows" -ForegroundColor Cyan
     npm run tauri -- build
     if ($LASTEXITCODE -ne 0) { throw "tauri build failed" }
 

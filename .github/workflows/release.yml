@@ -145,7 +145,7 @@ jobs:
       - name: Upload build artifacts (always)
         uses: actions/upload-artifact@v4
         with:
-          name: smart-clipboard-${{ matrix.label }}
+          name: yank-${{ matrix.label }}
           path: |
             src-tauri/target/${{ matrix.target }}/release/bundle/msi/*.msi
             src-tauri/target/${{ matrix.target }}/release/bundle/nsis/*setup.exe

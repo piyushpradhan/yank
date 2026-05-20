@@ -2,84 +2,42 @@
 const year = new Date().getFullYear();
 ---
 
-<footer class="footer">
-  <div class="container footer__inner">
-    <div class="footer__brand">
+<footer class="mt-10 border-t border-border-subtle py-10 pb-[60px]">
+  <div class="mx-auto flex max-w-[1120px] flex-col items-center gap-[18px] px-6 text-center max-[720px]:px-[18px]">
+    <div class="flex items-center gap-2 font-semibold text-fg">
       <img src="/logo.png" alt="" width="22" height="22" />
-      <span>Recall</span>
+      <span>Yank</span>
     </div>
 
-    <div class="footer__links">
+    <div class="flex flex-wrap justify-center gap-6 text-[13.5px] text-fg-muted">
       <a
         href="https://github.com/piyushpradhan/recall"
         target="_blank"
-        rel="noopener noreferrer">GitHub</a
+        rel="noopener noreferrer"
+        class="transition-colors duration-150 hover:text-accent-ink">GitHub</a
       >
       <a
         href="https://github.com/piyushpradhan/recall/releases"
         target="_blank"
-        rel="noopener noreferrer">Releases</a
+        rel="noopener noreferrer"
+        class="transition-colors duration-150 hover:text-accent-ink">Releases</a
       >
       <a
         href="https://github.com/piyushpradhan/recall/issues"
         target="_blank"
-        rel="noopener noreferrer">Issues</a
+        rel="noopener noreferrer"
+        class="transition-colors duration-150 hover:text-accent-ink">Issues</a
       >
       <a
         href="https://github.com/piyushpradhan/recall/blob/main/README.md"
         target="_blank"
-        rel="noopener noreferrer">README</a
+        rel="noopener noreferrer"
+        class="transition-colors duration-150 hover:text-accent-ink">README</a
       >
     </div>
 
-    <p class="footer__fine">© {year} Recall · MIT licensed · Built with Tauri</p>
+    <p class="font-mono text-[11.5px] tracking-[0.02em] text-fg-faint">
+      © {year} Yank · MIT licensed · Built with Tauri
+    </p>
   </div>
 </footer>
-
-<style>
-  .footer {
-    padding: 40px 0 60px;
-    border-top: 1px solid var(--border-soft);
-    margin-top: 40px;
-  }
-
-  .footer__inner {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 18px;
-    text-align: center;
-  }
-
-  .footer__brand {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-weight: 600;
-    color: var(--fg);
-  }
-
-  .footer__links {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 24px;
-    color: var(--fg-muted);
-    font-size: 13.5px;
-  }
-
-  .footer__links a {
-    transition: color 150ms ease;
-  }
-
-  .footer__links a:hover {
-    color: var(--accent-ink);
-  }
-
-  .footer__fine {
-    font-family: var(--font-mono);
-    font-size: 11.5px;
-    color: var(--fg-faint);
-    letter-spacing: 0.02em;
-  }
-</style>

@@ -1,4 +1,6 @@
 ---
+import { Icon } from "astro-icon/components";
+
 const releasesUrl = "https://github.com/piyushpradhan/recall/releases/latest";
 
 const platforms = [
@@ -6,221 +8,82 @@ const platforms = [
     label: "macOS",
     sublabel: "Apple Silicon · .dmg",
     href: `${releasesUrl}`,
-    icon: "apple",
+    icon: "simple-icons:apple",
   },
   {
     label: "Windows",
     sublabel: "x64 · NSIS installer",
     href: `${releasesUrl}`,
-    icon: "windows",
+    icon: "simple-icons:windows",
   },
   {
     label: "Linux",
     sublabel: "x64 · AppImage / .deb",
     href: `${releasesUrl}`,
-    icon: "linux",
+    icon: "simple-icons:linux",
   },
 ];
 ---
 
-<section class="download" id="download">
-  <div class="container">
-    <div class="download__panel">
-      <span class="eyebrow">Get Recall</span>
-      <h2 class="download__title">Free, open source, ready to ship.</h2>
-      <p class="download__lede">
+<section
+  class="relative border-t border-border-subtle py-20 max-[720px]:py-14"
+  id="download"
+>
+  <div class="mx-auto max-w-[1120px] px-6 max-[720px]:px-[18px]">
+    <div
+      class="relative overflow-hidden rounded-2xl border border-border bg-surface px-12 py-[60px] max-[720px]:px-6 max-[720px]:py-10"
+      style="background: radial-gradient(600px 300px at 80% 0%, color-mix(in oklab, var(--accent-ember-500) 28%, transparent), transparent 60%), var(--bg-surface);"
+    >
+      <span class="font-mono text-[11px] font-semibold uppercase tracking-[0.2em] text-accent-strong">
+        Get Yank
+      </span>
+      <h2 class="mt-2.5 max-w-[580px] text-[clamp(30px,4vw,40px)] leading-[1.1]">
+        Free, open source, ready to ship.
+      </h2>
+      <p class="mt-3.5 max-w-[520px] text-base leading-[1.55] text-fg-muted">
         Latest installers are attached to every GitHub release. Pick your
         platform — the rest is one click.
       </p>
 
-      <div class="download__grid">
+      <div class="mt-8 grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-3">
         {
           platforms.map((p) => (
             <a
-              class="platform"
+              class="platform group flex items-center gap-3.5 rounded-[10px] border border-border-subtle px-5 py-[18px] text-fg transition-all duration-200 hover:-translate-y-0.5 hover:border-accent hover:bg-muted"
               href={p.href}
               target="_blank"
               rel="noopener noreferrer"
+              style="background: color-mix(in oklab, var(--bg-subtle) 80%, transparent);"
             >
-              <div class="platform__icon" aria-hidden="true">
-                {p.icon === "apple" && (
-                  <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16.365 1.43c0 1.14-.452 2.232-1.18 3.052-.789.882-2.075 1.566-3.227 1.482-.137-1.118.39-2.232 1.118-2.951.821-.81 2.21-1.486 3.289-1.583zm3.42 16.29c-.564 1.31-.842 1.901-1.575 3.06-1.022 1.62-2.466 3.643-4.255 3.66-1.59.015-2 .985-4.158.973-2.158-.012-2.604-1.001-4.194-1.014-1.789-.014-3.155-1.84-4.177-3.46C-1.426 16.92-1.745 11.6 1.06 8.886c1.992-1.93 5.144-1.95 6.88-.95.985.566 1.595.962 3.156.952 1.502-.014 2.165-.41 3.27-.987 1.948-1.013 4.95-.84 7.09 1.142-3.93 2.14-3.292 7.748-1.671 8.677z"/></svg>
-                )}
-                {p.icon === "windows" && (
-                  <svg viewBox="0 0 24 24" fill="currentColor"><path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801"/></svg>
-                )}
-                {p.icon === "linux" && (
-                  <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.504 0c-.155 0-.315.008-.48.021-4.225.333-3.105 4.807-3.17 6.298-.076 1.092-.3 1.953-1.05 3.02-.885 1.051-2.127 2.75-2.716 4.521-.278.84-.41 1.694-.353 2.5-.046.405-.07.81-.045 1.20a8.69 8.69 0 0 0 .057.616c-.526 0-.928.3-1.157.717-.227.42-.293.937-.293 1.434 0 .37.017.738.017 1.097-.005.243.02.482.077.708.142.55.453 1.041.836 1.428.378.391.842.66 1.386.7l.046.001c1.09 0 2.058-.587 2.687-1.485l.058-.087c.218.094.46.17.722.207a4.52 4.52 0 0 0 1.265.001c.276-.04.524-.116.745-.215l.07.108c.62.882 1.563 1.453 2.65 1.45a2.45 2.45 0 0 0 1.402-.71c.385-.39.696-.882.838-1.43.057-.227.083-.467.077-.71 0-.36.018-.728.018-1.097 0-.498-.066-1.014-.293-1.434-.229-.418-.631-.717-1.157-.717a9.31 9.31 0 0 0 .057-.616c.024-.39 0-.794-.046-1.2.057-.806-.075-1.66-.353-2.5-.59-1.77-1.831-3.47-2.716-4.521-.75-1.067-.974-1.928-1.05-3.02-.075-1.755 1.034-6.29-3.171-6.298z"/></svg>
-                )}
+              <div class="flex h-8 w-8 items-center justify-center text-accent-ink" aria-hidden="true">
+                <Icon name={p.icon} width={26} height={26} />
               </div>
-              <div class="platform__text">
-                <span class="platform__label">{p.label}</span>
-                <span class="platform__sublabel">{p.sublabel}</span>
+              <div class="flex min-w-0 flex-1 flex-col gap-0.5">
+                <span class="text-sm font-semibold tracking-[-0.01em]">{p.label}</span>
+                <span class="font-mono text-[11.5px] text-fg-faint">{p.sublabel}</span>
               </div>
-              <svg
-                class="platform__arrow"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
+              <Icon
+                name="lucide:arrow-right"
+                width={16}
+                height={16}
+                class="shrink-0 text-fg-faint transition-all duration-200 group-hover:translate-x-0.5 group-hover:text-accent"
                 aria-hidden="true"
-              >
-                <line x1="5" y1="12" x2="19" y2="12" />
-                <polyline points="12 5 19 12 12 19" />
-              </svg>
+              />
             </a>
           ))
         }
       </div>
 
-      <p class="download__fine">
+      <p class="mt-7 text-[13px] text-fg-faint">
         Or build from source —
         <a
           href="https://github.com/piyushpradhan/recall#getting-started"
           target="_blank"
           rel="noopener noreferrer"
+          class="border-b border-accent-soft text-accent-ink hover:text-accent"
           >see the README
         </a>.
       </p>
     </div>
   </div>
 </section>
-
-<style>
-  .download {
-    padding: 80px 0;
-    border-top: 1px solid var(--border-soft);
-    position: relative;
-  }
-
-  .download__panel {
-    position: relative;
-    padding: 60px 48px;
-    border-radius: 16px;
-    background:
-      radial-gradient(
-        600px 300px at 80% 0%,
-        color-mix(in oklab, var(--accent-ember-500) 28%, transparent),
-        transparent 60%
-      ),
-      var(--bg-surface);
-    border: 1px solid var(--border);
-    overflow: hidden;
-  }
-
-  .download__title {
-    font-size: clamp(30px, 4vw, 40px);
-    line-height: 1.1;
-    margin-top: 10px;
-    max-width: 580px;
-  }
-
-  .download__lede {
-    margin-top: 14px;
-    font-size: 16px;
-    line-height: 1.55;
-    color: var(--fg-muted);
-    max-width: 520px;
-  }
-
-  .download__grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 12px;
-    margin-top: 32px;
-  }
-
-  .platform {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 18px 20px;
-    background: color-mix(in oklab, var(--bg-subtle) 80%, transparent);
-    border: 1px solid var(--border-soft);
-    border-radius: 10px;
-    color: var(--fg);
-    transition:
-      border-color 200ms ease,
-      transform 200ms ease,
-      background 200ms ease;
-  }
-
-  .platform:hover {
-    border-color: var(--accent-ember-500);
-    transform: translateY(-2px);
-    background: var(--bg-muted);
-  }
-
-  .platform__icon {
-    width: 32px;
-    height: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--accent-ink);
-  }
-
-  .platform__icon svg {
-    width: 26px;
-    height: 26px;
-  }
-
-  .platform__text {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    min-width: 0;
-  }
-
-  .platform__label {
-    font-size: 14px;
-    font-weight: 600;
-    letter-spacing: -0.01em;
-  }
-
-  .platform__sublabel {
-    font-family: var(--font-mono);
-    font-size: 11.5px;
-    color: var(--fg-faint);
-  }
-
-  .platform__arrow {
-    width: 16px;
-    height: 16px;
-    color: var(--fg-faint);
-    transition: transform 200ms ease;
-    flex-shrink: 0;
-  }
-
-  .platform:hover .platform__arrow {
-    color: var(--accent);
-    transform: translateX(2px);
-  }
-
-  .download__fine {
-    margin-top: 28px;
-    font-size: 13px;
-    color: var(--fg-faint);
-  }
-
-  .download__fine a {
-    color: var(--accent-ink);
-    border-bottom: 1px solid var(--accent-soft);
-  }
-
-  .download__fine a:hover {
-    color: var(--accent);
-  }
-
-  @media (max-width: 720px) {
-    .download {
-      padding: 56px 0;
-    }
-    .download__panel {
-      padding: 40px 24px;
-    }
-  }
-</style>

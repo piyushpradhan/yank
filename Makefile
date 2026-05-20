@@ -1,4 +1,4 @@
-# Recall — build targets
+# Yank — build targets
 #
 # One-command builds that produce installers for the host OS:
 #   - Windows → .msi + .exe (NSIS) in src-tauri/target/release/bundle/{msi,nsis}/

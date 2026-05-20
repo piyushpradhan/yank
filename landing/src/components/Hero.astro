@@ -1,50 +1,61 @@
 ---
+import { Icon } from "astro-icon/components";
 ---
 
-<section class="hero">
-  <div class="container hero__inner">
-    <div class="hero__copy">
-      <span class="eyebrow">v0.6 — local first</span>
-      <h1 class="hero__title">
+<section class="relative overflow-hidden py-20 pb-[100px] max-[980px]:py-14 max-[980px]:pb-16">
+  <div class="mx-auto grid max-w-[1120px] grid-cols-[minmax(320px,1fr)_minmax(320px,1.15fr)] items-center gap-[60px] px-6 max-[980px]:grid-cols-1 max-[980px]:gap-10 max-[720px]:px-[18px]">
+    <div class="flex flex-col gap-[22px]">
+      <span class="font-mono text-[11px] font-semibold uppercase tracking-[0.2em] text-accent-strong">v0.6 — local first</span>
+      <h1 class="mt-1.5 text-[clamp(40px,6vw,64px)] leading-[1.04]">
         A clipboard that<br />
-        <span class="hero__title-accent">remembers everything.</span>
+        <span class="bg-gradient-to-br from-accent to-accent-ink bg-clip-text text-transparent">
+          remembers everything.
+        </span>
       </h1>
-      <p class="hero__lede">
-        Recall is a fast, private clipboard manager for macOS, Windows, and
+      <p class="max-w-[540px] text-[17px] leading-[1.55] text-fg-muted max-[980px]:max-w-none">
+        Yank is a fast, private clipboard manager for macOS, Windows, and
         Linux. Fuzzy search. Semantic search. Images, code, links, colors —
         every clip you've ever made, one keystroke away.
       </p>
-      <div class="hero__ctas">
-        <a class="button button--primary" href="#download">
+      <div class="mt-1.5 flex flex-wrap gap-3">
+        <a
+          class="inline-flex h-10 items-center gap-2 rounded-md border border-transparent bg-accent px-4 text-sm font-medium tracking-[-0.01em] text-fg-inverse shadow-ember-sm transition-all duration-150 hover:-translate-y-px hover:bg-accent-strong hover:shadow-ember-md"
+          href="#download"
+        >
           Download
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <Icon name="lucide:download" width={14} height={14} aria-hidden="true" />
         </a>
         <a
-          class="button button--ghost"
+          class="inline-flex h-10 items-center gap-2 rounded-md border border-border bg-transparent px-4 text-sm font-medium tracking-[-0.01em] text-fg transition-all duration-150 hover:-translate-y-px hover:border-accent hover:text-accent-strong"
           href="https://github.com/piyushpradhan/recall"
           target="_blank"
           rel="noopener noreferrer"
         >
           View on GitHub
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17L17 7M17 7H8M17 7V16"/></svg>
+          <Icon name="lucide:arrow-up-right" width={14} height={14} aria-hidden="true" />
         </a>
       </div>
-      <div class="hero__hint">
+      <div class="mt-2 flex items-center gap-1.5 text-[12.5px] text-fg-faint">
         <span>Press</span>
-        <span class="kbd">Ctrl</span>
-        <span class="kbd">Shift</span>
-        <span class="kbd">V</span>
+        <span class="kbd-chip">Ctrl</span>
+        <span class="kbd-chip">Shift</span>
+        <span class="kbd-chip">V</span>
         <span>to open the palette anywhere.</span>
       </div>
     </div>
 
-    <div class="hero__media">
-      <div class="hero__frame">
-        <div class="hero__chrome">
-          <span class="hero__dot" data-color="red"></span>
-          <span class="hero__dot" data-color="yellow"></span>
-          <span class="hero__dot" data-color="green"></span>
-          <span class="hero__chrome-title">Recall — Quick Palette</span>
+    <div class="relative">
+      <div
+        class="relative z-[2] overflow-hidden rounded-xl border border-border bg-surface"
+        style="box-shadow: 0 60px 120px -30px rgba(0,0,0,0.7), 0 20px 40px -10px rgba(0,0,0,0.4);"
+      >
+        <div class="relative flex items-center gap-2 border-b border-border-subtle bg-subtle px-3.5 py-2.5">
+          <span class="h-[11px] w-[11px] rounded-full bg-danger"></span>
+          <span class="h-[11px] w-[11px] rounded-full bg-warning"></span>
+          <span class="h-[11px] w-[11px] rounded-full bg-success"></span>
+          <span class="absolute left-1/2 -translate-x-1/2 font-mono text-[11px] tracking-[0.05em] text-fg-faint">
+            Yank — Quick Palette
+          </span>
         </div>
         <video
           src="/media/image-copy-paste.webm"
@@ -53,157 +64,36 @@
           muted
           playsinline
           preload="metadata"
-          aria-label="Recall palette demo: searching for an image clip and pasting it"
+          aria-label="Yank palette demo: searching for an image clip and pasting it"
+          class="block h-auto w-full"
         ></video>
       </div>
-      <div class="hero__glow" aria-hidden="true"></div>
+      <div
+        class="pointer-events-none absolute -inset-10 z-[1] blur-xl"
+        style="background: radial-gradient(400px 280px at 50% 50%, color-mix(in oklab, var(--accent-ember-500) 38%, transparent), transparent 70%);"
+        aria-hidden="true"
+      ></div>
     </div>
   </div>
 </section>
 
 <style>
-  .hero {
-    position: relative;
-    padding: 80px 0 100px;
-    overflow: hidden;
-  }
-
-  .hero__inner {
-    display: grid;
-    grid-template-columns: minmax(320px, 1fr) minmax(320px, 1.15fr);
-    gap: 60px;
+  /* Kbd chip — used here and in Download. Centralised so the styling matches
+   * the in-app kbd visual without per-instance class repetition. */
+  .kbd-chip {
+    display: inline-flex;
     align-items: center;
-  }
-
-  .hero__copy {
-    display: flex;
-    flex-direction: column;
-    gap: 22px;
-  }
-
-  .hero__title {
-    font-size: clamp(40px, 6vw, 64px);
-    line-height: 1.04;
-    margin-top: 6px;
-  }
-
-  .hero__title-accent {
-    background: linear-gradient(
-      135deg,
-      var(--accent-ember-500) 0%,
-      var(--accent-ember-700) 100%
-    );
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-  }
-
-  .hero__lede {
-    font-size: 17px;
-    line-height: 1.55;
-    color: var(--fg-muted);
-    max-width: 540px;
-  }
-
-  .hero__ctas {
-    display: flex;
-    gap: 12px;
-    margin-top: 6px;
-    flex-wrap: wrap;
-  }
-
-  .hero__hint {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 12.5px;
-    color: var(--fg-faint);
-    margin-top: 8px;
-  }
-
-  .hero__media {
-    position: relative;
-  }
-
-  .hero__frame {
-    position: relative;
-    border-radius: 12px;
-    overflow: hidden;
-    background: var(--bg-window);
-    border: 1px solid var(--border);
-    box-shadow:
-      0 60px 120px -30px rgba(0, 0, 0, 0.7),
-      0 20px 40px -10px rgba(0, 0, 0, 0.4);
-    z-index: 2;
-  }
-
-  .hero__chrome {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 14px;
-    border-bottom: 1px solid var(--border-subtle);
-    background: var(--bg-subtle);
-    position: relative;
-  }
-
-  .hero__dot {
-    width: 11px;
-    height: 11px;
-    border-radius: 999px;
-  }
-
-  .hero__dot[data-color="red"] {
-    background: var(--status-danger);
-  }
-
-  .hero__dot[data-color="yellow"] {
-    background: var(--status-warning);
-  }
-
-  .hero__dot[data-color="green"] {
-    background: var(--status-success);
-  }
-
-  .hero__chrome-title {
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
+    padding: 2px 6px;
     font-family: var(--font-mono);
     font-size: 11px;
-    color: var(--fg-faint);
-    letter-spacing: 0.05em;
-  }
-
-  .hero__frame video {
-    width: 100%;
-    height: auto;
-    display: block;
-  }
-
-  .hero__glow {
-    position: absolute;
-    inset: -40px;
-    background: radial-gradient(
-      400px 280px at 50% 50%,
-      color-mix(in oklab, var(--accent-ember-500) 38%, transparent),
-      transparent 70%
-    );
-    z-index: 1;
-    pointer-events: none;
-    filter: blur(20px);
-  }
-
-  @media (max-width: 980px) {
-    .hero {
-      padding: 56px 0 64px;
-    }
-    .hero__inner {
-      grid-template-columns: 1fr;
-      gap: 40px;
-    }
-    .hero__lede {
-      max-width: none;
-    }
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-secondary);
+    background: color-mix(in oklab, var(--text-primary) 6%, transparent);
+    border: 1px solid var(--border-subtle);
+    border-radius: 3px;
+    box-shadow: inset 0 -1px 0
+      color-mix(in oklab, var(--text-primary) 10%, transparent);
+    line-height: 1;
   }
 </style>

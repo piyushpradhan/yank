@@ -1,0 +1,107 @@
+@import 'tailwindcss';
+
+/* Bridge ember-design-system tokens into Tailwind v4 utilities. Bundle-time
+ * the @theme block makes `bg-canvas`, `text-fg`, `text-accent`, etc. resolve
+ * to the ember CSS variables — so `data-theme=dark` on <html> still swaps
+ * the palette without component changes. */
+@theme {
+  --font-sans:
+    'Geist', 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono:
+    'Geist Mono', 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+
+  --color-canvas: var(--bg-canvas);
+  --color-surface: var(--bg-surface);
+  --color-subtle: var(--bg-subtle);
+  --color-muted: var(--bg-muted);
+
+  --color-fg: var(--text-primary);
+  --color-fg-muted: var(--text-secondary);
+  --color-fg-faint: var(--text-tertiary);
+  --color-fg-inverse: var(--text-inverse);
+
+  --color-border: var(--border-default);
+  --color-border-subtle: var(--border-subtle);
+  --color-border-strong: var(--border-strong);
+
+  --color-accent: var(--accent-ember-500);
+  --color-accent-strong: var(--accent-ember-600);
+  --color-accent-ink: var(--accent-ember-700);
+  --color-accent-soft: var(--accent-ember-50);
+  --color-accent-100: var(--accent-ember-100);
+
+  --color-success: var(--status-success);
+  --color-warning: var(--status-warning);
+  --color-danger: var(--status-danger);
+  --color-info: var(--status-info);
+
+  --shadow-ember-sm: var(--shadow-sm);
+  --shadow-ember-md: var(--shadow-md);
+}
+
+/* Aurora gradient backdrop — kept as a CSS var because Tailwind cannot
+ * compose a multi-stop radial gradient through utilities without verbose
+ * arbitrary-value syntax. data-theme swaps the underlying ember tokens. */
+:root {
+  --aurora:
+    radial-gradient(
+      1200px 600px at 15% -10%,
+      color-mix(in oklab, var(--accent-ember-500) 32%, transparent),
+      transparent 60%
+    ),
+    radial-gradient(
+      900px 500px at 110% 30%,
+      color-mix(in oklab, var(--accent-ember-700) 24%, transparent),
+      transparent 55%
+    ),
+    var(--bg-canvas);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--aurora);
+  background-attachment: fixed;
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: 'ss01', 'cv11';
+  letter-spacing: -0.01em;
+  min-height: 100%;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+img,
+video {
+  max-width: 100%;
+  display: block;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+  letter-spacing: -0.03em;
+  font-weight: 600;
+}
+
+p {
+  margin: 0;
+}
+
+::selection {
+  background: var(--accent-ember-100);
+  color: var(--text-primary);
+}

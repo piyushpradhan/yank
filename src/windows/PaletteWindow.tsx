@@ -49,16 +49,7 @@ export function PaletteWindow() {
   };
 
   return (
-    <div
-      style={{
-        width: "100%",
-        height: "100%",
-        background: "transparent",
-        color: t.fg,
-        fontFamily: t.fontUi,
-        overflow: "hidden",
-      }}
-    >
+    <div className="h-full w-full overflow-hidden bg-transparent font-sans text-fg">
       <Palette
         t={t}
         showLabels={tweaks.showLabels}

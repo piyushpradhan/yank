@@ -17,7 +17,7 @@ const API_VERSION: &str = "2023-06-01";
 const MAX_CONTENT_CHARS: usize = 1500;
 const MAX_LABEL_CHARS: usize = 80;
 
-const SYSTEM_PROMPT: &str = "You label clipboard items for a recall-first productivity app. \
+const SYSTEM_PROMPT: &str = "You label clipboard items for a clipboard productivity app. \
 Given a category and the raw copied text, return ONE short phrase (4–8 words) that describes what \
 the clip is or is about. Be specific — include the key noun or action. \
 Use Title Case. No quotes. No trailing punctuation. No prefixes like 'Label:' or 'A:'. \

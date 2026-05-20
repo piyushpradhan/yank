@@ -1,89 +1,30 @@
 ---
+import { Icon } from "astro-icon/components";
 ---
 
-<nav class="nav">
-  <div class="container nav__inner">
-    <a href="/" class="nav__brand" aria-label="Recall home">
+<nav
+  class="sticky top-0 z-50 border-b border-border-subtle backdrop-blur-xl backdrop-saturate-150"
+  style="background: color-mix(in oklab, var(--bg-canvas) 70%, transparent);"
+>
+  <div class="mx-auto flex h-[60px] max-w-[1120px] items-center justify-between px-6 max-[720px]:px-[18px]">
+    <a href="/" class="flex items-center gap-2.5 text-fg" aria-label="Yank home">
       <img src="/logo.png" alt="" width="28" height="28" />
-      <span class="nav__title">Recall</span>
+      <span class="text-base font-semibold tracking-[-0.02em]">Yank</span>
     </a>
 
-    <div class="nav__links">
-      <a href="#features">Features</a>
-      <a href="#showcase">Screenshots</a>
-      <a href="#download">Download</a>
+    <div class="flex items-center gap-[26px] text-[13.5px] text-fg-muted">
+      <a href="#features" class="transition-colors duration-150 hover:text-fg max-[720px]:hidden">Features</a>
+      <a href="#showcase" class="transition-colors duration-150 hover:text-fg max-[720px]:hidden">Screenshots</a>
+      <a href="#download" class="transition-colors duration-150 hover:text-fg max-[720px]:hidden">Download</a>
       <a
         href="https://github.com/piyushpradhan/recall"
         target="_blank"
         rel="noopener noreferrer"
+        class="transition-colors duration-150 hover:text-fg"
         aria-label="GitHub repository"
       >
-        <svg
-          viewBox="0 0 24 24"
-          width="18"
-          height="18"
-          fill="currentColor"
-          aria-hidden="true"
-        >
-          <path
-            d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.1.79-.25.79-.56 0-.27-.01-1-.02-1.96-3.2.7-3.87-1.54-3.87-1.54-.52-1.33-1.27-1.69-1.27-1.69-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.02 1.75 2.69 1.24 3.34.95.1-.74.4-1.25.72-1.54-2.55-.29-5.24-1.27-5.24-5.66 0-1.25.45-2.27 1.18-3.07-.12-.29-.51-1.46.11-3.04 0 0 .96-.31 3.15 1.17a10.96 10.96 0 0 1 5.74 0c2.19-1.48 3.15-1.17 3.15-1.17.62 1.58.23 2.75.11 3.04.74.8 1.18 1.82 1.18 3.07 0 4.4-2.69 5.36-5.25 5.65.41.36.77 1.05.77 2.12 0 1.53-.01 2.76-.01 3.13 0 .31.21.67.8.56 4.56-1.52 7.85-5.83 7.85-10.91C23.5 5.65 18.35.5 12 .5z"
-          ></path>
-        </svg>
+        <Icon name="simple-icons:github" width={18} height={18} aria-hidden="true" />
       </a>
     </div>
   </div>
 </nav>
-
-<style>
-  .nav {
-    position: sticky;
-    top: 0;
-    z-index: 50;
-    backdrop-filter: blur(20px) saturate(160%);
-    -webkit-backdrop-filter: blur(20px) saturate(160%);
-    background: color-mix(in oklab, var(--bg-canvas) 70%, transparent);
-    border-bottom: 1px solid var(--border-subtle);
-  }
-
-  .nav__inner {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    height: 60px;
-  }
-
-  .nav__brand {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    color: var(--fg);
-  }
-
-  .nav__title {
-    font-size: 16px;
-    font-weight: 600;
-    letter-spacing: -0.02em;
-  }
-
-  .nav__links {
-    display: flex;
-    align-items: center;
-    gap: 26px;
-    color: var(--fg-muted);
-    font-size: 13.5px;
-  }
-
-  .nav__links a {
-    transition: color 150ms ease;
-  }
-
-  .nav__links a:hover {
-    color: var(--fg);
-  }
-
-  @media (max-width: 720px) {
-    .nav__links a:not([aria-label]) {
-      display: none;
-    }
-  }
-</style>

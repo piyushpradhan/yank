@@ -110,17 +110,7 @@ function App() {
   }, [keymapOpen, tweaksOpen]);
 
   return (
-    <div
-      style={{
-        width: '100%',
-        height: '100%',
-        background: t.micaBg,
-        color: t.fg,
-        fontFamily: t.fontUi,
-        overflow: 'hidden',
-        position: 'relative',
-      }}
-    >
+    <div className="relative h-full w-full overflow-hidden bg-canvas font-sans text-fg">
       <Library
         t={t}
         showLabels={tweaks.showLabels}
@@ -133,45 +123,18 @@ function App() {
 
       {app.backfill && app.backfill.remaining > 0 && (
         <div
+          className="fixed left-1/2 top-2 z-[300] inline-flex h-6 -translate-x-1/2 items-center gap-2 rounded-full border bg-accent-soft px-3 font-mono text-[10.5px] tabular-nums text-accent-ink shadow-ember-sm"
           style={{
-            position: 'fixed',
-            top: 8,
-            left: '50%',
-            transform: 'translateX(-50%)',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 8,
-            height: 24,
-            padding: '0 12px',
-            fontFamily: t.fontMono,
-            fontSize: 10.5,
-            fontVariantNumeric: 'tabular-nums',
-            color: t.accentInk,
-            background: t.accentSoft,
-            border: `1px solid color-mix(in oklab, ${t.accent} 24%, transparent)`,
-            borderRadius: 999,
-            boxShadow: 'var(--shadow-sm)',
-            zIndex: 300,
+            borderColor: 'color-mix(in oklab, var(--accent-ember-500) 24%, transparent)',
           }}
         >
           <span
-            style={{
-              width: 6,
-              height: 6,
-              borderRadius: 999,
-              background: t.accent,
-              animation: 'backfillPulse 1.2s ease-in-out infinite',
-            }}
+            className="h-1.5 w-1.5 rounded-full bg-accent"
+            style={{ animation: 'backfillPulse 1.2s ease-in-out infinite' }}
             aria-hidden
           />
           Embedding {app.backfill.remaining} item
           {app.backfill.remaining === 1 ? '' : 's'}…
-          <style>{`
-            @keyframes backfillPulse {
-              0%, 100% { opacity: 0.5; }
-              50% { opacity: 1; }
-            }
-          `}</style>
         </div>
       )}
 
@@ -185,16 +148,7 @@ function App() {
         />
       )}
 
-      <div
-        style={{
-          position: 'fixed',
-          top: 8,
-          right: 150,
-          display: 'flex',
-          gap: 6,
-          zIndex: 200,
-        }}
-      >
+      <div className="fixed right-[150px] top-2 z-[200] flex gap-1.5">
         <Button
           size="sm"
           variant={settings.provider !== 'disabled' ? 'primary' : 'ghost'}
@@ -238,25 +192,11 @@ function App() {
       {keymapOpen && (
         <div
           onClick={() => setKeymapOpen(false)}
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0,0,0,0.45)',
-            display: 'grid',
-            placeItems: 'center',
-            zIndex: 700,
-          }}
+          className="fixed inset-0 z-[700] grid place-items-center bg-black/45"
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            style={{
-              width: 820,
-              height: 420,
-              borderRadius: 12,
-              overflow: 'hidden',
-              border: `1px solid ${t.border}`,
-              boxShadow: 'var(--shadow-md)',
-            }}
+            className="h-[420px] w-[820px] overflow-hidden rounded-xl border border-border shadow-ember-md"
           >
             <KeyboardMap t={t} />
           </div>

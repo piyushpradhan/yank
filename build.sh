@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Recall — Linux build wrapper.
+# Yank — Linux build wrapper.
 #
 # Mirrors build.ps1 (Windows) and the Makefile, with one extra trick:
 #   `./build.sh install` also installs the Tauri system prereqs for your
@@ -141,7 +141,7 @@ do_dev() {
 
 do_build() {
     ensure_toolchain
-    cyan "==> Building Recall release bundles"
+    cyan "==> Building Yank release bundles"
     # linuxdeploy ships as an AppImage and tries to FUSE-mount itself.
     # Setting APPIMAGE_EXTRACT_AND_RUN=1 makes it fall back to extracting
     # itself instead — works even without libfuse2, in containers, etc.
