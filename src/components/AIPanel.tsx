@@ -30,7 +30,11 @@ const LOCAL_MODELS: { id: string; label: string; note: string }[] = [
   },
 ];
 
-export function AIPanel({ t, settings, onChange, onClose }: AIPanelProps) {
+const FIELD_LABEL_CLS =
+  'mb-1.5 font-mono text-[10.5px] uppercase tracking-wide text-fg-muted';
+const HINT_CLS = 'mt-1.5 mb-3.5 text-[10.5px] leading-[1.5] text-fg-faint';
+
+export function AIPanel({ settings, onChange, onClose }: AIPanelProps) {
   const [local, setLocal] = useState<EmbedSettings>(settings);
   const [error, setError] = useState<string | null>(null);
 
@@ -82,17 +86,16 @@ export function AIPanel({ t, settings, onChange, onClose }: AIPanelProps) {
         </>
       }
     >
-      <StatusRow t={t} kind={embedStatus.kind} label="Semantic search" detail={embedStatus.text} />
+      <StatusRow kind={embedStatus.kind} label="Semantic search" detail={embedStatus.text} />
       <StatusRow
-        t={t}
         kind={local.anthropic_api_key.trim() ? 'ok' : 'off'}
         label="AI labels"
         detail={labelStatus}
       />
 
-      <div style={{ marginTop: 16, marginBottom: 16 }}>
-        <div style={labelStyle(t)}>Provider</div>
-        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+      <div className="mb-4 mt-4">
+        <div className={FIELD_LABEL_CLS}>Provider</div>
+        <div className="flex flex-wrap gap-1.5">
           {PROVIDERS.map((p) => (
             <Button
               key={p.id}
@@ -108,7 +111,7 @@ export function AIPanel({ t, settings, onChange, onClose }: AIPanelProps) {
 
       {local.provider === 'local' && (
         <>
-          <Field t={t} label="Embedding model">
+          <Field label="Embedding model">
             <Select
               value={local.local_model}
               onChange={(v) => set('local_model', v)}
@@ -116,7 +119,7 @@ export function AIPanel({ t, settings, onChange, onClose }: AIPanelProps) {
               aria-label="Embedding model"
             />
           </Field>
-          <p style={hintStyle(t)}>
+          <p className={HINT_CLS}>
             {LOCAL_MODELS.find((m) => m.id === local.local_model)?.note ??
               'Runs entirely on your machine via ONNX.'}{' '}
             The first embedding may take a few seconds while the model downloads.
@@ -126,7 +129,7 @@ export function AIPanel({ t, settings, onChange, onClose }: AIPanelProps) {
 
       {local.provider === 'openai' && (
         <>
-          <Field t={t} label="OpenAI API key">
+          <Field label="OpenAI API key">
             <Input
               type="password"
               value={local.openai_api_key}
@@ -134,7 +137,7 @@ export function AIPanel({ t, settings, onChange, onClose }: AIPanelProps) {
               placeholder="sk-…"
             />
           </Field>
-          <Field t={t} label="Model">
+          <Field label="Model">
             <Input
               value={local.openai_model}
               onChange={(e) => set('openai_model', e.target.value)}
@@ -145,40 +148,26 @@ export function AIPanel({ t, settings, onChange, onClose }: AIPanelProps) {
 
       {local.provider === 'ollama' && (
         <>
-          <Field t={t} label="Ollama URL">
+          <Field label="Ollama URL">
             <Input value={local.ollama_url} onChange={(e) => set('ollama_url', e.target.value)} />
           </Field>
-          <Field t={t} label="Embedding model">
+          <Field label="Embedding model">
             <Input
               value={local.ollama_model}
               onChange={(e) => set('ollama_model', e.target.value)}
             />
           </Field>
-          <p style={hintStyle(t)}>
+          <p className={HINT_CLS}>
             Install an embedding model first:{' '}
-            <code
-              style={{
-                fontFamily: t.fontMono,
-                color: t.fgMuted,
-                background: t.bgSurfaceAlt,
-                padding: '1px 5px',
-                borderRadius: 3,
-              }}
-            >
+            <code className="rounded-[3px] bg-subtle px-1.5 py-px font-mono text-fg-muted">
               ollama pull {local.ollama_model}
             </code>
           </p>
         </>
       )}
 
-      <div
-        style={{
-          marginTop: 18,
-          borderTop: `1px solid ${t.borderSoft}`,
-          paddingTop: 14,
-        }}
-      >
-        <Field t={t} label="Anthropic API key — AI labels">
+      <div className="mt-[18px] border-t border-border-subtle pt-3.5">
+        <Field label="Anthropic API key — AI labels">
           <Input
             type="password"
             value={local.anthropic_api_key}
@@ -186,7 +175,7 @@ export function AIPanel({ t, settings, onChange, onClose }: AIPanelProps) {
             placeholder="sk-ant-…"
           />
         </Field>
-        <p style={hintStyle(t)}>
+        <p className={HINT_CLS}>
           Each clip gets a one-line intent summary (e.g. "Stripe Webhook Debug"). Runs on Claude
           Haiku in the background. A few hundred clips cost pennies.
         </p>
@@ -195,15 +184,8 @@ export function AIPanel({ t, settings, onChange, onClose }: AIPanelProps) {
       {error && (
         <div
           role="alert"
-          style={{
-            marginTop: 14,
-            padding: '8px 10px',
-            fontSize: 11.5,
-            color: 'var(--status-danger)',
-            background: 'var(--bg-subtle)',
-            border: '1px solid var(--status-danger)',
-            borderRadius: 6,
-          }}
+          className="mt-3.5 rounded-md border bg-subtle px-2.5 py-2 text-[11.5px] text-danger"
+          style={{ borderColor: 'var(--status-danger)' }}
         >
           {error}
         </div>
@@ -212,30 +194,10 @@ export function AIPanel({ t, settings, onChange, onClose }: AIPanelProps) {
   );
 }
 
-function labelStyle(t: Theme) {
-  return {
-    fontSize: 10.5,
-    color: t.fgMuted,
-    fontFamily: t.fontMono,
-    letterSpacing: 0.4,
-    textTransform: 'uppercase' as const,
-    marginBottom: 6,
-  };
-}
-
-function hintStyle(t: Theme): React.CSSProperties {
-  return {
-    margin: '6px 0 14px',
-    fontSize: 10.5,
-    color: t.fgFaint,
-    lineHeight: 1.5,
-  };
-}
-
-function Field({ t, label, children }: { t: Theme; label: string; children: React.ReactNode }) {
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div style={{ marginBottom: 14 }}>
-      <div style={labelStyle(t)}>{label}</div>
+    <div className="mb-3.5">
+      <div className={FIELD_LABEL_CLS}>{label}</div>
       {children}
     </div>
   );
@@ -244,54 +206,32 @@ function Field({ t, label, children }: { t: Theme; label: string; children: Reac
 type StatusKind = 'ok' | 'off' | 'warn';
 
 interface StatusRowProps {
-  t: Theme;
   kind: StatusKind;
   label: string;
   detail: string;
 }
 
-function StatusRow({ t, kind, label, detail }: StatusRowProps) {
+function StatusRow({ kind, label, detail }: StatusRowProps) {
   const colour =
-    kind === 'ok' ? 'var(--status-success)' : kind === 'warn' ? 'var(--status-warning)' : t.fgFaint;
+    kind === 'ok'
+      ? 'var(--status-success)'
+      : kind === 'warn'
+        ? 'var(--status-warning)'
+        : 'var(--text-tertiary)';
   return (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'flex-start',
-        gap: 12,
-        padding: '10px 12px',
-        border: `1px solid ${t.borderSoft}`,
-        borderRadius: 8,
-        marginBottom: 8,
-        background: t.bgSurfaceAlt,
-      }}
-    >
+    <div className="mb-2 flex items-start gap-3 rounded-lg border border-border-subtle bg-subtle px-3 py-2.5">
       <span
+        className="mt-[5px] h-2 w-2 shrink-0 rounded-full"
         style={{
-          width: 8,
-          height: 8,
-          borderRadius: 999,
           background: colour,
-          marginTop: 5,
-          flexShrink: 0,
           boxShadow: `0 0 0 3px color-mix(in oklab, ${colour} 18%, transparent)`,
         }}
       />
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 3, minWidth: 0 }}>
-        <span
-          style={{
-            fontFamily: t.fontMono,
-            fontSize: 10,
-            color: t.fgMuted,
-            textTransform: 'uppercase',
-            letterSpacing: 0.8,
-            fontWeight: 600,
-            lineHeight: 1,
-          }}
-        >
+      <div className="flex min-w-0 flex-col gap-[3px]">
+        <span className="font-mono text-[10px] font-semibold uppercase leading-none tracking-wider text-fg-muted">
           {label}
         </span>
-        <span style={{ fontSize: 11.5, color: t.fg, lineHeight: 1.5 }}>{detail}</span>
+        <span className="text-[11.5px] leading-[1.5] text-fg">{detail}</span>
       </div>
     </div>
   );

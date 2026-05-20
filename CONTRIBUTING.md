@@ -1,4 +1,4 @@
-# Contributing to Recall
+# Contributing to Yank
 
 Thanks for your interest in contributing! This guide will help you set up your development environment and follow our code standards.
 
@@ -27,7 +27,7 @@ npm run app:dev      # Full Tauri app
 ## Project Structure
 
 ```
-recall/
+yank/
 ├── src/                 # React frontend (TypeScript)
 │   ├── components/      # UI components
 │   ├── hooks/          # React hooks

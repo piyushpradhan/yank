@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Recall",
+  "productName": "Yank",
   "version": "0.6.4",
-  "identifier": "com.getrecall.app",
+  "identifier": "com.getyank.app",
   "build": {
     "beforeDevCommand": "npm run dev",
     "devUrl": "http://localhost:1420",
@@ -13,7 +13,7 @@
     "windows": [
       {
         "label": "library",
-        "title": "Recall",
+        "title": "Yank",
         "width": 1080,
         "height": 720,
         "minWidth": 820,
@@ -28,7 +28,7 @@
       },
       {
         "label": "palette",
-        "title": "Recall Palette",
+        "title": "Yank Palette",
         "url": "index.html?window=palette",
         "width": 720,
         "height": 520,

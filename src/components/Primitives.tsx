@@ -14,14 +14,8 @@ export function CategoryChip({ t, cat, mode = 'chip' }: CategoryChipProps) {
   if (mode === 'dot') {
     return (
       <span
-        style={{
-          display: 'inline-block',
-          width: 8,
-          height: 8,
-          borderRadius: 999,
-          background: c.bgStrong,
-          flexShrink: 0,
-        }}
+        className="inline-block h-2 w-2 shrink-0 rounded-full"
+        style={{ background: c.bgStrong }}
       />
     );
   }
@@ -29,14 +23,8 @@ export function CategoryChip({ t, cat, mode = 'chip' }: CategoryChipProps) {
   if (mode === 'mono') {
     return (
       <span
-        style={{
-          fontFamily: t.fontMono,
-          fontSize: 10.5,
-          fontWeight: 500,
-          color: c.ink,
-          letterSpacing: 0.5,
-          textTransform: 'uppercase',
-        }}
+        className="font-mono text-[10.5px] font-medium uppercase tracking-wider"
+        style={{ color: c.ink }}
       >
         {c.mono}
       </span>
@@ -46,21 +34,8 @@ export function CategoryChip({ t, cat, mode = 'chip' }: CategoryChipProps) {
   if (mode === 'icon') {
     return (
       <span
-        style={{
-          width: 22,
-          height: 22,
-          borderRadius: 6,
-          display: 'inline-grid',
-          placeItems: 'center',
-          background: c.bg,
-          color: c.ink,
-          fontFamily: t.fontMono,
-          fontSize: 11,
-          fontWeight: 700,
-          lineHeight: 1,
-          border: `1px solid ${c.border}`,
-          flexShrink: 0,
-        }}
+        className="inline-grid h-[22px] w-[22px] shrink-0 place-items-center rounded-md border font-mono text-[11px] font-bold leading-none"
+        style={{ background: c.bg, color: c.ink, borderColor: c.border }}
       >
         {c.icon}
       </span>
@@ -69,23 +44,8 @@ export function CategoryChip({ t, cat, mode = 'chip' }: CategoryChipProps) {
 
   return (
     <span
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        height: 18,
-        padding: '0 6px',
-        fontFamily: t.fontMono,
-        fontSize: 10,
-        fontWeight: 600,
-        color: c.ink,
-        background: c.bg,
-        border: `1px solid ${c.border}`,
-        borderRadius: 4,
-        letterSpacing: 0.6,
-        textTransform: 'uppercase',
-        lineHeight: 1,
-        flexShrink: 0,
-      }}
+      className="inline-flex h-[18px] shrink-0 items-center rounded border px-1.5 font-mono text-[10px] font-semibold uppercase leading-none tracking-wider"
+      style={{ color: c.ink, background: c.bg, borderColor: c.border }}
     >
       {c.mono}
     </span>
@@ -105,7 +65,7 @@ interface KbdProps {
   onAccent?: boolean;
 }
 
-export function Kbd({ t, children, accent = false, onAccent = false }: KbdProps) {
+export function Kbd({ children, accent = false, onAccent = false }: KbdProps) {
   const palette = onAccent
     ? {
         bg: 'rgba(255,255,255,0.18)',
@@ -118,37 +78,25 @@ export function Kbd({ t, children, accent = false, onAccent = false }: KbdProps)
           bg: 'var(--accent-ember-50)',
           color: 'var(--accent-ember-700)',
           border: 'var(--accent-ember-100)',
-          shadow: 'inset 0 -1px 0 color-mix(in oklab, var(--accent-ember-700) 16%, transparent)',
+          shadow:
+            'inset 0 -1px 0 color-mix(in oklab, var(--accent-ember-700) 16%, transparent)',
         }
       : {
           bg: 'color-mix(in oklab, var(--text-primary) 6%, transparent)',
-          color: t.fgMuted,
+          color: 'var(--text-secondary)',
           border: 'var(--border-subtle)',
-          shadow: 'inset 0 -1px 0 color-mix(in oklab, var(--text-primary) 8%, transparent)',
+          shadow:
+            'inset 0 -1px 0 color-mix(in oklab, var(--text-primary) 8%, transparent)',
         };
 
   return (
     <kbd
+      className="inline-flex h-4 min-w-4 shrink-0 items-center justify-center rounded-[3px] border px-[5px] align-middle font-mono text-[10px] font-medium leading-none tabular-nums"
       style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        verticalAlign: 'middle',
-        minWidth: 16,
-        height: 16,
-        padding: '0 5px',
-        borderRadius: 3,
-        fontFamily: t.fontMono,
-        fontSize: 10,
-        fontWeight: 500,
-        fontVariantNumeric: 'tabular-nums',
         background: palette.bg,
         color: palette.color,
-        border: `1px solid ${palette.border}`,
+        borderColor: palette.border,
         boxShadow: palette.shadow,
-        lineHeight: 1,
-        letterSpacing: 0,
-        flexShrink: 0,
       }}
     >
       {children}
@@ -167,25 +115,15 @@ export function ItemBody({ t, item, compact = false }: ItemBodyProps) {
 
   if (item.category === 'color') {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+      <div className="flex items-center gap-3">
         <div
+          className={`${compact ? 'h-5 w-5' : 'h-9 w-9'} shrink-0 rounded-md border border-border-subtle`}
           style={{
-            width: compact ? 20 : 36,
-            height: compact ? 20 : 36,
-            borderRadius: 6,
             background: item.content,
-            border: `1px solid ${t.borderSoft}`,
-            boxShadow: `inset 0 0 0 1px rgba(255,255,255,0.1)`,
-            flexShrink: 0,
+            boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.1)',
           }}
         />
-        <code
-          style={{
-            fontFamily: t.fontMono,
-            fontSize: compact ? 12 : 13,
-            color: t.fg,
-          }}
-        >
+        <code className={`font-mono text-fg ${compact ? 'text-xs' : 'text-[13px]'}`}>
           {item.content}
         </code>
       </div>
@@ -195,18 +133,12 @@ export function ItemBody({ t, item, compact = false }: ItemBodyProps) {
   if (item.category === 'code') {
     return (
       <pre
+        className={`m-0 overflow-auto whitespace-pre rounded-lg border border-border-subtle font-mono leading-[1.55] text-fg ${
+          compact ? 'px-3 py-2 text-[11.5px]' : 'px-4 py-3 text-[12.5px]'
+        }`}
         style={{
-          margin: 0,
-          fontFamily: t.fontMono,
-          fontSize: compact ? 11.5 : 12.5,
-          lineHeight: 1.55,
-          color: t.fg,
-          background: 'color-mix(in oklab, var(--text-primary) 4%, var(--bg-subtle))',
-          border: `1px solid ${t.borderSoft}`,
-          borderRadius: 8,
-          padding: compact ? '8px 12px' : '12px 16px',
-          overflow: 'auto',
-          whiteSpace: 'pre',
+          background:
+            'color-mix(in oklab, var(--text-primary) 4%, var(--bg-subtle))',
         }}
       >
         {item.content}
@@ -223,12 +155,8 @@ export function ItemBody({ t, item, compact = false }: ItemBodyProps) {
   ) {
     return (
       <code
-        style={{
-          fontFamily: t.fontMono,
-          fontSize: compact ? 12 : 13.5,
-          color: c.ink,
-          wordBreak: 'break-all',
-        }}
+        className={`break-all font-mono ${compact ? 'text-xs' : 'text-[13.5px]'}`}
+        style={{ color: c.ink }}
       >
         {item.content}
       </code>
@@ -237,12 +165,9 @@ export function ItemBody({ t, item, compact = false }: ItemBodyProps) {
 
   return (
     <div
-      style={{
-        fontSize: compact ? 13 : 14,
-        lineHeight: 1.55,
-        color: t.fg,
-        whiteSpace: 'pre-wrap',
-      }}
+      className={`whitespace-pre-wrap leading-[1.55] text-fg ${
+        compact ? 'text-[13px]' : 'text-sm'
+      }`}
     >
       {item.content}
     </div>

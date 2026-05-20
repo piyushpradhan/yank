@@ -1,6 +1,6 @@
-# Recall — Landing Page
+# Yank — Landing Page
 
-Marketing site for [Recall](../). Built with [Astro](https://astro.build) —
+Marketing site for [Yank](../). Built with [Astro](https://astro.build) —
 static, no client-side JS by default.
 
 ## Deploy on Vercel

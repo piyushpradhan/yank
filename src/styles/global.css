@@ -1,3 +1,50 @@
+@import 'tailwindcss';
+
+/* Expose ember-design-system CSS variables as Tailwind v4 utility tokens.
+ * This bridge means class names like `bg-canvas`, `text-fg`, `border-default`
+ * stay correct across light/dark theme switches without duplicating values.
+ * Sizes are defined as keyword tokens so density layers (compact vs comfy)
+ * still resolve via ember's tokens on `:root[data-density="…"]`. */
+@theme {
+  --font-sans:
+    'Geist Sans', 'Inter', 'Segoe UI Variable', 'Segoe UI', system-ui,
+    sans-serif;
+  --font-display: 'Geist Sans', var(--font-sans);
+  --font-mono:
+    'Geist Mono', 'JetBrains Mono', 'Cascadia Code', ui-monospace, monospace;
+
+  /* Surface + ink palette — bound to ember tokens, so theme switching just
+   * works through `data-theme`. Tailwind generates utilities like `bg-canvas`,
+   * `bg-surface`, `text-fg-muted` etc. from these names. */
+  --color-canvas: var(--bg-canvas);
+  --color-surface: var(--bg-surface);
+  --color-subtle: var(--bg-subtle);
+  --color-muted: var(--bg-muted);
+
+  --color-fg: var(--text-primary);
+  --color-fg-muted: var(--text-secondary);
+  --color-fg-faint: var(--text-tertiary);
+  --color-fg-inverse: var(--text-inverse);
+
+  --color-border: var(--border-default);
+  --color-border-subtle: var(--border-subtle);
+  --color-border-strong: var(--border-strong);
+
+  --color-accent: var(--accent-ember-500);
+  --color-accent-soft: var(--accent-ember-50);
+  --color-accent-ink: var(--accent-ember-700);
+  --color-accent-100: var(--accent-ember-100);
+  --color-accent-600: var(--accent-ember-600);
+
+  --color-success: var(--status-success);
+  --color-warning: var(--status-warning);
+  --color-danger: var(--status-danger);
+  --color-info: var(--status-info);
+
+  --shadow-ember-sm: var(--shadow-sm);
+  --shadow-ember-md: var(--shadow-md);
+}
+
 *,
 *::before,
 *::after {
@@ -12,20 +59,6 @@ body,
   height: 100%;
   width: 100%;
   overflow: hidden;
-}
-
-/* Override ember's default font stack — Geist gives the UI more character
- * than Inter without losing the geometric crispness ember's tokens assume.
- * @fontsource ships Geist Sans under the family name 'Geist Sans' (not
- * 'Geist'); the previous value silently fell through to Inter because no
- * loaded face matched. */
-:root {
-  --font-sans:
-    'Geist Sans', 'Inter', 'Segoe UI Variable', 'Segoe UI', system-ui,
-    sans-serif;
-  --font-display: 'Geist Sans', var(--font-sans);
-  --font-mono:
-    'Geist Mono', 'JetBrains Mono', 'Cascadia Code', ui-monospace, monospace;
 }
 
 body {
@@ -49,8 +82,6 @@ textarea {
   font-family: inherit;
 }
 
-/* Mono surfaces deserve tabular figures + zero ligatures so codes/UUIDs
- * align in columns without surprise width shifts. */
 code,
 pre,
 kbd,
@@ -80,4 +111,14 @@ kbd,
 ::-webkit-scrollbar-thumb:hover {
   background: var(--border-strong);
   background-clip: padding-box;
+}
+
+@keyframes backfillPulse {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
 }

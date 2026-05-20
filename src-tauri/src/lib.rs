@@ -55,7 +55,7 @@ fn focus_library(app: &tauri::AppHandle) {
 }
 
 /// Dispatch CLI args. `is_second_instance` is true when invoked via the
-/// single-instance plugin (a second `smart-clipboard ...` call routed to
+/// single-instance plugin (a second `yank ...` call routed to
 /// the running app). Honoured flags:
 ///   --palette   toggle the palette
 ///   --library   focus the library
@@ -98,11 +98,11 @@ pub fn build_shortcut(sc: &ShortcutConfig) -> Shortcut {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
-        // Single-instance must be registered first so a second `smart-clipboard`
+        // Single-instance must be registered first so a second `yank`
         // invocation hands its args to the running app instead of starting
         // a new process. This is the Linux/Wayland fallback for global
         // hotkeys: users bind their DE's keyboard shortcut to
-        // `smart-clipboard --palette` and the running app handles it.
+        // `yank --palette` and the running app handles it.
         .plugin(tauri_plugin_single_instance::init(|app, args, _cwd| {
             handle_cli_args(app, &args, true);
         }))
@@ -217,7 +217,7 @@ pub fn run() {
             )?;
 
             let _tray = TrayIconBuilder::with_id("main-tray")
-                .tooltip("Recall")
+                .tooltip("Yank")
                 .icon(app.default_window_icon().unwrap().clone())
                 .menu(&menu)
                 .show_menu_on_left_click(false)

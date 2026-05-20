@@ -5,6 +5,7 @@ import type { CategoryDisplay, ClipItem, SearchMode, Theme } from '../lib/types'
 import type { AppState } from '../hooks/useAppState';
 import { useImageUrl } from '../hooks/useImageUrl';
 import { Button } from 'ember-design-system';
+import { LuCopy, LuEllipsis, LuPin, LuPinOff, LuSearch, LuTrash2 } from 'react-icons/lu';
 import { CategoryChip, Kbd } from '../components/Primitives';
 import { ItemBody } from '../components/Primitives';
 
@@ -12,7 +13,6 @@ import { ItemBody } from '../components/Primitives';
 const NO_IMAGE = (): Promise<Blob | null> => Promise.resolve(null);
 
 function ImagePreview({
-  t,
   item,
   getImage,
 }: {
@@ -23,15 +23,11 @@ function ImagePreview({
   const url = useImageUrl(item.id, getImage);
 
   if (!url) {
-    return <div style={{ color: t.fgFaint, fontSize: 13 }}>Loading image…</div>;
+    return <div className="text-[13px] text-fg-faint">Loading image…</div>;
   }
 
   return (
-    <img
-      src={url}
-      alt={item.preview}
-      style={{ maxWidth: '100%', maxHeight: 280, borderRadius: 8, background: t.bgSurfaceAlt }}
-    />
+    <img src={url} alt={item.preview} className="max-h-[280px] max-w-full rounded-lg bg-subtle" />
   );
 }
 
@@ -68,143 +64,71 @@ function PaletteRow({
       data-i={index}
       onMouseEnter={onMouseEnter}
       onClick={onClick}
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 12,
-        padding: `${t.dense ? 8 : 10}px 12px`,
-        borderRadius: 8,
-        background: selected ? t.bgSelected : 'transparent',
-        boxShadow: 'none',
-        cursor: 'pointer',
-        position: 'relative',
-        transition:
-          'background var(--duration-fast) var(--easing-standard), box-shadow var(--duration-fast) var(--easing-standard)',
-      }}
+      className={`relative flex cursor-pointer items-center gap-3 rounded-lg px-3 transition-colors duration-150 ${
+        t.dense ? 'py-2' : 'py-2.5'
+      } ${selected ? 'bg-accent-soft' : 'bg-transparent'}`}
     >
       {categoryMode === 'chip' && <CategoryChip t={t} cat={item.category} mode="chip" />}
       {categoryMode === 'icon' && <CategoryChip t={t} cat={item.category} mode="icon" />}
       {categoryMode === 'dot' && <CategoryChip t={t} cat={item.category} mode="dot" />}
 
       {isImage && (
-        <div
-          style={{
-            width: 44,
-            height: 32,
-            borderRadius: 4,
-            background: t.bgSurfaceAlt,
-            border: `1px solid ${t.borderSoft}`,
-            overflow: 'hidden',
-            flexShrink: 0,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
+        <div className="flex h-8 w-11 shrink-0 items-center justify-center overflow-hidden rounded-sm border border-border-subtle bg-subtle">
           {imageUrl ? (
             <img
               src={imageUrl}
               alt={item.preview}
-              style={{
-                maxWidth: '100%',
-                maxHeight: '100%',
-                objectFit: 'contain',
-              }}
+              className="max-h-full max-w-full object-contain"
             />
           ) : null}
         </div>
       )}
 
-      <div style={{ flex: 1, minWidth: 0 }}>
+      <div className="min-w-0 flex-1">
         {showLabels && (
           <div
-            style={{
-              fontSize: t.dense ? 13.5 : 14.5,
-              fontWeight: item.labelGenerated ? 500 : 400,
-              fontStyle: item.labelGenerated ? 'normal' : 'italic',
-              color: item.labelGenerated ? t.fg : t.fgMuted,
-              letterSpacing: -0.1,
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-            }}
+            className={`flex items-center gap-1.5 overflow-hidden text-ellipsis whitespace-nowrap tracking-[-0.1px] ${
+              t.dense ? 'text-[13.5px]' : 'text-[14.5px]'
+            } ${item.labelGenerated ? 'font-medium not-italic text-fg' : 'font-normal italic text-fg-muted'}`}
             title={item.labelGenerated ? undefined : 'Awaiting AI label'}
           >
-            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <span className="overflow-hidden text-ellipsis">
               {highlightMatch(t, item.label, query)}
             </span>
             {!item.labelGenerated && (
-              <span
-                aria-hidden="true"
-                style={{
-                  fontSize: 9,
-                  color: t.fgFaint,
-                  letterSpacing: 1,
-                  flexShrink: 0,
-                }}
-              >
-                ···
-              </span>
+              <LuEllipsis size={11} aria-hidden="true" className="shrink-0 text-fg-faint" />
             )}
           </div>
         )}
         <div
-          style={{
-            fontFamily:
-              item.category === 'text' || item.category === 'address' ? t.fontUi : t.fontMono,
-            fontSize: showLabels ? (t.dense ? 11.5 : 12) : t.dense ? 13 : 13.5,
-            color: showLabels ? t.fgMuted : t.fg,
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-            marginTop: showLabels ? 2 : 0,
-          }}
+          className={`overflow-hidden text-ellipsis whitespace-nowrap ${
+            item.category === 'text' || item.category === 'address' ? 'font-sans' : 'font-mono'
+          } ${
+            showLabels
+              ? `mt-0.5 ${t.dense ? 'text-[11.5px]' : 'text-xs'} text-fg-muted`
+              : `${t.dense ? 'text-[13px]' : 'text-[13.5px]'} text-fg`
+          }`}
         >
           {item.preview}
         </div>
       </div>
 
-      {item.pinned && <span style={{ color: t.accent, fontSize: 11, flexShrink: 0 }}>★</span>}
+      {item.pinned && (
+        <LuPin size={11} className="shrink-0 fill-current text-accent" aria-label="pinned" />
+      )}
       {item.category === 'color' && (
         <div
-          style={{
-            width: 18,
-            height: 18,
-            borderRadius: 4,
-            background: item.content,
-            border: `1px solid ${t.borderSoft}`,
-            flexShrink: 0,
-          }}
+          className="h-[18px] w-[18px] shrink-0 rounded-sm border border-border-subtle"
+          style={{ background: item.content }}
         />
       )}
 
-      <div
-        style={{
-          fontSize: 11,
-          color: t.fgFaint,
-          fontFamily: t.fontMono,
-          fontVariantNumeric: 'tabular-nums',
-          minWidth: 42,
-          textAlign: 'right',
-          lineHeight: 1,
-          flexShrink: 0,
-        }}
-      >
+      <div className="min-w-[42px] shrink-0 text-right font-mono text-[11px] leading-none tabular-nums text-fg-faint">
         {relTime(item.minutesAgo)}
       </div>
 
       {selected && (
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 4,
-            flexShrink: 0,
-          }}
-        >
+        <div className="flex shrink-0 items-center gap-1">
           <Kbd t={t} accent>
             ↵
           </Kbd>
@@ -251,9 +175,6 @@ export function Palette({
     inputRef.current?.focus();
   }, []);
 
-  // Semantic search runs async against the backend. When the provider isn't
-  // configured we skip the round-trip entirely — the empty-state UI already
-  // explains the situation and directs the user at the AI panel.
   useEffect(() => {
     if (mode !== 'semantic' || !query.trim()) {
       setSemanticResults(null);
@@ -315,7 +236,6 @@ export function Palette({
     setSelected(0);
   }, [query, mode]);
 
-  // Keep selected in bounds when results shrink.
   useEffect(() => {
     setSelected((s) => Math.min(s, lastIdx));
   }, [lastIdx]);
@@ -364,71 +284,30 @@ export function Palette({
 
   return (
     <div
-      style={{
-        position: 'absolute',
-        inset: 0,
-        background: 'transparent',
-        display: 'flex',
-        alignItems: 'stretch',
-        justifyContent: 'stretch',
-        zIndex: 500,
-        animation: 'paletteFadeIn 150ms ease',
-      }}
+      className="absolute inset-0 z-[500] flex items-stretch justify-stretch bg-transparent"
+      style={{ animation: 'paletteFadeIn 150ms ease' }}
     >
       <div
         onKeyDown={onKey}
         tabIndex={-1}
+        className="flex h-full max-h-full w-full overflow-hidden rounded-[14px] bg-surface font-sans text-fg"
         style={{
-          width: '100%',
-          height: '100%',
-          maxHeight: '100%',
-          borderRadius: 14,
-          overflow: 'hidden',
-          background: t.bgWindow,
           backdropFilter: 'blur(40px) saturate(160%)',
           WebkitBackdropFilter: 'blur(40px) saturate(160%)',
-          boxShadow: `inset 0 0 0 1px ${t.border},
+          boxShadow: `inset 0 0 0 1px var(--border-default),
                       0 80px 160px -30px rgba(0,0,0,${t.dark ? 0.75 : 0.3}),
                       0 20px 40px -10px rgba(0,0,0,${t.dark ? 0.5 : 0.14})`,
-          color: t.fg,
-          fontFamily: t.fontUi,
-          display: 'flex',
           animation: 'paletteScaleIn 180ms cubic-bezier(.2,.9,.3,1.1)',
         }}
       >
-        {/* Left pane - Search and List */}
-        <div
-          style={{
-            flex: '0 0 380px',
-            display: 'flex',
-            flexDirection: 'column',
-            borderRight: `1px solid ${t.borderSoft}`,
-            overflow: 'hidden',
-          }}
-        >
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              padding: '0 16px',
-              height: 56,
-              gap: 12,
-              borderBottom: `1px solid ${t.borderSoft}`,
-            }}
-          >
-            <span
-              style={{
-                fontFamily: t.fontMono,
-                fontSize: 15,
-                color: mode === 'semantic' ? t.accent : t.fgFaint,
-                fontWeight: 600,
-                width: 18,
-                textAlign: 'center',
-                transition: 'color 150ms',
-              }}
-            >
-              ⌕
-            </span>
+        <div className="flex flex-[0_0_380px] flex-col overflow-hidden border-r border-border-subtle">
+          <div className="flex h-14 items-center gap-3 border-b border-border-subtle px-4">
+            <LuSearch
+              size={16}
+              className={`shrink-0 transition-colors duration-150 ${
+                mode === 'semantic' ? 'text-accent' : 'text-fg-faint'
+              }`}
+            />
             <input
               ref={inputRef}
               value={query}
@@ -436,18 +315,7 @@ export function Palette({
               placeholder={
                 mode === 'semantic' ? 'Describe what you need…' : 'Search clipboard history'
               }
-              style={{
-                flex: 1,
-                minWidth: 0,
-                fontFamily: t.fontUi,
-                fontSize: 18,
-                fontWeight: 400,
-                background: 'transparent',
-                border: 'none',
-                outline: 'none',
-                color: t.fg,
-                letterSpacing: -0.2,
-              }}
+              className="min-w-0 flex-1 border-none bg-transparent font-sans text-lg font-normal tracking-[-0.2px] text-fg outline-none"
             />
             <Button
               size="sm"
@@ -456,12 +324,9 @@ export function Palette({
               title="Tab to toggle"
               leadingIcon={
                 <span
-                  style={{
-                    width: 5,
-                    height: 5,
-                    borderRadius: 999,
-                    background: mode === 'semantic' ? t.accentTextOn : t.fgFaint,
-                  }}
+                  className={`h-[5px] w-[5px] rounded-full ${
+                    mode === 'semantic' ? 'bg-fg-inverse' : 'bg-fg-faint'
+                  }`}
                 />
               }
               trailingIcon={<Kbd t={t}>Tab</Kbd>}
@@ -470,22 +335,14 @@ export function Palette({
             </Button>
           </div>
 
-          <div ref={listRef} style={{ flex: 1, overflow: 'auto', padding: 6, minHeight: 120 }}>
+          <div ref={listRef} className="min-h-[120px] flex-1 overflow-auto p-1.5">
             {results.length === 0 && (
-              <div
-                style={{
-                  padding: '48px 20px',
-                  textAlign: 'center',
-                  color: t.fgFaint,
-                  fontSize: 13,
-                  lineHeight: 1.6,
-                }}
-              >
+              <div className="px-5 py-12 text-center text-[13px] leading-[1.6] text-fg-faint">
                 {mode === 'semantic' && !semanticAvailable ? (
                   <>
-                    <b style={{ color: t.fg }}>Semantic search is off.</b>
+                    <b className="text-fg">Semantic search is off.</b>
                     <br />
-                    <span style={{ fontSize: 11.5 }}>
+                    <span className="text-[11.5px]">
                       Open the main window and click <b>AI</b> to configure.
                     </span>
                     <br />
@@ -495,9 +352,9 @@ export function Palette({
                   'Thinking…'
                 ) : mode === 'semantic' && semanticError ? (
                   <>
-                    <b style={{ color: t.fg }}>Semantic search failed.</b>
+                    <b className="text-fg">Semantic search failed.</b>
                     <br />
-                    <span style={{ fontSize: 11.5 }}>{semanticError}</span>
+                    <span className="text-[11.5px]">{semanticError}</span>
                     <br />
                     Press <Kbd t={t}>Tab</Kbd> to fall back to fuzzy.
                   </>
@@ -505,11 +362,11 @@ export function Palette({
                   <>
                     Clipboard is empty.
                     <br />
-                    <span style={{ fontSize: 11.5 }}>Copy anything and it lands here.</span>
+                    <span className="text-[11.5px]">Copy anything and it lands here.</span>
                   </>
                 ) : query ? (
                   <>
-                    No matches for <b style={{ color: t.fg }}>"{query}"</b>.<br />
+                    No matches for <b className="text-fg">"{query}"</b>.<br />
                     Press <Kbd t={t}>Tab</Kbd> to try semantic search.
                   </>
                 ) : (
@@ -538,42 +395,24 @@ export function Palette({
           </div>
 
           <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              padding: '0 14px',
-              height: 34,
-              borderTop: `1px solid ${t.borderSoft}`,
-              background: t.dark ? 'rgba(0,0,0,0.15)' : 'rgba(0,0,0,0.015)',
-              fontSize: 11,
-              color: t.fgFaint,
-            }}
+            className="flex h-[34px] items-center justify-between border-t border-border-subtle px-3.5 text-[11px] text-fg-faint"
+            style={{ background: t.dark ? 'rgba(0,0,0,0.15)' : 'rgba(0,0,0,0.015)' }}
           >
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 10,
-                flex: 1,
-                minWidth: 0,
-                overflow: 'hidden',
-              }}
-            >
-              <span style={{ display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0 }}>
+            <div className="flex min-w-0 flex-1 items-center gap-2.5 overflow-hidden">
+              <span className="flex shrink-0 items-center gap-1.5">
                 <Kbd t={t}>↑↓</Kbd> nav
               </span>
-              <span style={{ display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0 }}>
+              <span className="flex shrink-0 items-center gap-1.5">
                 <Kbd t={t}>↵</Kbd> paste
               </span>
-              <span style={{ display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0 }}>
+              <span className="flex shrink-0 items-center gap-1.5">
                 <Kbd t={t}>⌘P</Kbd> pin
               </span>
-              <span style={{ display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0 }}>
+              <span className="flex shrink-0 items-center gap-1.5">
                 <Kbd t={t}>⌘⌫</Kbd> del
               </span>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+            <div className="flex shrink-0 items-center gap-1.5">
               <span>
                 {results.length > MAX_VISIBLE
                   ? `${MAX_VISIBLE} of ${results.length}`
@@ -584,136 +423,44 @@ export function Palette({
           </div>
         </div>
 
-        {/* Right pane - Preview */}
-        <div
-          style={{
-            flex: 1,
-            display: 'flex',
-            flexDirection: 'column',
-            background: t.bgSurfaceAlt,
-            minWidth: 0,
-          }}
-        >
+        <div className="flex min-w-0 flex-1 flex-col bg-subtle">
           {selectedItem ? (
             <>
-              <div
-                style={{
-                  padding: '14px 20px',
-                  borderBottom: `1px solid ${t.borderSoft}`,
-                  background: t.bgSurface,
-                }}
-              >
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 10,
-                    marginBottom: 8,
-                    minHeight: 16,
-                  }}
-                >
+              <div className="border-b border-border-subtle bg-surface px-5 py-3.5">
+                <div className="mb-2 flex min-h-4 items-center gap-2.5">
                   <CategoryChip t={t} cat={selectedItem.category} mode="chip" />
-                  <span
-                    style={{
-                      fontSize: 11,
-                      color: t.fgFaint,
-                      fontFamily: t.fontMono,
-                      fontVariantNumeric: 'tabular-nums',
-                      flex: 1,
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
+                  <span className="flex-1 overflow-hidden text-ellipsis whitespace-nowrap font-mono text-[11px] tabular-nums text-fg-faint">
                     {selectedItem.source} · {relTime(selectedItem.minutesAgo)}
                   </span>
                   {selectedItem.pinned && (
-                    <span style={{ color: t.accent, fontSize: 12, lineHeight: 1 }}>★</span>
+                    <LuPin
+                      size={12}
+                      className="shrink-0 fill-current text-accent"
+                      aria-label="pinned"
+                    />
                   )}
                 </div>
-                <div
-                  style={{
-                    fontSize: 15,
-                    fontWeight: 600,
-                    letterSpacing: -0.2,
-                    lineHeight: 1.3,
-                    color: t.fg,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 10,
-                  }}
-                >
-                  <span
-                    style={{
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                      minWidth: 0,
-                    }}
-                  >
+                <div className="flex items-center gap-2.5 text-[15px] font-semibold leading-[1.3] tracking-[-0.2px] text-fg">
+                  <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
                     {selectedItem.label}
                   </span>
                   {!selectedItem.labelGenerated && (
-                    <span
-                      style={{
-                        fontSize: 10,
-                        fontWeight: 500,
-                        color: t.fgFaint,
-                        fontFamily: t.fontMono,
-                        letterSpacing: 1,
-                        textTransform: 'uppercase',
-                        border: `1px solid ${t.borderSoft}`,
-                        padding: '2px 6px',
-                        borderRadius: 3,
-                        lineHeight: 1,
-                        flexShrink: 0,
-                      }}
-                    >
+                    <span className="shrink-0 rounded-[3px] border border-border-subtle px-1.5 py-0.5 font-mono text-[10px] font-medium uppercase leading-none tracking-widest text-fg-faint">
                       Pending
                     </span>
                   )}
                 </div>
               </div>
-              <div
-                style={{
-                  flex: 1,
-                  overflow: 'auto',
-                  padding: 16,
-                  display: 'flex',
-                  alignItems: 'flex-start',
-                  justifyContent: 'center',
-                }}
-              >
+              <div className="flex flex-1 items-start justify-center overflow-auto p-4">
                 {selectedItem.category === 'image' ? (
                   <ImagePreview t={t} item={selectedItem} getImage={app.getImage} />
                 ) : (
-                  <div
-                    style={{
-                      width: '100%',
-                      maxWidth: 400,
-                      whiteSpace: 'pre-wrap',
-                      wordBreak: 'break-all',
-                      fontFamily: t.fontMono,
-                      fontSize: 13,
-                      color: t.fg,
-                      lineHeight: 1.5,
-                    }}
-                  >
+                  <div className="w-full max-w-[400px] whitespace-pre-wrap break-all font-mono text-[13px] leading-[1.5] text-fg">
                     <ItemBody t={t} item={selectedItem} />
                   </div>
                 )}
               </div>
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  flexWrap: 'wrap',
-                  gap: 8,
-                  padding: '12px 20px',
-                  borderTop: `1px solid ${t.borderSoft}`,
-                  background: t.bgSurface,
-                }}
-              >
+              <div className="flex flex-wrap items-center gap-2 border-t border-border-subtle bg-surface px-5 py-3">
                 <Button
                   size="sm"
                   variant="primary"
@@ -721,6 +468,7 @@ export function Palette({
                     app.copyItem(selectedItem.id);
                     onClose();
                   }}
+                  leadingIcon={<LuCopy size={13} />}
                   trailingIcon={
                     <Kbd t={t} onAccent>
                       ↵
@@ -733,6 +481,7 @@ export function Palette({
                   size="sm"
                   variant="secondary"
                   onClick={() => app.pinItem(selectedItem.id)}
+                  leadingIcon={selectedItem.pinned ? <LuPinOff size={13} /> : <LuPin size={13} />}
                   trailingIcon={<Kbd t={t}>⌘P</Kbd>}
                 >
                   {selectedItem.pinned ? 'Unpin' : 'Pin'}
@@ -744,6 +493,7 @@ export function Palette({
                     app.deleteItem(selectedItem.id);
                     setSelected((s) => Math.max(0, s - 1));
                   }}
+                  leadingIcon={<LuTrash2 size={13} />}
                   trailingIcon={<Kbd t={t}>⌘⌫</Kbd>}
                 >
                   Delete
@@ -751,16 +501,7 @@ export function Palette({
               </div>
             </>
           ) : (
-            <div
-              style={{
-                flex: 1,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: t.fgFaint,
-                fontSize: 13,
-              }}
-            >
+            <div className="flex flex-1 items-center justify-center text-[13px] text-fg-faint">
               Select an item to preview
             </div>
           )}

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Button, Input } from 'ember-design-system';
+import { LuCopy, LuPencil, LuPin, LuPinOff, LuTrash2 } from 'react-icons/lu';
 import { relTime } from '../lib/time';
 import type { ClipItem, Theme } from '../lib/types';
 import type { AppState } from '../hooks/useAppState';
@@ -7,7 +8,6 @@ import { useImageUrl } from '../hooks/useImageUrl';
 import { CategoryChip, ItemBody, Kbd } from './Primitives';
 
 function ImagePreview({
-  t,
   item,
   getImage,
 }: {
@@ -18,20 +18,11 @@ function ImagePreview({
   const url = useImageUrl(item.id, getImage);
 
   if (!url) {
-    return <div style={{ color: t.fgFaint, fontSize: 13 }}>Loading image…</div>;
+    return <div className="text-[13px] text-fg-faint">Loading image…</div>;
   }
 
   return (
-    <img
-      src={url}
-      alt={item.preview}
-      style={{
-        maxWidth: '100%',
-        maxHeight: 400,
-        borderRadius: 8,
-        background: t.bgSurfaceAlt,
-      }}
-    />
+    <img src={url} alt={item.preview} className="max-h-[400px] max-w-full rounded-lg bg-subtle" />
   );
 }
 
@@ -61,53 +52,15 @@ export function PreviewPane({
   }, [item.id, item.label]);
 
   return (
-    <div
-      style={{
-        flex: 1,
-        minWidth: 0,
-        display: 'flex',
-        flexDirection: 'column',
-        background: t.bgSurfaceAlt,
-      }}
-    >
-      <div
-        style={{
-          padding: '16px 20px 12px',
-          borderBottom: `1px solid ${t.borderSoft}`,
-        }}
-      >
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 10,
-            marginBottom: 8,
-            minHeight: 18,
-          }}
-        >
+    <div className="flex min-w-0 flex-1 flex-col bg-subtle">
+      <div className="border-b border-border-subtle px-5 pb-3 pt-4">
+        <div className="mb-2 flex min-h-[18px] items-center gap-2.5">
           <CategoryChip t={t} cat={item.category} mode="chip" />
-          <span
-            style={{
-              fontSize: 11,
-              color: t.fgFaint,
-              fontFamily: t.fontMono,
-              fontVariantNumeric: 'tabular-nums',
-              flex: 1,
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-              lineHeight: 1,
-            }}
-          >
+          <span className="flex-1 overflow-hidden text-ellipsis whitespace-nowrap font-mono text-[11px] leading-none tabular-nums text-fg-faint">
             {item.source} · {relTime(item.minutesAgo)}
           </span>
           {item.pinned && (
-            <span
-              style={{ color: t.accent, fontSize: 12, lineHeight: 1, flexShrink: 0 }}
-              aria-label="pinned"
-            >
-              ★
-            </span>
+            <LuPin size={12} className="shrink-0 fill-current text-accent" aria-label="pinned" />
           )}
         </div>
         {showLabels &&
@@ -139,74 +92,36 @@ export function PreviewPane({
                   ? 'Double-click to rename'
                   : 'Awaiting AI label — double-click to rename'
               }
-              style={{
-                fontSize: 17,
-                fontWeight: item.labelGenerated ? 600 : 500,
-                fontStyle: item.labelGenerated ? 'normal' : 'italic',
-                color: item.labelGenerated ? t.fg : t.fgMuted,
-                letterSpacing: -0.3,
-                lineHeight: 1.3,
-                cursor: 'text',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 10,
-              }}
+              className={`flex cursor-text items-center gap-2.5 text-[17px] leading-[1.3] tracking-[-0.3px] ${
+                item.labelGenerated
+                  ? 'font-semibold not-italic text-fg'
+                  : 'font-medium italic text-fg-muted'
+              }`}
             >
-              <span
-                style={{
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                  minWidth: 0,
-                }}
-              >
+              <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
                 {item.label}
               </span>
               {!item.labelGenerated && anthropicEnabled && (
-                <span
-                  style={{
-                    fontSize: 10,
-                    fontStyle: 'normal',
-                    fontWeight: 500,
-                    color: t.fgFaint,
-                    fontFamily: t.fontMono,
-                    letterSpacing: 1,
-                    textTransform: 'uppercase',
-                    border: `1px solid ${t.borderSoft}`,
-                    padding: '3px 6px',
-                    borderRadius: 3,
-                    lineHeight: 1,
-                    flexShrink: 0,
-                  }}
-                >
+                <span className="shrink-0 rounded-[3px] border border-border-subtle px-1.5 py-[3px] font-mono text-[10px] font-medium not-italic uppercase leading-none tracking-widest text-fg-faint">
                   Labeling…
                 </span>
               )}
             </div>
           ))}
       </div>
-      <div style={{ flex: 1, overflow: 'auto', padding: '20px' }}>
+      <div className="flex-1 overflow-auto p-5">
         {item.category === 'image' ? (
           <ImagePreview t={t} item={item} getImage={app.getImage} />
         ) : (
           <ItemBody t={t} item={item} />
         )}
       </div>
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 8,
-          padding: '12px 20px',
-          borderTop: `1px solid ${t.borderSoft}`,
-          background: t.bgSurface,
-          flexWrap: 'wrap',
-        }}
-      >
+      <div className="flex flex-wrap items-center gap-2 border-t border-border-subtle bg-surface px-5 py-3">
         <Button
           size="sm"
           variant="primary"
           onClick={() => app.copyItem(item.id)}
+          leadingIcon={<LuCopy size={13} />}
           trailingIcon={
             <Kbd t={t} onAccent>
               ↵
@@ -219,6 +134,7 @@ export function PreviewPane({
           size="sm"
           variant="secondary"
           onClick={() => app.pinItem(item.id)}
+          leadingIcon={item.pinned ? <LuPinOff size={13} /> : <LuPin size={13} />}
           trailingIcon={<Kbd t={t}>⌘P</Kbd>}
         >
           {item.pinned ? 'Unpin' : 'Pin'}
@@ -227,6 +143,7 @@ export function PreviewPane({
           size="sm"
           variant="secondary"
           onClick={() => app.deleteItem(item.id)}
+          leadingIcon={<LuTrash2 size={13} />}
           trailingIcon={<Kbd t={t}>⌫</Kbd>}
         >
           Delete
@@ -235,6 +152,7 @@ export function PreviewPane({
           size="sm"
           variant="secondary"
           onClick={() => setEditing(true)}
+          leadingIcon={<LuPencil size={13} />}
           trailingIcon={<Kbd t={t}>E</Kbd>}
         >
           Rename
