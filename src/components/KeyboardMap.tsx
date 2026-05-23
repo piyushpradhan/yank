@@ -1,9 +1,4 @@
-import type { Theme } from '../lib/types';
-import { Kbd } from './Primitives';
-
-interface KeyboardMapProps {
-  t: Theme;
-}
+import { Kbd } from 'ember-design-system';
 
 interface KeyRow {
   keys: string[];
@@ -43,7 +38,7 @@ const GROUPS: [string, KeyRow[]][] = [
   ],
 ];
 
-export function KeyboardMap({ t }: KeyboardMapProps) {
+export function KeyboardMap() {
   return (
     <div className="grid h-full w-full grid-cols-3 gap-8 overflow-auto bg-surface p-8 font-sans text-fg">
       {GROUPS.map(([heading, rows]) => (
@@ -56,7 +51,7 @@ export function KeyboardMap({ t }: KeyboardMapProps) {
               <div key={i} className="grid grid-cols-[108px_1fr] items-center gap-3.5">
                 <div className="flex flex-wrap items-center gap-1">
                   {row.keys.map((k, j) => (
-                    <Kbd key={j} t={t}>
+                    <Kbd key={j} size="sm">
                       {k}
                     </Kbd>
                   ))}

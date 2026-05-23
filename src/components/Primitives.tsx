@@ -1,4 +1,3 @@
-import type { ReactNode } from 'react';
 import { catStyle } from '../lib/category';
 import type { Category, ClipItem, Theme } from '../lib/types';
 
@@ -49,58 +48,6 @@ export function CategoryChip({ t, cat, mode = 'chip' }: CategoryChipProps) {
     >
       {c.mono}
     </span>
-  );
-}
-
-interface KbdProps {
-  t: Theme;
-  children: ReactNode;
-  /** Warm ember tint — for callouts (hint banner, primary actions). */
-  accent?: boolean;
-  /**
-   * Render against a solid accent surface (e.g. a primary Button's
-   * background). The default and `accent` tones both sit too close in
-   * lightness to ember orange to read once they land on it.
-   */
-  onAccent?: boolean;
-}
-
-export function Kbd({ children, accent = false, onAccent = false }: KbdProps) {
-  const palette = onAccent
-    ? {
-        bg: 'rgba(255,255,255,0.18)',
-        color: 'var(--text-inverse)',
-        border: 'rgba(255,255,255,0.28)',
-        shadow: 'inset 0 -1px 0 rgba(0,0,0,0.12)',
-      }
-    : accent
-      ? {
-          bg: 'var(--accent-ember-50)',
-          color: 'var(--accent-ember-700)',
-          border: 'var(--accent-ember-100)',
-          shadow:
-            'inset 0 -1px 0 color-mix(in oklab, var(--accent-ember-700) 16%, transparent)',
-        }
-      : {
-          bg: 'color-mix(in oklab, var(--text-primary) 6%, transparent)',
-          color: 'var(--text-secondary)',
-          border: 'var(--border-subtle)',
-          shadow:
-            'inset 0 -1px 0 color-mix(in oklab, var(--text-primary) 8%, transparent)',
-        };
-
-  return (
-    <kbd
-      className="inline-flex h-4 min-w-4 shrink-0 items-center justify-center rounded-[3px] border px-[5px] align-middle font-mono text-[10px] font-medium leading-none tabular-nums"
-      style={{
-        background: palette.bg,
-        color: palette.color,
-        borderColor: palette.border,
-        boxShadow: palette.shadow,
-      }}
-    >
-      {children}
-    </kbd>
   );
 }
 

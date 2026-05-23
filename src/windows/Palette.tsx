@@ -4,10 +4,25 @@ import { relTime } from '../lib/time';
 import type { CategoryDisplay, ClipItem, SearchMode, Theme } from '../lib/types';
 import type { AppState } from '../hooks/useAppState';
 import { useImageUrl } from '../hooks/useImageUrl';
-import { Button } from 'ember-design-system';
+import { Button, Kbd } from 'ember-design-system';
 import { LuCopy, LuEllipsis, LuPin, LuPinOff, LuSearch, LuTrash2 } from 'react-icons/lu';
-import { CategoryChip, Kbd } from '../components/Primitives';
+import { CategoryChip } from '../components/Primitives';
 import { ItemBody } from '../components/Primitives';
+
+const accentStyle = {
+  background: 'var(--accent-ember-50)',
+  color: 'var(--accent-ember-700)',
+  borderColor: 'var(--accent-ember-100)',
+  boxShadow:
+    'inset 0 -1px 0 color-mix(in oklab, var(--accent-ember-700) 16%, transparent)',
+} as const;
+
+const onAccentStyle = {
+  background: 'rgba(255,255,255,0.18)',
+  color: 'var(--text-inverse)',
+  borderColor: 'rgba(255,255,255,0.28)',
+  boxShadow: 'inset 0 -1px 0 rgba(0,0,0,0.12)',
+} as const;
 
 // Stable no-op so useImageUrl's effect deps stay stable for non-image rows.
 const NO_IMAGE = (): Promise<Blob | null> => Promise.resolve(null);
@@ -129,7 +144,7 @@ function PaletteRow({
 
       {selected && (
         <div className="flex shrink-0 items-center gap-1">
-          <Kbd t={t} accent>
+          <Kbd size="sm" style={accentStyle}>
             ↵
           </Kbd>
         </div>
@@ -329,7 +344,7 @@ export function Palette({
                   }`}
                 />
               }
-              trailingIcon={<Kbd t={t}>Tab</Kbd>}
+              trailingIcon={<Kbd size="sm">Tab</Kbd>}
             >
               {mode}
             </Button>
@@ -346,7 +361,7 @@ export function Palette({
                       Open the main window and click <b>AI</b> to configure.
                     </span>
                     <br />
-                    Press <Kbd t={t}>Tab</Kbd> to fall back to fuzzy.
+                    Press <Kbd size="sm">Tab</Kbd> to fall back to fuzzy.
                   </>
                 ) : mode === 'semantic' && semanticLoading ? (
                   'Thinking…'
@@ -356,7 +371,7 @@ export function Palette({
                     <br />
                     <span className="text-[11.5px]">{semanticError}</span>
                     <br />
-                    Press <Kbd t={t}>Tab</Kbd> to fall back to fuzzy.
+                    Press <Kbd size="sm">Tab</Kbd> to fall back to fuzzy.
                   </>
                 ) : app.items.length === 0 ? (
                   <>
@@ -367,7 +382,7 @@ export function Palette({
                 ) : query ? (
                   <>
                     No matches for <b className="text-fg">"{query}"</b>.<br />
-                    Press <Kbd t={t}>Tab</Kbd> to try semantic search.
+                    Press <Kbd size="sm">Tab</Kbd> to try semantic search.
                   </>
                 ) : (
                   'Clipboard is empty.'
@@ -400,16 +415,16 @@ export function Palette({
           >
             <div className="flex min-w-0 flex-1 items-center gap-2.5 overflow-hidden">
               <span className="flex shrink-0 items-center gap-1.5">
-                <Kbd t={t}>↑↓</Kbd> nav
+                <Kbd size="sm">↑↓</Kbd> nav
               </span>
               <span className="flex shrink-0 items-center gap-1.5">
-                <Kbd t={t}>↵</Kbd> paste
+                <Kbd size="sm">↵</Kbd> paste
               </span>
               <span className="flex shrink-0 items-center gap-1.5">
-                <Kbd t={t}>⌘P</Kbd> pin
+                <Kbd size="sm">⌘P</Kbd> pin
               </span>
               <span className="flex shrink-0 items-center gap-1.5">
-                <Kbd t={t}>⌘⌫</Kbd> del
+                <Kbd size="sm">⌘⌫</Kbd> del
               </span>
             </div>
             <div className="flex shrink-0 items-center gap-1.5">
@@ -470,7 +485,7 @@ export function Palette({
                   }}
                   leadingIcon={<LuCopy size={13} />}
                   trailingIcon={
-                    <Kbd t={t} onAccent>
+                    <Kbd size="sm" style={onAccentStyle}>
                       ↵
                     </Kbd>
                   }
@@ -482,7 +497,7 @@ export function Palette({
                   variant="secondary"
                   onClick={() => app.pinItem(selectedItem.id)}
                   leadingIcon={selectedItem.pinned ? <LuPinOff size={13} /> : <LuPin size={13} />}
-                  trailingIcon={<Kbd t={t}>⌘P</Kbd>}
+                  trailingIcon={<Kbd size="sm">⌘P</Kbd>}
                 >
                   {selectedItem.pinned ? 'Unpin' : 'Pin'}
                 </Button>
@@ -494,7 +509,7 @@ export function Palette({
                     setSelected((s) => Math.max(0, s - 1));
                   }}
                   leadingIcon={<LuTrash2 size={13} />}
-                  trailingIcon={<Kbd t={t}>⌘⌫</Kbd>}
+                  trailingIcon={<Kbd size="sm">⌘⌫</Kbd>}
                 >
                   Delete
                 </Button>

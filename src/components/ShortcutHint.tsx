@@ -1,24 +1,29 @@
-import { IconButton } from 'ember-design-system';
+import { IconButton, Kbd } from 'ember-design-system';
 import { LuX } from 'react-icons/lu';
-import type { Theme } from '../lib/types';
-import { Kbd } from './Primitives';
+
+const accentStyle = {
+  background: 'var(--accent-ember-50)',
+  color: 'var(--accent-ember-700)',
+  borderColor: 'var(--accent-ember-100)',
+  boxShadow:
+    'inset 0 -1px 0 color-mix(in oklab, var(--accent-ember-700) 16%, transparent)',
+} as const;
 
 interface ShortcutHintProps {
-  t: Theme;
   onDismiss: () => void;
 }
 
-export function ShortcutHint({ t, onDismiss }: ShortcutHintProps) {
+export function ShortcutHint({ onDismiss }: ShortcutHintProps) {
   return (
     <div className="absolute right-5 top-[52px] z-[400] flex items-center gap-2.5 rounded-[10px] border border-border bg-surface px-5 py-3.5 font-sans text-[13px] text-fg shadow-ember-md">
       <span className="text-fg-muted">Press</span>
-      <Kbd t={t} accent>
+      <Kbd size="sm" style={accentStyle}>
         Ctrl
       </Kbd>
-      <Kbd t={t} accent>
+      <Kbd size="sm" style={accentStyle}>
         Shift
       </Kbd>
-      <Kbd t={t} accent>
+      <Kbd size="sm" style={accentStyle}>
         V
       </Kbd>
       <span className="text-fg-muted">anywhere to open</span>

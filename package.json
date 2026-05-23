@@ -26,7 +26,7 @@
     "@tauri-apps/plugin-global-shortcut": "^2.3.1",
     "@tauri-apps/plugin-opener": "^2",
     "@tauri-apps/plugin-store": "^2.4.2",
-    "ember-design-system": "github:piyushpradhan/ember-design-system#be3a620",
+    "ember-design-system": "github:piyushpradhan/ember-design-system#main",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-icons": "^5.6.0"

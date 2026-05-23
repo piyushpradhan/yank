@@ -5,7 +5,15 @@ import { relTime } from '../lib/time';
 import type { ClipItem, Theme } from '../lib/types';
 import type { AppState } from '../hooks/useAppState';
 import { useImageUrl } from '../hooks/useImageUrl';
-import { CategoryChip, ItemBody, Kbd } from './Primitives';
+import { CategoryChip, ItemBody } from './Primitives';
+import { Kbd } from 'ember-design-system';
+
+const onAccentStyle = {
+  background: 'rgba(255,255,255,0.18)',
+  color: 'var(--text-inverse)',
+  borderColor: 'rgba(255,255,255,0.28)',
+  boxShadow: 'inset 0 -1px 0 rgba(0,0,0,0.12)',
+} as const;
 
 function ImagePreview({
   item,
@@ -123,7 +131,7 @@ export function PreviewPane({
           onClick={() => app.copyItem(item.id)}
           leadingIcon={<LuCopy size={13} />}
           trailingIcon={
-            <Kbd t={t} onAccent>
+            <Kbd size="sm" style={onAccentStyle}>
               ↵
             </Kbd>
           }
@@ -135,7 +143,7 @@ export function PreviewPane({
           variant="secondary"
           onClick={() => app.pinItem(item.id)}
           leadingIcon={item.pinned ? <LuPinOff size={13} /> : <LuPin size={13} />}
-          trailingIcon={<Kbd t={t}>⌘P</Kbd>}
+          trailingIcon={<Kbd size="sm">⌘P</Kbd>}
         >
           {item.pinned ? 'Unpin' : 'Pin'}
         </Button>
@@ -144,7 +152,7 @@ export function PreviewPane({
           variant="secondary"
           onClick={() => app.deleteItem(item.id)}
           leadingIcon={<LuTrash2 size={13} />}
-          trailingIcon={<Kbd t={t}>⌫</Kbd>}
+          trailingIcon={<Kbd size="sm">⌫</Kbd>}
         >
           Delete
         </Button>
@@ -153,7 +161,7 @@ export function PreviewPane({
           variant="secondary"
           onClick={() => setEditing(true)}
           leadingIcon={<LuPencil size={13} />}
-          trailingIcon={<Kbd t={t}>E</Kbd>}
+          trailingIcon={<Kbd size="sm">E</Kbd>}
         >
           Rename
         </Button>

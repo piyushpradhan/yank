@@ -15,7 +15,7 @@
     "@tailwindcss/vite": "^4.0.0",
     "astro": "^5.0.0",
     "astro-icon": "^1.1.5",
-    "ember-design-system": "github:piyushpradhan/ember-design-system#be3a620",
+    "ember-design-system": "github:piyushpradhan/ember-design-system#main",
     "tailwindcss": "^4.0.0"
   }
 }
