@@ -17,6 +17,14 @@ const accentStyle = {
     'inset 0 -1px 0 color-mix(in oklab, var(--accent-ember-700) 16%, transparent)',
 } as const;
 
+const onAccentStyle = {
+  background: 'rgba(255,255,255,0.18)',
+  color: 'var(--text-inverse)',
+  borderColor: 'rgba(255,255,255,0.28)',
+  boxShadow: 'inset 0 -1px 0 rgba(0,0,0,0.12)',
+} as const;
+
+// Stable no-op so useImageUrl's effect deps stay stable for non-image rows.
 const NO_IMAGE = (): Promise<Blob | null> => Promise.resolve(null);
 
 function ImagePreview({
@@ -476,8 +484,11 @@ export function Palette({
                     onClose();
                   }}
                   leadingIcon={<LuCopy size={13} />}
-                  title="Copy to clipboard (Enter)"
-                  className="shadow-sm"
+                  trailingIcon={
+                    <Kbd size="sm" style={onAccentStyle}>
+                      ↵
+                    </Kbd>
+                  }
                 >
                   Copy
                 </Button>
@@ -489,7 +500,7 @@ export function Palette({
                   variant="secondary"
                   onClick={() => app.pinItem(selectedItem.id)}
                   leadingIcon={selectedItem.pinned ? <LuPinOff size={13} /> : <LuPin size={13} />}
-                  title={selectedItem.pinned ? 'Unpin (⌘P)' : 'Pin (⌘P)'}
+                  trailingIcon={<Kbd size="sm">⌘P</Kbd>}
                 >
                   {selectedItem.pinned ? 'Unpin' : 'Pin'}
                 </Button>
@@ -504,8 +515,7 @@ export function Palette({
                     setSelected((s) => Math.max(0, s - 1));
                   }}
                   leadingIcon={<LuTrash2 size={13} />}
-                  title="Delete (⌘⌫)"
-                  className="text-fg-muted hover:text-danger"
+                  trailingIcon={<Kbd size="sm">⌘⌫</Kbd>}
                 >
                   Delete
                 </Button>

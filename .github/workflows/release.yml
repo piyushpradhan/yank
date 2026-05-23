@@ -133,6 +133,21 @@ jobs:
 
       - run: npm ci
 
+      - name: Set release version
+        if: needs.prepare.outputs.is_release == 'true'
+        shell: bash
+        run: |
+          VERSION="${{ needs.prepare.outputs.tag }}"
+          VERSION="${VERSION#v}"
+          echo "Setting version to $VERSION"
+
+          npm version "$VERSION" --no-git-tag-version --allow-same-version
+
+          tmp=$(mktemp)
+          jq --arg v "$VERSION" '.version = $v' src-tauri/tauri.conf.json > "$tmp" && mv "$tmp" src-tauri/tauri.conf.json
+
+          sed -i "s/^version = \".*\"/version = \"$VERSION\"/" src-tauri/Cargo.toml
+
       - name: Build Tauri release bundles
         shell: bash
         run: |
