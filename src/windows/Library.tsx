@@ -17,7 +17,7 @@ import type {
   TimeFilter,
 } from '../lib/types';
 import type { AppState } from '../hooks/useAppState';
-import { Button } from 'ember-design-system';
+import { Button, Kbd } from 'ember-design-system';
 import {
   LuClock,
   LuList,
@@ -29,7 +29,7 @@ import {
   LuSparkles,
   LuX,
 } from 'react-icons/lu';
-import { CategoryChip, Kbd } from '../components/Primitives';
+import { CategoryChip } from '../components/Primitives';
 import { PreviewPane } from '../components/PreviewPane';
 import { SidebarRow } from '../components/SidebarRow';
 
@@ -606,17 +606,17 @@ export function Library({
 
           <div className="mt-auto flex flex-col gap-2 px-2.5 pb-1 pt-4 font-mono text-[10.5px] leading-none tracking-[0.3px] text-fg-faint">
             <div className="flex flex-wrap items-center gap-1.5">
-              <Kbd t={t}>/</Kbd>
+              <Kbd size="sm">/</Kbd>
               <span>search</span>
               <span className="flex-1" />
-              <Kbd t={t}>1–9</Kbd>
+              <Kbd size="sm">1–9</Kbd>
               <span>filter</span>
             </div>
             <div className="flex flex-wrap items-center gap-1.5">
-              <Kbd t={t}>E</Kbd>
+              <Kbd size="sm">E</Kbd>
               <span>rename</span>
               <span className="flex-1" />
-              <Kbd t={t}>⌘I</Kbd>
+              <Kbd size="sm">⌘I</Kbd>
               <span>preview</span>
             </div>
           </div>
@@ -687,7 +687,7 @@ export function Library({
                       <br />
                       Click <b>AI</b> in the title bar to configure a provider,
                       <br />
-                      or press <Kbd t={t}>Tab</Kbd> to search fuzzy.
+                      or press <Kbd size="sm">Tab</Kbd> to search fuzzy.
                     </>
                   ) : mode === 'semantic' && semanticError ? (
                     <>
@@ -695,13 +695,13 @@ export function Library({
                       <br />
                       <span className="text-fg-muted">{semanticError}</span>
                       <br />
-                      Press <Kbd t={t}>Tab</Kbd> to fall back to fuzzy.
+                      Press <Kbd size="sm">Tab</Kbd> to fall back to fuzzy.
                     </>
                   ) : (
                     <>
                       Nothing matches.
                       <br />
-                      Press <Kbd t={t}>Enter</Kbd> to{' '}
+                      Press <Kbd size="sm">Enter</Kbd> to{' '}
                       {mode === 'fuzzy' ? 'search semantically' : 'search again'}.
                     </>
                   )

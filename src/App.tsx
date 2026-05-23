@@ -140,7 +140,6 @@ function App() {
 
       {!hintDismissed && (
         <ShortcutHint
-          t={t}
           onDismiss={() => {
             setHintDismissedState(true);
             void saveHintDismissed(true);
@@ -198,7 +197,7 @@ function App() {
             onClick={(e) => e.stopPropagation()}
             className="h-[420px] w-[820px] overflow-hidden rounded-xl border border-border shadow-ember-md"
           >
-            <KeyboardMap t={t} />
+            <KeyboardMap />
           </div>
         </div>
       )}
