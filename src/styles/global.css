@@ -5,6 +5,18 @@
  * stay correct across light/dark theme switches without duplicating values.
  * Sizes are defined as keyword tokens so density layers (compact vs comfy)
  * still resolve via ember's tokens on `:root[data-density="…"]`. */
+/* Hard-pin the Geist font stack before Tailwind processes @theme so that
+ * ember-design-system/tokens.css (which sets --font-sans: 'Inter' and
+ * --font-mono: 'JetBrains Mono') cannot win regardless of layer ordering. */
+:root {
+  --font-sans:
+    'Geist Sans', 'Inter', 'Segoe UI Variable', 'Segoe UI', system-ui,
+    sans-serif;
+  --font-display: 'Geist Sans', var(--font-sans);
+  --font-mono:
+    'Geist Mono', 'JetBrains Mono', 'Cascadia Code', ui-monospace, monospace;
+}
+
 @theme {
   --font-sans:
     'Geist Sans', 'Inter', 'Segoe UI Variable', 'Segoe UI', system-ui,

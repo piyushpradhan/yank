@@ -13,6 +13,7 @@ import '@fontsource/geist-sans/700.css';
 import '@fontsource/geist-mono/400.css';
 import '@fontsource/geist-mono/500.css';
 import '@fontsource/geist-mono/600.css';
+import '@fontsource/geist-mono/700.css';
 import 'ember-design-system/tokens.css';
 import 'ember-design-system/styles.css';
 import './styles/global.css';

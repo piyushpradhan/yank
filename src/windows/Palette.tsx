@@ -475,7 +475,7 @@ export function Palette({
                   </div>
                 )}
               </div>
-              <div className="flex flex-wrap items-center gap-2 border-t border-border-subtle bg-surface px-5 py-3">
+              <div className="flex items-center gap-1 border-t border-border-subtle bg-surface/60 px-4 py-2.5">
                 <Button
                   size="sm"
                   variant="primary"
@@ -492,6 +492,9 @@ export function Palette({
                 >
                   Copy
                 </Button>
+
+                <div className="mx-1.5 h-5 w-px shrink-0 bg-border-subtle" />
+
                 <Button
                   size="sm"
                   variant="secondary"
@@ -501,9 +504,12 @@ export function Palette({
                 >
                   {selectedItem.pinned ? 'Unpin' : 'Pin'}
                 </Button>
+
+                <div className="mx-1.5 h-5 w-px shrink-0 bg-border-subtle" />
+
                 <Button
                   size="sm"
-                  variant="secondary"
+                  variant="ghost"
                   onClick={() => {
                     app.deleteItem(selectedItem.id);
                     setSelected((s) => Math.max(0, s - 1));
