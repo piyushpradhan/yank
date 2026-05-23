@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { Button, IconButton } from 'ember-design-system';
 import { LuX } from 'react-icons/lu';
@@ -53,12 +53,93 @@ function Chip({
   );
 }
 
+const RECORDING_IGNORE = new Set([
+  'ControlLeft',
+  'ControlRight',
+  'ShiftLeft',
+  'ShiftRight',
+  'AltLeft',
+  'AltRight',
+  'MetaLeft',
+  'MetaRight',
+  'CapsLock',
+  'NumLock',
+  'ScrollLock',
+  'Fn',
+  'FnLock',
+]);
+
+const MOD_CONTROL = 0x08;
+const MOD_ALT = 0x01;
+const MOD_SHIFT = 0x200;
+const MOD_META = 0x40;
+
+function labelForShortcut(modifiers: number, key: string): string {
+  const parts: string[] = [];
+  if (modifiers & MOD_CONTROL) parts.push('Ctrl');
+  if (modifiers & MOD_ALT) parts.push('Alt');
+  if (modifiers & MOD_SHIFT) parts.push('Shift');
+  if (modifiers & MOD_META) parts.push('Meta');
+  parts.push(key.startsWith('Key') ? key.slice(3) : key);
+  return parts.join('+');
+}
+
 export function TweaksPanel({ tweaks, onChange, onClose, onAfterClear }: TweaksPanelProps) {
   const set = <K extends keyof Tweaks>(k: K, v: Tweaks[K]) => onChange({ ...tweaks, [k]: v });
 
   const [clearArmed, setClearArmed] = useState(false);
   const [clearing, setClearing] = useState(false);
   const [clearError, setClearError] = useState<string | null>(null);
+
+  const [recording, setRecording] = useState(false);
+  const [recordError, setRecordError] = useState<string | null>(null);
+  const tweaksRef = useRef(tweaks);
+  tweaksRef.current = tweaks;
+
+  useEffect(() => {
+    if (!recording) return;
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      const code = e.code;
+      if (RECORDING_IGNORE.has(code)) return;
+
+      e.preventDefault();
+      e.stopPropagation();
+
+      let mods = 0;
+      if (e.ctrlKey) mods |= MOD_CONTROL;
+      if (e.altKey) mods |= MOD_ALT;
+      if (e.shiftKey) mods |= MOD_SHIFT;
+      if (e.metaKey) mods |= MOD_META;
+
+      if (code === 'Escape' && mods === 0) {
+        setRecording(false);
+        setRecordError(null);
+        return;
+      }
+
+      if (mods === 0) {
+        setRecordError('Use at least one modifier key (Ctrl/Alt/Shift/Meta)');
+        return;
+      }
+
+      const label = labelForShortcut(mods, code);
+      invoke('set_shortcut', { sc: { modifiers: mods, key: code } })
+        .then(() => {
+          setRecordError(null);
+          onChange({ ...tweaksRef.current, paletteShortcut: label });
+        })
+        .catch((err: unknown) => {
+          setRecordError(String(err));
+        })
+        .finally(() => {
+          setRecording(false);
+        });
+    };
+
+    window.addEventListener('keydown', onKeyDown, true);
+    return () => window.removeEventListener('keydown', onKeyDown, true);
+  }, [recording, onChange]);
 
   const clear = async () => {
     setClearing(true);
@@ -178,27 +259,23 @@ export function TweaksPanel({ tweaks, onChange, onClose, onAfterClear }: TweaksP
           </span>
           <Button
             size="sm"
-            variant="secondary"
+            variant={recording ? 'primary' : 'secondary'}
             onClick={() => {
-              const CTRL = 0x08;
-              const SHIFT = 0x200;
-              const switchingToCtrlSpace = tweaks.paletteShortcut === 'Ctrl+Shift+Space';
-              const next: Tweaks = {
-                ...tweaks,
-                paletteShortcut: switchingToCtrlSpace ? 'Ctrl+Space' : 'Ctrl+Shift+Space',
-              };
-              onChange(next);
-              void invoke('set_shortcut', {
-                sc: {
-                  modifiers: switchingToCtrlSpace ? CTRL : CTRL | SHIFT,
-                  key: 'Space',
-                },
-              });
+              if (recording) {
+                setRecording(false);
+                setRecordError(null);
+              } else {
+                setRecording(true);
+                setRecordError(null);
+              }
             }}
           >
-            Rebind
+            {recording ? 'Cancel' : 'Record'}
           </Button>
         </Row>
+        {recordError && (
+          <div className="mt-1 text-[10.5px] text-danger">{recordError}</div>
+        )}
         <Row label="Launch at login">
           <Chip
             active={!!tweaks.autostart}

@@ -10,22 +10,19 @@ const accentStyle = {
 } as const;
 
 interface ShortcutHintProps {
+  keys: string[];
   onDismiss: () => void;
 }
 
-export function ShortcutHint({ onDismiss }: ShortcutHintProps) {
+export function ShortcutHint({ keys, onDismiss }: ShortcutHintProps) {
   return (
     <div className="absolute right-5 top-[52px] z-[400] flex items-center gap-2.5 rounded-[10px] border border-border bg-surface px-5 py-3.5 font-sans text-[13px] text-fg shadow-ember-md">
       <span className="text-fg-muted">Press</span>
-      <Kbd size="sm" style={accentStyle}>
-        Ctrl
-      </Kbd>
-      <Kbd size="sm" style={accentStyle}>
-        Shift
-      </Kbd>
-      <Kbd size="sm" style={accentStyle}>
-        V
-      </Kbd>
+      {keys.map((k, i) => (
+        <Kbd key={i} size="sm" style={accentStyle}>
+          {k}
+        </Kbd>
+      ))}
       <span className="text-fg-muted">anywhere to open</span>
       <IconButton
         aria-label="Dismiss"

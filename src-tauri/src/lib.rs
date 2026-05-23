@@ -91,7 +91,10 @@ pub fn build_shortcut(sc: &ShortcutConfig) -> Shortcut {
     } else {
         Modifiers::from_bits_truncate(raw)
     };
-    let code = Code::from_str(&sc.key).unwrap_or(Code::KeyV);
+    let code = Code::from_str(&sc.key).unwrap_or_else(|_| {
+        eprintln!("[shortcut] unrecognised key '{}', falling back to Space", sc.key);
+        Code::Space
+    });
     Shortcut::new(Some(mods), code)
 }
 
