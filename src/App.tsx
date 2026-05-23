@@ -140,6 +140,7 @@ function App() {
 
       {!hintDismissed && (
         <ShortcutHint
+          keys={(tweaks.paletteShortcut ?? 'Ctrl+Shift+Space').split('+')}
           onDismiss={() => {
             setHintDismissedState(true);
             void saveHintDismissed(true);
