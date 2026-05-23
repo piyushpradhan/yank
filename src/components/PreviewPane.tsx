@@ -6,14 +6,6 @@ import type { ClipItem, Theme } from '../lib/types';
 import type { AppState } from '../hooks/useAppState';
 import { useImageUrl } from '../hooks/useImageUrl';
 import { CategoryChip, ItemBody } from './Primitives';
-import { Kbd } from 'ember-design-system';
-
-const onAccentStyle = {
-  background: 'rgba(255,255,255,0.18)',
-  color: 'var(--text-inverse)',
-  borderColor: 'rgba(255,255,255,0.28)',
-  boxShadow: 'inset 0 -1px 0 rgba(0,0,0,0.12)',
-} as const;
 
 function ImagePreview({
   item,
@@ -124,46 +116,50 @@ export function PreviewPane({
           <ItemBody t={t} item={item} />
         )}
       </div>
-      <div className="flex flex-wrap items-center gap-2 border-t border-border-subtle bg-surface px-5 py-3">
+      <div className="flex items-center gap-1 border-t border-border-subtle bg-surface/60 px-4 py-2.5">
         <Button
           size="sm"
           variant="primary"
           onClick={() => app.copyItem(item.id)}
           leadingIcon={<LuCopy size={13} />}
-          trailingIcon={
-            <Kbd size="sm" style={onAccentStyle}>
-              ↵
-            </Kbd>
-          }
+          title="Copy to clipboard (Enter)"
+          className="shadow-sm"
         >
           Copy
         </Button>
+
+        <div className="mx-1.5 h-5 w-px shrink-0 bg-border-subtle" />
+
         <Button
           size="sm"
           variant="secondary"
           onClick={() => app.pinItem(item.id)}
           leadingIcon={item.pinned ? <LuPinOff size={13} /> : <LuPin size={13} />}
-          trailingIcon={<Kbd size="sm">⌘P</Kbd>}
+          title={item.pinned ? 'Unpin (⌘P)' : 'Pin (⌘P)'}
         >
           {item.pinned ? 'Unpin' : 'Pin'}
         </Button>
         <Button
           size="sm"
           variant="secondary"
-          onClick={() => app.deleteItem(item.id)}
-          leadingIcon={<LuTrash2 size={13} />}
-          trailingIcon={<Kbd size="sm">⌫</Kbd>}
-        >
-          Delete
-        </Button>
-        <Button
-          size="sm"
-          variant="secondary"
           onClick={() => setEditing(true)}
           leadingIcon={<LuPencil size={13} />}
-          trailingIcon={<Kbd size="sm">E</Kbd>}
+          title="Rename (E)"
         >
           Rename
+        </Button>
+
+        <div className="mx-1.5 h-5 w-px shrink-0 bg-border-subtle" />
+
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={() => app.deleteItem(item.id)}
+          leadingIcon={<LuTrash2 size={13} />}
+          title="Delete (Backspace)"
+          className="text-fg-muted hover:text-danger"
+        >
+          Delete
         </Button>
       </div>
     </div>

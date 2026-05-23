@@ -17,14 +17,6 @@ const accentStyle = {
     'inset 0 -1px 0 color-mix(in oklab, var(--accent-ember-700) 16%, transparent)',
 } as const;
 
-const onAccentStyle = {
-  background: 'rgba(255,255,255,0.18)',
-  color: 'var(--text-inverse)',
-  borderColor: 'rgba(255,255,255,0.28)',
-  boxShadow: 'inset 0 -1px 0 rgba(0,0,0,0.12)',
-} as const;
-
-// Stable no-op so useImageUrl's effect deps stay stable for non-image rows.
 const NO_IMAGE = (): Promise<Blob | null> => Promise.resolve(null);
 
 function ImagePreview({
@@ -475,7 +467,7 @@ export function Palette({
                   </div>
                 )}
               </div>
-              <div className="flex flex-wrap items-center gap-2 border-t border-border-subtle bg-surface px-5 py-3">
+              <div className="flex items-center gap-1 border-t border-border-subtle bg-surface/60 px-4 py-2.5">
                 <Button
                   size="sm"
                   variant="primary"
@@ -484,32 +476,36 @@ export function Palette({
                     onClose();
                   }}
                   leadingIcon={<LuCopy size={13} />}
-                  trailingIcon={
-                    <Kbd size="sm" style={onAccentStyle}>
-                      ↵
-                    </Kbd>
-                  }
+                  title="Copy to clipboard (Enter)"
+                  className="shadow-sm"
                 >
                   Copy
                 </Button>
+
+                <div className="mx-1.5 h-5 w-px shrink-0 bg-border-subtle" />
+
                 <Button
                   size="sm"
                   variant="secondary"
                   onClick={() => app.pinItem(selectedItem.id)}
                   leadingIcon={selectedItem.pinned ? <LuPinOff size={13} /> : <LuPin size={13} />}
-                  trailingIcon={<Kbd size="sm">⌘P</Kbd>}
+                  title={selectedItem.pinned ? 'Unpin (⌘P)' : 'Pin (⌘P)'}
                 >
                   {selectedItem.pinned ? 'Unpin' : 'Pin'}
                 </Button>
+
+                <div className="mx-1.5 h-5 w-px shrink-0 bg-border-subtle" />
+
                 <Button
                   size="sm"
-                  variant="secondary"
+                  variant="ghost"
                   onClick={() => {
                     app.deleteItem(selectedItem.id);
                     setSelected((s) => Math.max(0, s - 1));
                   }}
                   leadingIcon={<LuTrash2 size={13} />}
-                  trailingIcon={<Kbd size="sm">⌘⌫</Kbd>}
+                  title="Delete (⌘⌫)"
+                  className="text-fg-muted hover:text-danger"
                 >
                   Delete
                 </Button>
