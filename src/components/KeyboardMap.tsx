@@ -1,4 +1,5 @@
 import { Kbd } from 'ember-design-system';
+import { getKeyIcon } from '../lib/keyIcons';
 
 interface KeyRow {
   keys: string[];
@@ -52,7 +53,7 @@ export function KeyboardMap() {
                 <div className="flex flex-wrap items-center gap-1">
                   {row.keys.map((k, j) => (
                     <Kbd key={j} size="sm">
-                      {k}
+                      {getKeyIcon(k)}
                     </Kbd>
                   ))}
                 </div>

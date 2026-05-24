@@ -1,4 +1,5 @@
-import { catStyle } from '../lib/category';
+import { Badge, type BadgeTone } from 'ember-design-system';
+import { catStyle, CATEGORY_TONE } from '../lib/category';
 import type { Category, ClipItem, Theme } from '../lib/types';
 
 interface CategoryChipProps {
@@ -9,6 +10,7 @@ interface CategoryChipProps {
 
 export function CategoryChip({ t, cat, mode = 'chip' }: CategoryChipProps) {
   const c = catStyle(t, cat);
+  const tone = CATEGORY_TONE[cat] as BadgeTone;
 
   if (mode === 'dot') {
     return (
@@ -32,22 +34,28 @@ export function CategoryChip({ t, cat, mode = 'chip' }: CategoryChipProps) {
 
   if (mode === 'icon') {
     return (
-      <span
-        className="inline-grid h-[22px] w-[22px] shrink-0 place-items-center rounded-md border font-mono text-[11px] font-bold leading-none"
-        style={{ background: c.bg, color: c.ink, borderColor: c.border }}
+      <Badge
+        tone={tone}
+        variant="subtle"
+        size="sm"
+        className="!h-[22px] !w-[22px] !rounded-md !px-0 justify-center font-mono !text-[11px] font-bold"
+        style={{ borderColor: c.border }}
       >
         {c.icon}
-      </span>
+      </Badge>
     );
   }
 
   return (
-    <span
-      className="inline-flex h-[18px] shrink-0 items-center rounded border px-1.5 font-mono text-[10px] font-semibold uppercase leading-none tracking-wider"
-      style={{ color: c.ink, background: c.bg, borderColor: c.border }}
+    <Badge
+      tone={tone}
+      variant="subtle"
+      size="sm"
+      className="!rounded !px-1.5 font-mono !text-[10px] font-semibold uppercase tracking-wider"
+      style={{ borderColor: c.border }}
     >
       {c.mono}
-    </span>
+    </Badge>
   );
 }
 
@@ -84,8 +92,7 @@ export function ItemBody({ t, item, compact = false }: ItemBodyProps) {
           compact ? 'px-3 py-2 text-[11.5px]' : 'px-4 py-3 text-[12.5px]'
         }`}
         style={{
-          background:
-            'color-mix(in oklab, var(--text-primary) 4%, var(--bg-subtle))',
+          background: 'color-mix(in oklab, var(--text-primary) 4%, var(--bg-subtle))',
         }}
       >
         {item.content}

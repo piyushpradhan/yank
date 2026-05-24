@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Input } from 'ember-design-system';
+import { Input, Kbd } from 'ember-design-system';
 import { LuPin } from 'react-icons/lu';
+import { MdKeyboardBackspace, MdKeyboardReturn } from 'react-icons/md';
 import { relTime } from '../lib/time';
 import type { ClipItem, Theme } from '../lib/types';
 import type { AppState } from '../hooks/useAppState';
@@ -101,7 +102,7 @@ export function PreviewPane({
       <div className="flex items-center gap-1 border-t border-border-subtle bg-surface/60 px-4 py-2.5">
         <CopyButton
           onClick={() => app.copyItem(item.id)}
-          trailingKbd="↵"
+          trailingKbd={<MdKeyboardReturn size={10} />}
         />
 
         <ActionSeparator />
@@ -115,7 +116,11 @@ export function PreviewPane({
         <DeleteButton
           onClick={() => app.deleteItem(item.id)}
           variant="secondary"
-          kbd="⌫"
+          kbd={
+            <Kbd size="sm">
+              <MdKeyboardBackspace size={10} />
+            </Kbd>
+          }
         />
       </div>
     </div>

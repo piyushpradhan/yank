@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Button, Input, Modal, Select } from 'ember-design-system';
+import { Button, Card, FormField, Input, Modal, Select } from 'ember-design-system';
 import type { Theme } from '../lib/types';
 import type { EmbedProvider, EmbedSettings } from '../hooks/useSettings';
 
@@ -30,8 +30,7 @@ const LOCAL_MODELS: { id: string; label: string; note: string }[] = [
   },
 ];
 
-const FIELD_LABEL_CLS =
-  'mb-1.5 font-mono text-[10.5px] uppercase tracking-wide text-fg-muted';
+const FIELD_LABEL_CLS = 'mb-1.5 font-mono text-[10.5px] uppercase tracking-wide text-fg-muted';
 const HINT_CLS = 'mt-1.5 mb-3.5 text-[10.5px] leading-[1.5] text-fg-faint';
 
 export function AIPanel({ settings, onChange, onClose }: AIPanelProps) {
@@ -182,13 +181,14 @@ export function AIPanel({ settings, onChange, onClose }: AIPanelProps) {
       </div>
 
       {error && (
-        <div
+        <Card
           role="alert"
-          className="mt-3.5 rounded-md border bg-subtle px-2.5 py-2 text-[11.5px] text-danger"
+          padding="none"
+          className="mt-3.5 !bg-subtle px-2.5 py-2 text-[11.5px] text-danger"
           style={{ borderColor: 'var(--status-danger)' }}
         >
           {error}
-        </div>
+        </Card>
       )}
     </Modal>
   );
@@ -196,10 +196,12 @@ export function AIPanel({ settings, onChange, onClose }: AIPanelProps) {
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="mb-3.5">
-      <div className={FIELD_LABEL_CLS}>{label}</div>
+    <FormField
+      className="mb-3.5 !gap-1.5"
+      label={<span className={FIELD_LABEL_CLS.replace('mb-1.5 ', '')}>{label}</span>}
+    >
       {children}
-    </div>
+    </FormField>
   );
 }
 
@@ -219,7 +221,7 @@ function StatusRow({ kind, label, detail }: StatusRowProps) {
         ? 'var(--status-warning)'
         : 'var(--text-tertiary)';
   return (
-    <div className="mb-2 flex items-start gap-3 rounded-lg border border-border-subtle bg-subtle px-3 py-2.5">
+    <Card padding="none" className="mb-2 flex items-start gap-3 !rounded-lg !bg-subtle px-3 py-2.5">
       <span
         className="mt-[5px] h-2 w-2 shrink-0 rounded-full"
         style={{
@@ -233,7 +235,7 @@ function StatusRow({ kind, label, detail }: StatusRowProps) {
         </span>
         <span className="text-[11.5px] leading-[1.5] text-fg">{detail}</span>
       </div>
-    </div>
+    </Card>
   );
 }
 

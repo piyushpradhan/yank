@@ -4,13 +4,15 @@ import { relTime } from '../lib/time';
 import type { CategoryDisplay, ClipItem, SearchMode, Theme } from '../lib/types';
 import type { AppState } from '../hooks/useAppState';
 import { useImageUrl } from '../hooks/useImageUrl';
-import { Button, Kbd } from 'ember-design-system';
-import { LuEllipsis, LuPin, LuSearch } from 'react-icons/lu';
+import { Button, Kbd, Tooltip } from 'ember-design-system';
+import { LuArrowUpDown, LuEllipsis, LuPin, LuSearch } from 'react-icons/lu';
+import { getKeyIcon } from '../lib/keyIcons';
 import { CategoryChip } from '../components/Primitives';
 import { ItemBody } from '../components/Primitives';
 import { ImagePreview } from '../components/ImagePreview';
 import { CopyButton, PinButton, DeleteButton, ActionSeparator } from '../components/ActionButtons';
 import { accentStyle } from '../lib/styles';
+import { MdKeyboardReturn } from 'react-icons/md';
 
 // Stable no-op so useImageUrl's effect deps stay stable for non-image rows.
 const NO_IMAGE = (): Promise<Blob | null> => Promise.resolve(null);
@@ -301,22 +303,22 @@ export function Palette({
               }
               className="min-w-0 flex-1 border-none bg-transparent font-sans text-lg font-normal tracking-[-0.2px] text-fg outline-none"
             />
-            <Button
-              size="sm"
-              variant={mode === 'semantic' ? 'primary' : 'secondary'}
-              onClick={() => setMode((m) => (m === 'fuzzy' ? 'semantic' : 'fuzzy'))}
-              title="Tab to toggle"
-              leadingIcon={
-                <span
-                  className={`h-[5px] w-[5px] rounded-full ${
-                    mode === 'semantic' ? 'bg-fg-inverse' : 'bg-fg-faint'
-                  }`}
-                />
-              }
-              trailingIcon={<Kbd size="sm">Tab</Kbd>}
-            >
-              {mode}
-            </Button>
+            <Tooltip content={<Kbd size="sm">{getKeyIcon('Tab')}</Kbd>}>
+              <Button
+                size="sm"
+                variant={mode === 'semantic' ? 'primary' : 'secondary'}
+                onClick={() => setMode((m) => (m === 'fuzzy' ? 'semantic' : 'fuzzy'))}
+                leadingIcon={
+                  <span
+                    className={`h-[5px] w-[5px] rounded-full ${
+                      mode === 'semantic' ? 'bg-fg-inverse' : 'bg-fg-faint'
+                    }`}
+                  />
+                }
+              >
+                {mode}
+              </Button>
+            </Tooltip>
           </div>
 
           <div ref={listRef} className="min-h-[120px] flex-1 overflow-auto p-1.5">
@@ -330,7 +332,7 @@ export function Palette({
                       Open the main window and click <b>AI</b> to configure.
                     </span>
                     <br />
-                    Press <Kbd size="sm">Tab</Kbd> to fall back to fuzzy.
+                    Press <Kbd size="sm">{getKeyIcon('Tab')}</Kbd> to fall back to fuzzy.
                   </>
                 ) : mode === 'semantic' && semanticLoading ? (
                   'Thinking…'
@@ -340,7 +342,7 @@ export function Palette({
                     <br />
                     <span className="text-[11.5px]">{semanticError}</span>
                     <br />
-                    Press <Kbd size="sm">Tab</Kbd> to fall back to fuzzy.
+                    Press <Kbd size="sm">{getKeyIcon('Tab')}</Kbd> to fall back to fuzzy.
                   </>
                 ) : app.items.length === 0 ? (
                   <>
@@ -351,7 +353,7 @@ export function Palette({
                 ) : query ? (
                   <>
                     No matches for <b className="text-fg">"{query}"</b>.<br />
-                    Press <Kbd size="sm">Tab</Kbd> to try semantic search.
+                    Press <Kbd size="sm">{getKeyIcon('Tab')}</Kbd> to try semantic search.
                   </>
                 ) : (
                   'Clipboard is empty.'
@@ -384,10 +386,16 @@ export function Palette({
           >
             <div className="flex min-w-0 flex-1 items-center gap-2.5 overflow-hidden">
               <span className="flex shrink-0 items-center gap-1.5">
-                <Kbd size="sm">↑↓</Kbd> nav
+                <Kbd size="sm">
+                  <LuArrowUpDown />
+                </Kbd>{' '}
+                nav
               </span>
               <span className="flex shrink-0 items-center gap-1.5">
-                <Kbd size="sm">↵</Kbd> paste
+                <Kbd size="sm">
+                  <MdKeyboardReturn />
+                </Kbd>{' '}
+                paste
               </span>
               <span className="flex shrink-0 items-center gap-1.5">
                 <Kbd size="sm">⌘P</Kbd> pin
@@ -454,7 +462,10 @@ export function Palette({
 
                 <ActionSeparator />
 
-                <PinButton pinned={!!selectedItem.pinned} onClick={() => app.pinItem(selectedItem.id)} />
+                <PinButton
+                  pinned={!!selectedItem.pinned}
+                  onClick={() => app.pinItem(selectedItem.id)}
+                />
 
                 <ActionSeparator />
 

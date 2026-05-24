@@ -17,7 +17,8 @@ import type {
   TimeFilter,
 } from '../lib/types';
 import type { AppState } from '../hooks/useAppState';
-import { Button, Kbd } from 'ember-design-system';
+import { Button, Input, Kbd } from 'ember-design-system';
+import { getKeyIcon } from '../lib/keyIcons';
 import {
   LuClock,
   LuList,
@@ -405,6 +406,11 @@ export function Library({
       searchRef.current?.focus();
       return;
     }
+    if (inSearch && e.key === 'Tab') {
+      e.preventDefault();
+      if (mode === 'fuzzy') setMode('semantic');
+      else setMode('fuzzy');
+    }
     if (inSearch && e.key === 'Enter') {
       e.preventDefault();
       if (mode === 'fuzzy') setMode('semantic');
@@ -625,27 +631,29 @@ export function Library({
         {/* List column */}
         <div
           className={`flex min-h-0 min-w-[320px] shrink-0 flex-col ${
-            localPreview === 'split' ? 'w-[340px] border-r border-border-subtle' : 'w-auto flex-1'
+            localPreview === 'split' ? 'w-85 border-r border-border-subtle' : 'w-auto flex-1'
           }`}
         >
           {/* Search row */}
-          <div className="border-b border-border-subtle px-3 py-2.5">
-            <div className="flex h-8 items-center gap-2.5 rounded-lg border border-border-subtle bg-subtle pl-2.5 pr-1.5">
-              <LuSearch
-                size={13}
-                className={`shrink-0 transition-colors duration-150 ${
-                  mode === 'semantic' ? 'text-accent' : 'text-fg-faint'
-                }`}
-              />
-              <input
+          <div className="border-b border-border-subtle">
+            <div className="flex items-center gap-2 overflow-hidden px-3 py-3">
+              <Input
+                leadingIcon={
+                  <LuSearch
+                    size={13}
+                    className={`shrink-0 transition-colors duration-150 ${
+                      mode === 'semantic' ? 'text-accent' : 'text-fg-faint'
+                    }`}
+                  />
+                }
+                inputSize="md"
                 ref={searchRef}
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder={mode === 'semantic' ? 'Describe what you need…' : 'Search history…'}
-                className="min-w-0 flex-1 border-none bg-transparent font-sans text-[13.5px] tracking-[-0.1px] text-fg outline-none"
               />
               <Button
-                size="sm"
+                size="md"
                 variant={mode === 'semantic' ? 'primary' : 'ghost'}
                 onClick={() => setMode((m) => (m === 'fuzzy' ? 'semantic' : 'fuzzy'))}
                 leadingIcon={
@@ -687,7 +695,7 @@ export function Library({
                       <br />
                       Click <b>AI</b> in the title bar to configure a provider,
                       <br />
-                      or press <Kbd size="sm">Tab</Kbd> to search fuzzy.
+                      or press <Kbd size="sm">{getKeyIcon('Tab')}</Kbd> to search fuzzy.
                     </>
                   ) : mode === 'semantic' && semanticError ? (
                     <>
@@ -695,13 +703,13 @@ export function Library({
                       <br />
                       <span className="text-fg-muted">{semanticError}</span>
                       <br />
-                      Press <Kbd size="sm">Tab</Kbd> to fall back to fuzzy.
+                      Press <Kbd size="sm">{getKeyIcon('Tab')}</Kbd> to fall back to fuzzy.
                     </>
                   ) : (
                     <>
                       Nothing matches.
                       <br />
-                      Press <Kbd size="sm">Enter</Kbd> to{' '}
+                      Press <Kbd size="sm">{getKeyIcon('Enter')}</Kbd> to{' '}
                       {mode === 'fuzzy' ? 'search semantically' : 'search again'}.
                     </>
                   )

@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
-import { Button, IconButton } from 'ember-design-system';
+import { Button, Card, IconButton, Kbd } from 'ember-design-system';
 import { LuX } from 'react-icons/lu';
+import { getKeyIcon } from '../lib/keyIcons';
 import type { CategoryDisplay, Density, PreviewMode, Theme, ThemeMode, Tweaks } from '../lib/types';
 
 interface TweaksPanelProps {
@@ -158,8 +159,9 @@ export function TweaksPanel({ tweaks, onChange, onClose, onAfterClear }: TweaksP
   };
 
   return (
-    <div
-      className="fixed right-4 top-[52px] z-[600] w-80 overflow-hidden rounded-xl border border-border bg-surface font-sans text-[13px] text-fg shadow-ember-md"
+    <Card
+      padding="none"
+      className="fixed right-4 top-[52px] z-[600] w-80 overflow-hidden !rounded-xl !border-border font-sans text-[13px] text-fg shadow-ember-md"
       style={{ animation: 'tweaksIn 180ms var(--easing-standard)' }}
     >
       <style>{`
@@ -251,12 +253,13 @@ export function TweaksPanel({ tweaks, onChange, onClose, onAfterClear }: TweaksP
 
       <Section title="System">
         <Row label="Palette shortcut">
-          <span
-            className="inline-flex h-[22px] items-center rounded border border-border-subtle px-2 font-mono text-[10.5px] leading-none tabular-nums text-fg-muted"
-            style={{ background: 'color-mix(in oklab, var(--text-primary) 6%, transparent)' }}
-          >
-            {tweaks.paletteShortcut ?? 'Ctrl+Shift+Space'}
-          </span>
+          <div className="flex items-center gap-0.5">
+            {(tweaks.paletteShortcut ?? 'Ctrl+Shift+Space').split('+').map((k, i) => (
+              <Kbd key={i} size="sm">
+                {getKeyIcon(k)}
+              </Kbd>
+            ))}
+          </div>
           <Button
             size="sm"
             variant={recording ? 'primary' : 'secondary'}
@@ -273,9 +276,7 @@ export function TweaksPanel({ tweaks, onChange, onClose, onAfterClear }: TweaksP
             {recording ? 'Cancel' : 'Record'}
           </Button>
         </Row>
-        {recordError && (
-          <div className="mt-1 text-[10.5px] text-danger">{recordError}</div>
-        )}
+        {recordError && <div className="mt-1 text-[10.5px] text-danger">{recordError}</div>}
         <Row label="Launch at login">
           <Chip
             active={!!tweaks.autostart}
@@ -329,6 +330,6 @@ export function TweaksPanel({ tweaks, onChange, onClose, onAfterClear }: TweaksP
           </div>
         )}
       </div>
-    </div>
+    </Card>
   );
 }

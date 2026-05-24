@@ -1,12 +1,12 @@
-import { IconButton, Kbd } from 'ember-design-system';
+import { Card, IconButton, Kbd } from 'ember-design-system';
 import { LuX } from 'react-icons/lu';
+import { getKeyIcon } from '../lib/keyIcons';
 
 const accentStyle = {
   background: 'var(--accent-ember-50)',
   color: 'var(--accent-ember-700)',
   borderColor: 'var(--accent-ember-100)',
-  boxShadow:
-    'inset 0 -1px 0 color-mix(in oklab, var(--accent-ember-700) 16%, transparent)',
+  boxShadow: 'inset 0 -1px 0 color-mix(in oklab, var(--accent-ember-700) 16%, transparent)',
 } as const;
 
 interface ShortcutHintProps {
@@ -16,11 +16,15 @@ interface ShortcutHintProps {
 
 export function ShortcutHint({ keys, onDismiss }: ShortcutHintProps) {
   return (
-    <div className="absolute right-5 top-[52px] z-[400] flex items-center gap-2.5 rounded-[10px] border border-border bg-surface px-5 py-3.5 font-sans text-[13px] text-fg shadow-ember-md">
+    <Card
+      elevated
+      padding="none"
+      className="absolute right-5 top-[52px] z-[400] flex items-center gap-2.5 !rounded-[10px] !border-border px-5 py-3.5 font-sans text-[13px] text-fg shadow-ember-md"
+    >
       <span className="text-fg-muted">Press</span>
       {keys.map((k, i) => (
         <Kbd key={i} size="sm" style={accentStyle}>
-          {k}
+          {getKeyIcon(k)}
         </Kbd>
       ))}
       <span className="text-fg-muted">anywhere to open</span>
@@ -31,6 +35,6 @@ export function ShortcutHint({ keys, onDismiss }: ShortcutHintProps) {
         size="sm"
         onClick={onDismiss}
       />
-    </div>
+    </Card>
   );
 }
