@@ -12,7 +12,7 @@ import { ItemBody } from '../components/Primitives';
 import { ImagePreview } from '../components/ImagePreview';
 import { CopyButton, PinButton, DeleteButton, ActionSeparator } from '../components/ActionButtons';
 import { accentStyle } from '../lib/styles';
-import { MdKeyboardReturn } from 'react-icons/md';
+import { MdKeyboardBackspace, MdKeyboardCommandKey, MdKeyboardReturn } from 'react-icons/md';
 
 // Stable no-op so useImageUrl's effect deps stay stable for non-image rows.
 const NO_IMAGE = (): Promise<Blob | null> => Promise.resolve(null);
@@ -398,10 +398,17 @@ export function Palette({
                 paste
               </span>
               <span className="flex shrink-0 items-center gap-1.5">
-                <Kbd size="sm">⌘P</Kbd> pin
+                <Kbd size="sm">
+                  <MdKeyboardCommandKey />P
+                </Kbd>{' '}
+                pin
               </span>
               <span className="flex shrink-0 items-center gap-1.5">
-                <Kbd size="sm">⌘⌫</Kbd> del
+                <Kbd size="sm">
+                  <MdKeyboardCommandKey />
+                  <MdKeyboardBackspace />
+                </Kbd>{' '}
+                del
               </span>
             </div>
             <div className="flex shrink-0 items-center gap-1.5">

@@ -17,7 +17,7 @@ import type {
   TimeFilter,
 } from '../lib/types';
 import type { AppState } from '../hooks/useAppState';
-import { Button, Input, Kbd } from 'ember-design-system';
+import { Button, Input, Kbd, Tag } from 'ember-design-system';
 import { getKeyIcon } from '../lib/keyIcons';
 import {
   LuClock,
@@ -33,6 +33,7 @@ import {
 import { CategoryChip } from '../components/Primitives';
 import { PreviewPane } from '../components/PreviewPane';
 import { SidebarRow } from '../components/SidebarRow';
+import { MdKeyboardCommandKey } from 'react-icons/md';
 
 interface LibraryProps {
   t: Theme;
@@ -610,21 +611,17 @@ export function Library({
             );
           })}
 
-          <div className="mt-auto flex flex-col gap-2 px-2.5 pb-1 pt-4 font-mono text-[10.5px] leading-none tracking-[0.3px] text-fg-faint">
-            <div className="flex flex-wrap items-center gap-1.5">
-              <Kbd size="sm">/</Kbd>
-              <span>search</span>
-              <span className="flex-1" />
-              <Kbd size="sm">1–9</Kbd>
-              <span>filter</span>
-            </div>
-            <div className="flex flex-wrap items-center gap-1.5">
-              <Kbd size="sm">E</Kbd>
-              <span>rename</span>
-              <span className="flex-1" />
-              <Kbd size="sm">⌘I</Kbd>
-              <span>preview</span>
-            </div>
+          <div className="mt-auto grid grid-cols-[auto_1fr_auto_1fr] items-center gap-x-1.5 gap-y-2 px-2.5 pb-1 pt-4 font-mono text-[10.5px] leading-none tracking-[0.3px] text-fg-faint">
+            <Kbd size="sm">/</Kbd>
+            <span>search</span>
+            <Kbd size="sm">1–9</Kbd>
+            <span>filter</span>
+            <Kbd size="sm">E</Kbd>
+            <span>rename</span>
+            <Kbd size="sm">
+              <MdKeyboardCommandKey />I
+            </Kbd>
+            <span>preview</span>
           </div>
         </div>
 
