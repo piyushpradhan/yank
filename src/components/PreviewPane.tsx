@@ -1,38 +1,12 @@
 import { useEffect, useState } from 'react';
-import { Button, Input } from 'ember-design-system';
-import { LuCopy, LuPencil, LuPin, LuPinOff, LuTrash2 } from 'react-icons/lu';
+import { Input } from 'ember-design-system';
+import { LuPin } from 'react-icons/lu';
 import { relTime } from '../lib/time';
 import type { ClipItem, Theme } from '../lib/types';
 import type { AppState } from '../hooks/useAppState';
-import { useImageUrl } from '../hooks/useImageUrl';
 import { CategoryChip, ItemBody } from './Primitives';
-import { Kbd } from 'ember-design-system';
-
-const onAccentStyle = {
-  background: 'rgba(255,255,255,0.18)',
-  color: 'var(--text-inverse)',
-  borderColor: 'rgba(255,255,255,0.28)',
-  boxShadow: 'inset 0 -1px 0 rgba(0,0,0,0.12)',
-} as const;
-
-function ImagePreview({
-  item,
-  getImage,
-}: {
-  t: Theme;
-  item: ClipItem;
-  getImage: (id: string) => Promise<Blob | null>;
-}) {
-  const url = useImageUrl(item.id, getImage);
-
-  if (!url) {
-    return <div className="text-[13px] text-fg-faint">Loading image…</div>;
-  }
-
-  return (
-    <img src={url} alt={item.preview} className="max-h-[400px] max-w-full rounded-lg bg-subtle" />
-  );
-}
+import { ImagePreview } from './ImagePreview';
+import { CopyButton, PinButton, DeleteButton, RenameButton, ActionSeparator } from './ActionButtons';
 
 interface PreviewPaneProps {
   t: Theme;
@@ -119,58 +93,30 @@ export function PreviewPane({
       </div>
       <div className="flex-1 overflow-auto p-5">
         {item.category === 'image' ? (
-          <ImagePreview t={t} item={item} getImage={app.getImage} />
+          <ImagePreview item={item} getImage={app.getImage} maxHeight="400px" />
         ) : (
           <ItemBody t={t} item={item} />
         )}
       </div>
       <div className="flex items-center gap-1 border-t border-border-subtle bg-surface/60 px-4 py-2.5">
-        <Button
-          size="sm"
-          variant="primary"
+        <CopyButton
           onClick={() => app.copyItem(item.id)}
-          leadingIcon={<LuCopy size={13} />}
-          trailingIcon={
-            <Kbd size="sm" style={onAccentStyle}>
-              ↵
-            </Kbd>
-          }
-        >
-          Copy
-        </Button>
+          trailingKbd="↵"
+        />
 
-        <div className="mx-1.5 h-5 w-px shrink-0 bg-border-subtle" />
+        <ActionSeparator />
 
-        <Button
-          size="sm"
-          variant="secondary"
-          onClick={() => app.pinItem(item.id)}
-          leadingIcon={item.pinned ? <LuPinOff size={13} /> : <LuPin size={13} />}
-          trailingIcon={<Kbd size="sm">⌘P</Kbd>}
-        >
-          {item.pinned ? 'Unpin' : 'Pin'}
-        </Button>
-        <Button
-          size="sm"
-          variant="secondary"
+        <PinButton pinned={!!item.pinned} onClick={() => app.pinItem(item.id)} />
+
+        <ActionSeparator />
+
+        <RenameButton onClick={() => setEditing(true)} />
+
+        <DeleteButton
           onClick={() => app.deleteItem(item.id)}
-          leadingIcon={<LuTrash2 size={13} />}
-          trailingIcon={<Kbd size="sm">⌫</Kbd>}
-        >
-          Rename
-        </Button>
-
-        <div className="mx-1.5 h-5 w-px shrink-0 bg-border-subtle" />
-
-        <Button
-          size="sm"
           variant="secondary"
-          onClick={() => setEditing(true)}
-          leadingIcon={<LuPencil size={13} />}
-          trailingIcon={<Kbd size="sm">E</Kbd>}
-        >
-          Delete
-        </Button>
+          kbd="⌫"
+        />
       </div>
     </div>
   );

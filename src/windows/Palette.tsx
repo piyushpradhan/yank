@@ -5,46 +5,15 @@ import type { CategoryDisplay, ClipItem, SearchMode, Theme } from '../lib/types'
 import type { AppState } from '../hooks/useAppState';
 import { useImageUrl } from '../hooks/useImageUrl';
 import { Button, Kbd } from 'ember-design-system';
-import { LuCopy, LuEllipsis, LuPin, LuPinOff, LuSearch, LuTrash2 } from 'react-icons/lu';
+import { LuEllipsis, LuPin, LuSearch } from 'react-icons/lu';
 import { CategoryChip } from '../components/Primitives';
 import { ItemBody } from '../components/Primitives';
-
-const accentStyle = {
-  background: 'var(--accent-ember-50)',
-  color: 'var(--accent-ember-700)',
-  borderColor: 'var(--accent-ember-100)',
-  boxShadow:
-    'inset 0 -1px 0 color-mix(in oklab, var(--accent-ember-700) 16%, transparent)',
-} as const;
-
-const onAccentStyle = {
-  background: 'rgba(255,255,255,0.18)',
-  color: 'var(--text-inverse)',
-  borderColor: 'rgba(255,255,255,0.28)',
-  boxShadow: 'inset 0 -1px 0 rgba(0,0,0,0.12)',
-} as const;
+import { ImagePreview } from '../components/ImagePreview';
+import { CopyButton, PinButton, DeleteButton, ActionSeparator } from '../components/ActionButtons';
+import { accentStyle } from '../lib/styles';
 
 // Stable no-op so useImageUrl's effect deps stay stable for non-image rows.
 const NO_IMAGE = (): Promise<Blob | null> => Promise.resolve(null);
-
-function ImagePreview({
-  item,
-  getImage,
-}: {
-  t: Theme;
-  item: ClipItem;
-  getImage: (id: string) => Promise<Blob | null>;
-}) {
-  const url = useImageUrl(item.id, getImage);
-
-  if (!url) {
-    return <div className="text-[13px] text-fg-faint">Loading image…</div>;
-  }
-
-  return (
-    <img src={url} alt={item.preview} className="max-h-[280px] max-w-full rounded-lg bg-subtle" />
-  );
-}
 
 interface PaletteRowProps {
   t: Theme;
@@ -468,7 +437,7 @@ export function Palette({
               </div>
               <div className="flex flex-1 items-start justify-center overflow-auto p-4">
                 {selectedItem.category === 'image' ? (
-                  <ImagePreview t={t} item={selectedItem} getImage={app.getImage} />
+                  <ImagePreview item={selectedItem} getImage={app.getImage} maxHeight="280px" />
                 ) : (
                   <div className="w-full max-w-[400px] whitespace-pre-wrap break-all font-mono text-[13px] leading-[1.5] text-fg">
                     <ItemBody t={t} item={selectedItem} />
@@ -476,49 +445,26 @@ export function Palette({
                 )}
               </div>
               <div className="flex items-center gap-1 border-t border-border-subtle bg-surface/60 px-4 py-2.5">
-                <Button
-                  size="sm"
-                  variant="primary"
+                <CopyButton
                   onClick={() => {
                     app.copyItem(selectedItem.id);
                     onClose();
                   }}
-                  leadingIcon={<LuCopy size={13} />}
-                  trailingIcon={
-                    <Kbd size="sm" style={onAccentStyle}>
-                      ↵
-                    </Kbd>
-                  }
-                >
-                  Copy
-                </Button>
+                />
 
-                <div className="mx-1.5 h-5 w-px shrink-0 bg-border-subtle" />
+                <ActionSeparator />
 
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  onClick={() => app.pinItem(selectedItem.id)}
-                  leadingIcon={selectedItem.pinned ? <LuPinOff size={13} /> : <LuPin size={13} />}
-                  trailingIcon={<Kbd size="sm">⌘P</Kbd>}
-                >
-                  {selectedItem.pinned ? 'Unpin' : 'Pin'}
-                </Button>
+                <PinButton pinned={!!selectedItem.pinned} onClick={() => app.pinItem(selectedItem.id)} />
 
-                <div className="mx-1.5 h-5 w-px shrink-0 bg-border-subtle" />
+                <ActionSeparator />
 
-                <Button
-                  size="sm"
-                  variant="ghost"
+                <DeleteButton
                   onClick={() => {
                     app.deleteItem(selectedItem.id);
                     setSelected((s) => Math.max(0, s - 1));
                   }}
-                  leadingIcon={<LuTrash2 size={13} />}
-                  trailingIcon={<Kbd size="sm">⌘⌫</Kbd>}
-                >
-                  Delete
-                </Button>
+                  variant="ghost"
+                />
               </div>
             </>
           ) : (
