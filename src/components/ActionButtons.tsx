@@ -1,6 +1,6 @@
 import { Button, Divider, Kbd, Tooltip } from 'ember-design-system';
 import { LuCopy, LuPencil, LuPin, LuPinOff, LuTrash2 } from 'react-icons/lu';
-import { MdKeyboardBackspace, MdKeyboardCommandKey } from 'react-icons/md';
+import { MdKeyboardCommandKey } from 'react-icons/md';
 import type { ReactNode } from 'react';
 
 interface CopyButtonProps {
@@ -79,9 +79,8 @@ export function DeleteButton({ onClick, variant = 'secondary', kbd }: DeleteButt
               <Kbd size="sm">
                 <MdKeyboardCommandKey size={10} />
               </Kbd>
-              <Kbd size="sm">
-                <MdKeyboardBackspace size={10} />
-              </Kbd>
+              <Kbd size="sm">Shift</Kbd>
+              <Kbd size="sm">X</Kbd>
             </>
           )}
         </ShortcutTooltipContent>

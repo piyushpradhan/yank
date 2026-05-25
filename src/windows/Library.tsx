@@ -432,7 +432,7 @@ export function Library({
     } else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'p') {
       e.preventDefault();
       if (current) app.pinItem(current.id);
-    } else if (e.key === 'Backspace' || e.key === 'Delete') {
+    } else if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === 'x') {
       e.preventDefault();
       if (current) app.deleteItem(current.id);
     } else if (e.key.toLowerCase() === 'e' && !inSearch) {

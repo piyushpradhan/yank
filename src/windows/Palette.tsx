@@ -255,7 +255,7 @@ export function Palette({
       e.preventDefault();
       const it = displayResults[selected];
       if (it) app.pinItem(it.id);
-    } else if ((e.metaKey || e.ctrlKey) && (e.key === 'Backspace' || e.key === 'Delete')) {
+    } else if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === 'x') {
       e.preventDefault();
       const it = displayResults[selected];
       if (it) {

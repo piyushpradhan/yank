@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Input, Kbd } from 'ember-design-system';
 import { LuPin } from 'react-icons/lu';
-import { MdKeyboardBackspace, MdKeyboardReturn } from 'react-icons/md';
+import { MdKeyboardReturn } from 'react-icons/md';
 import { relTime } from '../lib/time';
 import type { ClipItem, Theme } from '../lib/types';
 import type { AppState } from '../hooks/useAppState';
@@ -117,9 +117,10 @@ export function PreviewPane({
           onClick={() => app.deleteItem(item.id)}
           variant="secondary"
           kbd={
-            <Kbd size="sm">
-              <MdKeyboardBackspace size={10} />
-            </Kbd>
+            <>
+              <Kbd size="sm">Shift</Kbd>
+              <Kbd size="sm">X</Kbd>
+            </>
           }
         />
       </div>
