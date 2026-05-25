@@ -72,6 +72,7 @@ function App() {
   // Mirror Tweaks → ember CSS-var theme. data-theme drives all token colors.
   useEffect(() => {
     setTheme(tweaks.theme);
+    invoke('set_theme', { theme: tweaks.theme }).catch(() => {});
   }, [tweaks.theme, setTheme]);
 
   const t = useMemo(() => buildTheme(tweaks.theme, tweaks.density), [tweaks.theme, tweaks.density]);
@@ -98,7 +99,6 @@ function App() {
         setKeymapOpen((v) => !v);
       } else if (e.key === 'Escape') {
         if (keymapOpen) setKeymapOpen(false);
-        if (tweaksOpen) setTweaksOpen(false);
       }
     };
     document.addEventListener('keydown', onKey, true);
@@ -107,7 +107,7 @@ function App() {
       document.removeEventListener('keydown', onKey, true);
       window.removeEventListener('keydown', onKey, true);
     };
-  }, [keymapOpen, tweaksOpen]);
+  }, [keymapOpen]);
 
   return (
     <div className="relative h-full w-full overflow-hidden bg-canvas font-sans text-fg">
@@ -178,7 +178,6 @@ function App() {
 
       {tweaksOpen && (
         <TweaksPanel
-          t={t}
           tweaks={tweaks}
           onChange={setTweaks}
           onClose={() => setTweaksOpen(false)}

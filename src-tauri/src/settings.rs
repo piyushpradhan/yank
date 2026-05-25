@@ -196,3 +196,25 @@ pub fn set_shortcut(app: AppHandle, sc: ShortcutConfig) -> Result<(), String> {
 pub fn get_loaded_shortcut(app: &AppHandle) -> ShortcutConfig {
     load_shortcut(app)
 }
+
+const THEME_KEY: &str = "theme";
+
+#[tauri::command]
+pub fn get_theme(app: AppHandle) -> String {
+    let Ok(store) = app.store(STORE_PATH) else {
+        return "dark".into();
+    };
+    store
+        .get(THEME_KEY)
+        .and_then(|v| v.as_str().map(|s| s.to_string()))
+        .unwrap_or_else(|| "dark".into())
+}
+
+#[tauri::command]
+pub fn set_theme(app: AppHandle, theme: String) -> Result<(), String> {
+    let store = app.store(STORE_PATH).map_err(|e| e.to_string())?;
+    store.set(THEME_KEY, serde_json::json!(theme));
+    store.save().map_err(|e| e.to_string())?;
+    let _ = app.emit("theme-changed", &theme);
+    Ok(())
+}

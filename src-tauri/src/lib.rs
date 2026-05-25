@@ -152,6 +152,8 @@ pub fn run() {
             settings::set_shortcut,
             settings::get_autostart,
             settings::set_autostart,
+            settings::get_theme,
+            settings::set_theme,
         ])
         .setup(move |app| {
             let data_dir = app

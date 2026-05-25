@@ -125,6 +125,12 @@ kbd,
   background-clip: padding-box;
 }
 
+[role='tooltip'] {
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-md);
+}
+
 @keyframes backfillPulse {
   0%,
   100% {
