@@ -1,20 +1,20 @@
-import { useEffect, useMemo, useState } from "react";
-import { getCurrentWindow } from "@tauri-apps/api/window";
-import { invoke } from "@tauri-apps/api/core";
-import { listen } from "@tauri-apps/api/event";
-import { useTheme } from "ember-design-system";
-import { Palette } from "./Palette";
-import { useAppState } from "../hooks/useAppState";
-import { isSemanticAvailable, useSettings } from "../hooks/useSettings";
-import { buildTheme } from "../lib/theme";
-import type { ThemeMode, Tweaks } from "../lib/types";
+import { useEffect, useMemo, useState } from 'react';
+import { getCurrentWindow } from '@tauri-apps/api/window';
+import { invoke } from '@tauri-apps/api/core';
+import { listen } from '@tauri-apps/api/event';
+import { Box, useTheme } from 'ember-design-system';
+import { Palette } from './Palette';
+import { useAppState } from '../hooks/useAppState';
+import { isSemanticAvailable, useSettings } from '../hooks/useSettings';
+import { buildTheme } from '../lib/theme';
+import type { ThemeMode, Tweaks } from '../lib/types';
 
 const DEFAULT_TWEAKS: Tweaks = {
-  theme: "dark",
-  density: "comfy",
-  categoryDisplay: "chip",
+  theme: 'dark',
+  density: 'comfy',
+  categoryDisplay: 'chip',
   showLabels: true,
-  previewMode: "split",
+  previewMode: 'split',
 };
 
 export function PaletteWindow() {
@@ -25,13 +25,10 @@ export function PaletteWindow() {
 
   const semanticAvailable = isSemanticAvailable(settings);
 
-  const t = useMemo(
-    () => buildTheme(tweaks.theme, tweaks.density),
-    [tweaks.theme, tweaks.density],
-  );
+  const t = useMemo(() => buildTheme(tweaks.theme, tweaks.density), [tweaks.theme, tweaks.density]);
 
   useEffect(() => {
-    invoke<string>("get_theme")
+    invoke<string>('get_theme')
       .then((theme) => {
         setTweaks((prev) => ({ ...prev, theme: theme as ThemeMode }));
       })
@@ -43,7 +40,7 @@ export function PaletteWindow() {
   }, [tweaks.theme, setTheme]);
 
   useEffect(() => {
-    const unlisten = listen<string>("theme-changed", (event) => {
+    const unlisten = listen<string>('theme-changed', (event) => {
       setTweaks((prev) => ({ ...prev, theme: event.payload as ThemeMode }));
     });
     return () => {
@@ -52,8 +49,8 @@ export function PaletteWindow() {
   }, []);
 
   useEffect(() => {
-    const unlisten = listen("palette-shown", () => {
-      const input = document.querySelector<HTMLInputElement>("input");
+    const unlisten = listen('palette-shown', () => {
+      const input = document.querySelector<HTMLInputElement>('input');
       input?.focus();
       input?.select();
     });
@@ -63,11 +60,13 @@ export function PaletteWindow() {
   }, []);
 
   const close = () => {
-    getCurrentWindow().hide().catch(() => {});
+    getCurrentWindow()
+      .hide()
+      .catch(() => {});
   };
 
   return (
-    <div className="h-full w-full overflow-hidden bg-transparent font-sans text-fg">
+    <Box fullHeight fullWidth overflow="hidden" bg="transparent">
       <Palette
         t={t}
         showLabels={tweaks.showLabels}
@@ -76,6 +75,6 @@ export function PaletteWindow() {
         onClose={close}
         semanticAvailable={semanticAvailable}
       />
-    </div>
+    </Box>
   );
 }

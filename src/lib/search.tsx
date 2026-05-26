@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { Mark } from 'ember-design-system';
 import type { ClipItem, SearchMode, Theme } from './types';
 
 const SEM_CONCEPTS: Record<string, string[]> = {
@@ -99,9 +100,7 @@ export function highlightMatch(_t: Theme, text: string, query: string): ReactNod
   return (
     <>
       {txt.slice(0, idx)}
-      <mark className="rounded-[3px] bg-accent-soft px-[3px] py-px text-accent-ink">
-        {txt.slice(idx, idx + q.length)}
-      </mark>
+      <Mark>{txt.slice(idx, idx + q.length)}</Mark>
       {txt.slice(idx + q.length)}
     </>
   );

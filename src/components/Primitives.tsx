@@ -1,4 +1,4 @@
-import { Badge, type BadgeTone } from 'ember-design-system';
+import { Badge, Box, Inline, Text, Dot, type BadgeTone } from 'ember-design-system';
 import { catStyle, CATEGORY_TONE } from '../lib/category';
 import type { Category, ClipItem, Theme } from '../lib/types';
 
@@ -13,22 +13,21 @@ export function CategoryChip({ t, cat, mode = 'chip' }: CategoryChipProps) {
   const tone = CATEGORY_TONE[cat] as BadgeTone;
 
   if (mode === 'dot') {
-    return (
-      <span
-        className="inline-block h-2 w-2 shrink-0 rounded-full"
-        style={{ background: c.bgStrong }}
-      />
-    );
+    return <Dot color={c.bgStrong} />;
   }
 
   if (mode === 'mono') {
     return (
-      <span
-        className="font-mono text-[10.5px] font-medium uppercase tracking-wider"
+      <Text
+        family="mono"
+        size={10.5}
+        weight="medium"
+        transform="uppercase"
+        tracking="wider"
         style={{ color: c.ink }}
       >
         {c.mono}
-      </span>
+      </Text>
     );
   }
 
@@ -70,33 +69,48 @@ export function ItemBody({ t, item, compact = false }: ItemBodyProps) {
 
   if (item.category === 'color') {
     return (
-      <div className="flex items-center gap-3">
-        <div
-          className={`${compact ? 'h-5 w-5' : 'h-9 w-9'} shrink-0 rounded-md border border-border-subtle`}
+      <Inline gap={3}>
+        <Box
+          radius="md"
+          border="subtle"
           style={{
+            width: compact ? 20 : 36,
+            height: compact ? 20 : 36,
+            flexShrink: 0,
             background: item.content,
             boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.1)',
           }}
         />
-        <code className={`font-mono text-fg ${compact ? 'text-xs' : 'text-[13px]'}`}>
+        <Text as="code" family="mono" tone="primary" size={compact ? 12 : 13}>
           {item.content}
-        </code>
-      </div>
+        </Text>
+      </Inline>
     );
   }
 
   if (item.category === 'code') {
     return (
-      <pre
-        className={`m-0 overflow-auto whitespace-pre rounded-lg border border-border-subtle font-mono leading-[1.55] text-fg ${
-          compact ? 'px-3 py-2 text-[11.5px]' : 'px-4 py-3 text-[12.5px]'
-        }`}
-        style={{
-          background: 'color-mix(in oklab, var(--text-primary) 4%, var(--bg-subtle))',
-        }}
+      <Box
+        as="pre"
+        bg="subtle"
+        border="subtle"
+        radius="lg"
+        overflow="auto"
+        px={compact ? 3 : 4}
+        py={compact ? 2 : 3}
+        style={{ margin: 0 }}
       >
-        {item.content}
-      </pre>
+        <Text
+          as="span"
+          family="mono"
+          tone="primary"
+          size={compact ? 11.5 : 12.5}
+          leading={1.55}
+          whitespace="pre"
+        >
+          {item.content}
+        </Text>
+      </Box>
     );
   }
 
@@ -108,22 +122,20 @@ export function ItemBody({ t, item, compact = false }: ItemBodyProps) {
     item.category === 'number'
   ) {
     return (
-      <code
-        className={`break-all font-mono ${compact ? 'text-xs' : 'text-[13.5px]'}`}
-        style={{ color: c.ink }}
+      <Text
+        as="code"
+        family="mono"
+        size={compact ? 12 : 13.5}
+        style={{ color: c.ink, wordBreak: 'break-all' }}
       >
         {item.content}
-      </code>
+      </Text>
     );
   }
 
   return (
-    <div
-      className={`whitespace-pre-wrap leading-[1.55] text-fg ${
-        compact ? 'text-[13px]' : 'text-sm'
-      }`}
-    >
+    <Text as="div" tone="primary" size={compact ? 13 : 14} leading={1.55} whitespace="pre-wrap">
       {item.content}
-    </div>
+    </Text>
   );
 }

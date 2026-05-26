@@ -1,3 +1,4 @@
+import { Image, Text } from 'ember-design-system';
 import { useImageUrl } from '../hooks/useImageUrl';
 import type { ClipItem } from '../lib/types';
 
@@ -11,15 +12,12 @@ export function ImagePreview({ item, getImage, maxHeight = '400px' }: ImagePrevi
   const url = useImageUrl(item.id, getImage);
 
   if (!url) {
-    return <div className="text-[13px] text-fg-faint">Loading image…</div>;
+    return (
+      <Text size={13} tone="tertiary">
+        Loading image…
+      </Text>
+    );
   }
 
-  return (
-    <img
-      src={url}
-      alt={item.preview}
-      className="max-w-full rounded-lg bg-subtle"
-      style={{ maxHeight }}
-    />
-  );
+  return <Image src={url} alt={item.preview} radius="lg" bg fit="contain" maxHeight={maxHeight} />;
 }

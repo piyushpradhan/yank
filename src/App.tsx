@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
-import { Button, useTheme } from 'ember-design-system';
+import { Box, Button, Dot, Inline, Text, useTheme } from 'ember-design-system';
 import { AIPanel } from './components/AIPanel';
 import { KeyboardMap } from './components/KeyboardMap';
 import { ShortcutHint } from './components/ShortcutHint';
@@ -110,7 +110,7 @@ function App() {
   }, [keymapOpen]);
 
   return (
-    <div className="relative h-full w-full overflow-hidden bg-canvas font-sans text-fg">
+    <Box position="relative" fullHeight fullWidth overflow="hidden" bg="canvas">
       <Library
         t={t}
         showLabels={tweaks.showLabels}
@@ -122,20 +122,30 @@ function App() {
       />
 
       {app.backfill && app.backfill.remaining > 0 && (
-        <div
-          className="fixed left-1/2 top-2 z-[300] inline-flex h-6 -translate-x-1/2 items-center gap-2 rounded-full border bg-accent-soft px-3 font-mono text-[10.5px] tabular-nums text-accent-ink shadow-ember-sm"
+        <Box
+          display="inline-flex"
+          align="center"
+          gap={2}
+          px={3}
+          radius="pill"
+          bg="accent-soft"
+          shadow="sm"
+          position="fixed"
           style={{
-            borderColor: 'color-mix(in oklab, var(--accent-ember-500) 24%, transparent)',
+            height: 24,
+            top: 8,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 300,
+            border: '1px solid color-mix(in oklab, var(--accent-ember-500) 24%, transparent)',
           }}
         >
-          <span
-            className="h-1.5 w-1.5 rounded-full bg-accent"
-            style={{ animation: 'backfillPulse 1.2s ease-in-out infinite' }}
-            aria-hidden
-          />
-          Embedding {app.backfill.remaining} item
-          {app.backfill.remaining === 1 ? '' : 's'}…
-        </div>
+          <Dot tone="accent" size="sm" pulse />
+          <Text family="mono" size={10.5} tabularNums tone="accent-ink">
+            Embedding {app.backfill.remaining} item
+            {app.backfill.remaining === 1 ? '' : 's'}…
+          </Text>
+        </Box>
       )}
 
       {!hintDismissed && (
@@ -148,7 +158,7 @@ function App() {
         />
       )}
 
-      <div className="fixed right-[150px] top-2 z-[200] flex gap-1.5">
+      <Inline position="fixed" style={{ right: 150, top: 8, zIndex: 200, gap: 6 }}>
         <Button
           size="sm"
           variant={settings.provider !== 'disabled' ? 'primary' : 'ghost'}
@@ -165,7 +175,7 @@ function App() {
         >
           Tweaks
         </Button>
-      </div>
+      </Inline>
 
       {aiOpen && (
         <AIPanel
@@ -189,21 +199,27 @@ function App() {
       )}
 
       {keymapOpen && (
-        <div
+        <Box
           onClick={() => setKeymapOpen(false)}
-          className="fixed inset-0 z-[700] grid place-items-center bg-black/45"
+          position="fixed"
+          display="grid"
+          style={{ inset: 0, zIndex: 700, placeItems: 'center', background: 'rgba(0,0,0,0.45)' }}
         >
-          <div
+          <Box
             onClick={(e) => e.stopPropagation()}
-            className="h-[420px] w-[820px] overflow-hidden rounded-xl border border-border shadow-ember-md"
+            overflow="hidden"
+            radius="lg"
+            border
+            shadow="md"
+            style={{ height: 420, width: 820 }}
           >
             <KeyboardMap />
-          </div>
-        </div>
+          </Box>
+        </Box>
       )}
 
       {app.toast && <Toast t={t} toast={app.toast} />}
-    </div>
+    </Box>
   );
 }
 
