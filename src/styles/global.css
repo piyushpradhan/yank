@@ -131,12 +131,46 @@ kbd,
   box-shadow: var(--shadow-md);
 }
 
-@keyframes backfillPulse {
-  0%,
-  100% {
-    opacity: 0.5;
+/* Entrance animations for app-level popovers and overlays. Component visuals
+ * come from ember-design-system; these only describe motion on mount. */
+@keyframes toastIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 12px);
   }
-  50% {
+  to {
     opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+@keyframes tweaksIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes paletteFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes paletteScaleIn {
+  from {
+    opacity: 0;
+    transform: translateY(-12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
   }
 }

@@ -1,6 +1,6 @@
-import { Button, Divider, Kbd, Tooltip } from 'ember-design-system';
+import { Box, Button, Divider, Kbd, Tooltip } from 'ember-design-system';
 import { LuCopy, LuPencil, LuPin, LuPinOff, LuTrash2 } from 'react-icons/lu';
-import { MdKeyboardCommandKey } from 'react-icons/md';
+import { MdKeyboardBackspace, MdKeyboardCommandKey } from 'react-icons/md';
 import type { ReactNode } from 'react';
 
 interface CopyButtonProps {
@@ -9,7 +9,11 @@ interface CopyButtonProps {
 }
 
 function ShortcutTooltipContent({ children }: { children: ReactNode }) {
-  return <span className="inline-flex items-center gap-1">{children}</span>;
+  return (
+    <Box as="span" display="inline-flex" align="center" gap={1}>
+      {children}
+    </Box>
+  );
 }
 
 export function CopyButton({ onClick, trailingKbd }: CopyButtonProps) {
@@ -79,8 +83,9 @@ export function DeleteButton({ onClick, variant = 'secondary', kbd }: DeleteButt
               <Kbd size="sm">
                 <MdKeyboardCommandKey size={10} />
               </Kbd>
-              <Kbd size="sm">Shift</Kbd>
-              <Kbd size="sm">X</Kbd>
+              <Kbd size="sm">
+                <MdKeyboardBackspace size={10} />
+              </Kbd>
             </>
           )}
         </ShortcutTooltipContent>
@@ -115,8 +120,15 @@ export function RenameButton({ onClick }: RenameButtonProps) {
 
 export function ActionSeparator() {
   return (
-    <span className="mx-1.5 inline-flex h-5 shrink-0 items-stretch" aria-hidden>
+    <Box
+      as="span"
+      display="inline-flex"
+      align="stretch"
+      shrink={0}
+      aria-hidden
+      style={{ height: 20, marginLeft: 6, marginRight: 6 }}
+    >
       <Divider orientation="vertical" />
-    </span>
+    </Box>
   );
 }

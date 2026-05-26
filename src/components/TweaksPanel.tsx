@@ -1,12 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
-import { Button, Card, IconButton, Kbd } from 'ember-design-system';
+import { Box, Button, Card, IconButton, Inline, Kbd, Overline, Stack, Text } from 'ember-design-system';
 import { LuX } from 'react-icons/lu';
 import { getKeyIcon } from '../lib/keyIcons';
-import type { CategoryDisplay, Density, PreviewMode, Theme, ThemeMode, Tweaks } from '../lib/types';
+import type { CategoryDisplay, Density, PreviewMode, ThemeMode, Tweaks } from '../lib/types';
 
 interface TweaksPanelProps {
-  t: Theme;
   tweaks: Tweaks;
   onChange: (next: Tweaks) => void;
   onClose: () => void;
@@ -20,21 +19,25 @@ const PREVIEWS: PreviewMode[] = ['split', 'inline'];
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="border-b border-border-subtle px-4 py-3">
-      <div className="mb-2.5 font-mono text-[9.5px] font-semibold uppercase leading-none tracking-[1.4px] text-fg-faint">
+    <Box px={4} py={3} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+      <Overline as="div" size={9.5} tracking="wider" style={{ marginBottom: 10 }}>
         {title}
-      </div>
-      <div className="flex flex-col gap-1.5">{children}</div>
-    </div>
+      </Overline>
+      <Stack gap={2}>{children}</Stack>
+    </Box>
   );
 }
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="flex min-h-7 items-center justify-between gap-3">
-      <span className="font-sans text-xs leading-none text-fg-muted">{label}</span>
-      <div className="flex flex-wrap items-center justify-end gap-1.5">{children}</div>
-    </div>
+    <Inline justify="between" gap={3} style={{ minHeight: 28 }}>
+      <Text size={12} tone="secondary">
+        {label}
+      </Text>
+      <Inline gap={2} wrap justify="end">
+        {children}
+      </Inline>
+    </Inline>
   );
 }
 
@@ -161,32 +164,33 @@ export function TweaksPanel({ tweaks, onChange, onClose, onAfterClear }: TweaksP
   return (
     <Card
       padding="none"
-      className="fixed right-4 top-[52px] z-[600] w-80 overflow-hidden !rounded-xl !border-border font-sans text-[13px] text-fg shadow-ember-md"
+      className="fixed right-4 top-[52px] z-[600] w-80 overflow-hidden !rounded-xl !border-border shadow-ember-md"
       style={{ animation: 'tweaksIn 180ms var(--easing-standard)' }}
     >
-      <style>{`
-        @keyframes tweaksIn {
-          from { opacity: 0; transform: translateY(-6px); }
-          to { opacity: 1; transform: none; }
-        }
-      `}</style>
-
-      <div
-        className="relative border-b border-border-subtle px-4 pb-3 pt-3.5"
+      <Box
+        position="relative"
+        px={4}
+        pt={3}
+        pb={3}
         style={{
+          borderBottom: '1px solid var(--border-subtle)',
           background: 'linear-gradient(180deg, var(--accent-ember-50) 0%, transparent 100%)',
         }}
       >
-        <div className="absolute bottom-0 left-0 top-0 w-[3px] bg-accent" />
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="font-mono text-[9.5px] font-semibold uppercase tracking-[2px] text-accent-ink">
+        <Box
+          position="absolute"
+          bg="accent"
+          style={{ top: 0, bottom: 0, left: 0, width: 3 }}
+        />
+        <Inline justify="between">
+          <Stack gap={1}>
+            <Overline as="div" size={9.5} tracking="widest" tone="accent-ink">
               Tweaks
-            </div>
-            <div className="mt-0.5 text-[13.5px] font-semibold tracking-[-0.2px] text-fg">
+            </Overline>
+            <Text size={13.5} weight="semibold" tracking="tight">
               Make it yours
-            </div>
-          </div>
+            </Text>
+          </Stack>
           <IconButton
             aria-label="Close"
             icon={<LuX size={14} />}
@@ -194,8 +198,8 @@ export function TweaksPanel({ tweaks, onChange, onClose, onAfterClear }: TweaksP
             size="sm"
             onClick={onClose}
           />
-        </div>
-      </div>
+        </Inline>
+      </Box>
 
       <Section title="Appearance">
         <Row label="Theme">
@@ -253,13 +257,13 @@ export function TweaksPanel({ tweaks, onChange, onClose, onAfterClear }: TweaksP
 
       <Section title="System">
         <Row label="Palette shortcut">
-          <div className="flex items-center gap-0.5">
+          <Inline gap={0}>
             {(tweaks.paletteShortcut ?? 'Ctrl+Shift+Space').split('+').map((k, i) => (
               <Kbd key={i} size="sm">
                 {getKeyIcon(k)}
               </Kbd>
             ))}
-          </div>
+          </Inline>
           <Button
             size="sm"
             variant={recording ? 'primary' : 'secondary'}
@@ -276,7 +280,11 @@ export function TweaksPanel({ tweaks, onChange, onClose, onAfterClear }: TweaksP
             {recording ? 'Cancel' : 'Record'}
           </Button>
         </Row>
-        {recordError && <div className="mt-1 text-[10.5px] text-danger">{recordError}</div>}
+        {recordError && (
+          <Text size={10.5} tone="danger" style={{ marginTop: 4 }}>
+            {recordError}
+          </Text>
+        )}
         <Row label="Launch at login">
           <Chip
             active={!!tweaks.autostart}
@@ -291,19 +299,16 @@ export function TweaksPanel({ tweaks, onChange, onClose, onAfterClear }: TweaksP
         </Row>
       </Section>
 
-      <div
-        className="px-4 py-3"
-        style={{ background: 'color-mix(in oklab, var(--status-danger) 5%, transparent)' }}
-      >
-        <div className="mb-2 font-mono text-[9.5px] font-semibold uppercase tracking-[1.4px] text-danger">
+      <Box px={4} py={3} style={{ background: 'color-mix(in oklab, var(--status-danger) 5%, transparent)' }}>
+        <Overline as="div" size={9.5} tracking="wider" tone="danger" style={{ marginBottom: 8 }}>
           Danger zone
-        </div>
+        </Overline>
         {!clearArmed ? (
           <Button fullWidth size="sm" variant="secondary" onClick={() => setClearArmed(true)}>
             Clear history (keeps pinned)
           </Button>
         ) : (
-          <div className="flex gap-1.5">
+          <Inline gap={2}>
             <Button
               fullWidth
               size="sm"
@@ -322,14 +327,14 @@ export function TweaksPanel({ tweaks, onChange, onClose, onAfterClear }: TweaksP
             >
               {clearing ? 'Clearing…' : 'Confirm'}
             </Button>
-          </div>
+          </Inline>
         )}
         {clearError && (
-          <div role="alert" className="mt-2 text-[11px] text-danger">
+          <Text as="div" role="alert" size={11} tone="danger" style={{ marginTop: 8 }}>
             {clearError}
-          </div>
+          </Text>
         )}
-      </div>
+      </Box>
     </Card>
   );
 }

@@ -1,5 +1,5 @@
 import type { ComponentType } from 'react';
-import { Button, Card } from 'ember-design-system';
+import { Box, Button, Card, Inline, Text } from 'ember-design-system';
 import { LuCheck, LuInfo, LuPin, LuTrash2 } from 'react-icons/lu';
 import type { Theme, Toast as ToastType, ToastKind } from '../lib/types';
 
@@ -20,24 +20,29 @@ export function Toast({ toast }: ToastProps) {
   return (
     <Card
       padding="none"
-      className="fixed bottom-6 left-1/2 z-[1000] flex -translate-x-1/2 items-center gap-2.5 !rounded-full !border-border px-4 py-2.5 font-sans text-[12.5px] font-medium text-fg shadow-ember-md"
+      className="fixed bottom-6 left-1/2 z-[1000] -translate-x-1/2 !rounded-full !border-border px-4 py-2.5 shadow-ember-md"
       style={{ animation: 'toastIn 180ms var(--easing-standard)' }}
     >
-      <span className="grid h-[18px] w-[18px] place-items-center rounded-full bg-accent text-fg-inverse">
-        <Icon size={11} />
-      </span>
-      <span>{toast.msg}</span>
-      {toast.undo && (
-        <Button size="sm" variant="ghost" onClick={toast.undo}>
-          Undo
-        </Button>
-      )}
-      <style>{`
-        @keyframes toastIn {
-          from { opacity: 0; transform: translate(-50%, 12px); }
-          to { opacity: 1; transform: translate(-50%, 0); }
-        }
-      `}</style>
+      <Inline gap={3}>
+        <Box
+          display="flex"
+          align="center"
+          justify="center"
+          radius="pill"
+          bg="accent"
+          style={{ width: 18, height: 18, color: 'var(--text-inverse)' }}
+        >
+          <Icon size={11} />
+        </Box>
+        <Text size={12.5} weight="medium">
+          {toast.msg}
+        </Text>
+        {toast.undo && (
+          <Button size="sm" variant="ghost" onClick={toast.undo}>
+            Undo
+          </Button>
+        )}
+      </Inline>
     </Card>
   );
 }

@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { Inline } from 'ember-design-system';
 import type { Theme } from '../lib/types';
 
 interface SidebarRowProps {
@@ -10,13 +11,22 @@ interface SidebarRowProps {
 
 export function SidebarRow({ active, onClick, children }: SidebarRowProps) {
   return (
-    <div
+    <Inline
       onClick={onClick}
-      className={`relative mb-0.5 flex h-7 cursor-pointer items-center gap-2.5 rounded-md px-2.5 transition-colors duration-150 ${
-        active ? 'bg-accent-soft font-medium text-fg' : 'bg-transparent text-fg-muted'
-      }`}
+      gap={3}
+      px={3}
+      radius="md"
+      bg={active ? 'accent-soft' : 'transparent'}
+      position="relative"
+      interactive
+      style={{
+        height: 28,
+        marginBottom: 2,
+        fontWeight: active ? 'var(--font-medium)' : undefined,
+        color: active ? 'var(--text-primary)' : 'var(--text-secondary)',
+      }}
     >
       {children}
-    </div>
+    </Inline>
   );
 }

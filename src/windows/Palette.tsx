@@ -4,14 +4,24 @@ import { relTime } from '../lib/time';
 import type { CategoryDisplay, ClipItem, SearchMode, Theme } from '../lib/types';
 import type { AppState } from '../hooks/useAppState';
 import { useImageUrl } from '../hooks/useImageUrl';
-import { Button, Kbd, Tooltip } from 'ember-design-system';
+import {
+  Box,
+  Button,
+  Dot,
+  Image,
+  Inline,
+  Input,
+  Kbd,
+  Stack,
+  Text,
+  Tooltip,
+} from 'ember-design-system';
 import { LuArrowUpDown, LuEllipsis, LuPin, LuSearch } from 'react-icons/lu';
 import { getKeyIcon } from '../lib/keyIcons';
 import { CategoryChip } from '../components/Primitives';
 import { ItemBody } from '../components/Primitives';
 import { ImagePreview } from '../components/ImagePreview';
 import { CopyButton, PinButton, DeleteButton, ActionSeparator } from '../components/ActionButtons';
-import { accentStyle } from '../lib/styles';
 import { MdKeyboardBackspace, MdKeyboardCommandKey, MdKeyboardReturn } from 'react-icons/md';
 
 // Stable no-op so useImageUrl's effect deps stay stable for non-image rows.
@@ -46,81 +56,121 @@ function PaletteRow({
   const imageUrl = useImageUrl(isImage ? item.id : '', isImage ? getImage : NO_IMAGE);
 
   return (
-    <div
+    <Inline
       data-i={index}
       onMouseEnter={onMouseEnter}
       onClick={onClick}
-      className={`relative flex cursor-pointer items-center gap-3 rounded-lg px-3 transition-colors duration-150 ${
-        t.dense ? 'py-2' : 'py-2.5'
-      } ${selected ? 'bg-accent-soft' : 'bg-transparent'}`}
+      position="relative"
+      interactive
+      gap={3}
+      radius="lg"
+      px={3}
+      bg={selected ? 'accent-soft' : 'transparent'}
+      style={{ paddingTop: t.dense ? 8 : 10, paddingBottom: t.dense ? 8 : 10 }}
     >
       {categoryMode === 'chip' && <CategoryChip t={t} cat={item.category} mode="chip" />}
       {categoryMode === 'icon' && <CategoryChip t={t} cat={item.category} mode="icon" />}
       {categoryMode === 'dot' && <CategoryChip t={t} cat={item.category} mode="dot" />}
 
       {isImage && (
-        <div className="flex h-8 w-11 shrink-0 items-center justify-center overflow-hidden rounded-sm border border-border-subtle bg-subtle">
+        <Box
+          display="flex"
+          align="center"
+          justify="center"
+          shrink={0}
+          overflow="hidden"
+          radius="sm"
+          border="subtle"
+          bg="subtle"
+          style={{ height: 32, width: 44 }}
+        >
           {imageUrl ? (
-            <img
+            <Image
               src={imageUrl}
               alt={item.preview}
-              className="max-h-full max-w-full object-contain"
+              fit="contain"
+              style={{ maxHeight: '100%', maxWidth: '100%' }}
             />
           ) : null}
-        </div>
+        </Box>
       )}
 
-      <div className="min-w-0 flex-1">
+      <Box grow={1} style={{ minWidth: 0 }}>
         {showLabels && (
-          <div
-            className={`flex items-center gap-1.5 overflow-hidden text-ellipsis whitespace-nowrap tracking-[-0.1px] ${
-              t.dense ? 'text-[13.5px]' : 'text-[14.5px]'
-            } ${item.labelGenerated ? 'font-medium not-italic text-fg' : 'font-normal italic text-fg-muted'}`}
+          <Inline
             title={item.labelGenerated ? undefined : 'Awaiting AI label'}
+            style={{ gap: 6, overflow: 'hidden' }}
           >
-            <span className="overflow-hidden text-ellipsis">
+            <Text
+              as="span"
+              size={t.dense ? 13.5 : 14.5}
+              tracking="tight"
+              truncate
+              weight={item.labelGenerated ? 'medium' : 'regular'}
+              italic={!item.labelGenerated}
+              tone={item.labelGenerated ? 'primary' : 'secondary'}
+            >
               {highlightMatch(t, item.label, query)}
-            </span>
+            </Text>
             {!item.labelGenerated && (
-              <LuEllipsis size={11} aria-hidden="true" className="shrink-0 text-fg-faint" />
+              <LuEllipsis
+                size={11}
+                aria-hidden="true"
+                color="var(--text-tertiary)"
+                style={{ flexShrink: 0 }}
+              />
             )}
-          </div>
+          </Inline>
         )}
-        <div
-          className={`overflow-hidden text-ellipsis whitespace-nowrap ${
-            item.category === 'text' || item.category === 'address' ? 'font-sans' : 'font-mono'
-          } ${
-            showLabels
-              ? `mt-0.5 ${t.dense ? 'text-[11.5px]' : 'text-xs'} text-fg-muted`
-              : `${t.dense ? 'text-[13px]' : 'text-[13.5px]'} text-fg`
-          }`}
+        <Text
+          as="div"
+          family={item.category === 'text' || item.category === 'address' ? 'sans' : 'mono'}
+          truncate
+          size={showLabels ? (t.dense ? 11.5 : 12) : t.dense ? 13 : 13.5}
+          tone={showLabels ? 'secondary' : 'primary'}
+          style={{ marginTop: showLabels ? 2 : 0 }}
         >
           {item.preview}
-        </div>
-      </div>
+        </Text>
+      </Box>
 
       {item.pinned && (
-        <LuPin size={11} className="shrink-0 fill-current text-accent" aria-label="pinned" />
+        <LuPin
+          size={11}
+          color="var(--accent-ember-500)"
+          style={{ flexShrink: 0, fill: 'currentColor' }}
+          aria-label="pinned"
+        />
       )}
       {item.category === 'color' && (
-        <div
-          className="h-[18px] w-[18px] shrink-0 rounded-sm border border-border-subtle"
-          style={{ background: item.content }}
+        <Box
+          shrink={0}
+          radius="sm"
+          border="subtle"
+          style={{ height: 18, width: 18, background: item.content }}
         />
       )}
 
-      <div className="min-w-[42px] shrink-0 text-right font-mono text-[11px] leading-none tabular-nums text-fg-faint">
+      <Text
+        family="mono"
+        size={11}
+        leading={1}
+        tabularNums
+        tone="tertiary"
+        shrink
+        style={{ minWidth: 42, textAlign: 'right' }}
+      >
         {relTime(item.minutesAgo)}
-      </div>
+      </Text>
 
       {selected && (
-        <div className="flex shrink-0 items-center gap-1">
-          <Kbd size="sm" style={accentStyle}>
+        <Inline shrink={0} gap={1}>
+          <Kbd size="sm" tone="accent">
             ↵
           </Kbd>
-        </div>
+        </Inline>
       )}
-    </div>
+    </Inline>
   );
 }
 
@@ -255,7 +305,7 @@ export function Palette({
       e.preventDefault();
       const it = displayResults[selected];
       if (it) app.pinItem(it.id);
-    } else if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === 'x') {
+    } else if ((e.metaKey || e.ctrlKey) && (e.key === 'Backspace' || e.key === 'Delete')) {
       e.preventDefault();
       const it = displayResults[selected];
       if (it) {
@@ -269,15 +319,23 @@ export function Palette({
   };
 
   return (
-    <div
-      className="absolute inset-0 z-[500] flex items-stretch justify-stretch bg-transparent"
-      style={{ animation: 'paletteFadeIn 150ms ease' }}
+    <Box
+      position="absolute"
+      display="flex"
+      align="stretch"
+      style={{ inset: 0, zIndex: 500, animation: 'paletteFadeIn 150ms ease' }}
     >
-      <div
+      <Inline
         onKeyDown={onKey}
         tabIndex={-1}
-        className="flex h-full max-h-full w-full overflow-hidden rounded-[14px] bg-surface font-sans text-fg"
+        align="stretch"
+        fullWidth
+        fullHeight
+        overflow="hidden"
+        bg="surface"
         style={{
+          maxHeight: '100%',
+          borderRadius: 14,
           backdropFilter: 'blur(40px) saturate(160%)',
           WebkitBackdropFilter: 'blur(40px) saturate(160%)',
           boxShadow: `inset 0 0 0 1px var(--border-default),
@@ -286,22 +344,28 @@ export function Palette({
           animation: 'paletteScaleIn 180ms cubic-bezier(.2,.9,.3,1.1)',
         }}
       >
-        <div className="flex flex-[0_0_380px] flex-col overflow-hidden border-r border-border-subtle">
-          <div className="flex h-14 items-center gap-3 border-b border-border-subtle px-4">
+        <Stack
+          overflow="hidden"
+          style={{ flex: '0 0 380px', borderRight: '1px solid var(--border-subtle)' }}
+        >
+          <Inline
+            gap={3}
+            px={4}
+            style={{ height: 56, borderBottom: '1px solid var(--border-subtle)' }}
+          >
             <LuSearch
               size={16}
-              className={`shrink-0 transition-colors duration-150 ${
-                mode === 'semantic' ? 'text-accent' : 'text-fg-faint'
-              }`}
+              color={mode === 'semantic' ? 'var(--accent-ember-500)' : 'var(--text-tertiary)'}
+              style={{ flexShrink: 0, transition: 'color 150ms' }}
             />
-            <input
+            <Input
               ref={inputRef}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder={
                 mode === 'semantic' ? 'Describe what you need…' : 'Search clipboard history'
               }
-              className="min-w-0 flex-1 border-none bg-transparent font-sans text-lg font-normal tracking-[-0.2px] text-fg outline-none"
+              className="!border-none !bg-transparent !text-lg"
             />
             <Tooltip content={<Kbd size="sm">{getKeyIcon('Tab')}</Kbd>}>
               <Button
@@ -309,56 +373,69 @@ export function Palette({
                 variant={mode === 'semantic' ? 'primary' : 'secondary'}
                 onClick={() => setMode((m) => (m === 'fuzzy' ? 'semantic' : 'fuzzy'))}
                 leadingIcon={
-                  <span
-                    className={`h-[5px] w-[5px] rounded-full ${
-                      mode === 'semantic' ? 'bg-fg-inverse' : 'bg-fg-faint'
-                    }`}
+                  <Dot
+                    size="xs"
+                    color={mode === 'semantic' ? 'var(--text-inverse)' : 'var(--text-tertiary)'}
                   />
                 }
               >
                 {mode}
               </Button>
             </Tooltip>
-          </div>
+          </Inline>
 
-          <div ref={listRef} className="min-h-[120px] flex-1 overflow-auto p-1.5">
+          <Box ref={listRef} grow={1} overflow="auto" style={{ minHeight: 120, padding: 6 }}>
             {results.length === 0 && (
-              <div className="px-5 py-12 text-center text-[13px] leading-[1.6] text-fg-faint">
-                {mode === 'semantic' && !semanticAvailable ? (
-                  <>
-                    <b className="text-fg">Semantic search is off.</b>
-                    <br />
-                    <span className="text-[11.5px]">
-                      Open the main window and click <b>AI</b> to configure.
-                    </span>
-                    <br />
-                    Press <Kbd size="sm">{getKeyIcon('Tab')}</Kbd> to fall back to fuzzy.
-                  </>
-                ) : mode === 'semantic' && semanticLoading ? (
-                  'Thinking…'
-                ) : mode === 'semantic' && semanticError ? (
-                  <>
-                    <b className="text-fg">Semantic search failed.</b>
-                    <br />
-                    <span className="text-[11.5px]">{semanticError}</span>
-                    <br />
-                    Press <Kbd size="sm">{getKeyIcon('Tab')}</Kbd> to fall back to fuzzy.
-                  </>
-                ) : app.items.length === 0 ? (
-                  <>
-                    Clipboard is empty.
-                    <br />
-                    <span className="text-[11.5px]">Copy anything and it lands here.</span>
-                  </>
-                ) : query ? (
-                  <>
-                    No matches for <b className="text-fg">"{query}"</b>.<br />
-                    Press <Kbd size="sm">{getKeyIcon('Tab')}</Kbd> to try semantic search.
-                  </>
-                ) : (
-                  'Clipboard is empty.'
-                )}
-              </div>
+              <Box px={5} style={{ paddingTop: 48, paddingBottom: 48, textAlign: 'center' }}>
+                <Text size={13} leading={1.6} tone="tertiary">
+                  {mode === 'semantic' && !semanticAvailable ? (
+                    <>
+                      <Text as="b" tone="primary" weight="semibold">
+                        Semantic search is off.
+                      </Text>
+                      <br />
+                      <Text size={11.5}>
+                        Open the main window and click{' '}
+                        <Text as="b" weight="semibold" tone="primary">
+                          AI
+                        </Text>{' '}
+                        to configure.
+                      </Text>
+                      <br />
+                      Press <Kbd size="sm">{getKeyIcon('Tab')}</Kbd> to fall back to fuzzy.
+                    </>
+                  ) : mode === 'semantic' && semanticLoading ? (
+                    'Thinking…'
+                  ) : mode === 'semantic' && semanticError ? (
+                    <>
+                      <Text as="b" tone="primary" weight="semibold">
+                        Semantic search failed.
+                      </Text>
+                      <br />
+                      <Text size={11.5}>{semanticError}</Text>
+                      <br />
+                      Press <Kbd size="sm">{getKeyIcon('Tab')}</Kbd> to fall back to fuzzy.
+                    </>
+                  ) : app.items.length === 0 ? (
+                    <>
+                      Clipboard is empty.
+                      <br />
+                      <Text size={11.5}>Copy anything and it lands here.</Text>
+                    </>
+                  ) : query ? (
+                    <>
+                      No matches for{' '}
+                      <Text as="b" tone="primary" weight="semibold">
+                        "{query}"
+                      </Text>
+                      .<br />
+                      Press <Kbd size="sm">{getKeyIcon('Tab')}</Kbd> to try semantic search.
+                    </>
+                  ) : (
+                    'Clipboard is empty.'
+                  )}
+                </Text>
+              </Box>
             )}
             {displayResults.map((item, i) => (
               <PaletteRow
@@ -378,88 +455,141 @@ export function Palette({
                 }}
               />
             ))}
-          </div>
+          </Box>
 
-          <div
-            className="flex h-[34px] items-center justify-between border-t border-border-subtle px-3.5 text-[11px] text-fg-faint"
-            style={{ background: t.dark ? 'rgba(0,0,0,0.15)' : 'rgba(0,0,0,0.015)' }}
+          <Inline
+            justify="between"
+            px={3}
+            style={{
+              height: 34,
+              borderTop: '1px solid var(--border-subtle)',
+              background: t.dark ? 'rgba(0,0,0,0.15)' : 'rgba(0,0,0,0.015)',
+            }}
           >
-            <div className="flex min-w-0 flex-1 items-center gap-2.5 overflow-hidden">
-              <span className="flex shrink-0 items-center gap-1.5">
+            <Inline grow={1} gap={2} overflow="hidden" style={{ minWidth: 0 }}>
+              <Inline shrink={0} style={{ gap: 6 }}>
                 <Kbd size="sm">
                   <LuArrowUpDown />
-                </Kbd>{' '}
-                nav
-              </span>
-              <span className="flex shrink-0 items-center gap-1.5">
+                </Kbd>
+                <Text size={11} tone="tertiary">
+                  nav
+                </Text>
+              </Inline>
+              <Inline shrink={0} style={{ gap: 6 }}>
                 <Kbd size="sm">
                   <MdKeyboardReturn />
-                </Kbd>{' '}
-                paste
-              </span>
-              <span className="flex shrink-0 items-center gap-1.5">
+                </Kbd>
+                <Text size={11} tone="tertiary">
+                  paste
+                </Text>
+              </Inline>
+              <Inline shrink={0} style={{ gap: 6 }}>
                 <Kbd size="sm">
                   <MdKeyboardCommandKey />P
-                </Kbd>{' '}
-                pin
-              </span>
-              <span className="flex shrink-0 items-center gap-1.5">
+                </Kbd>
+                <Text size={11} tone="tertiary">
+                  pin
+                </Text>
+              </Inline>
+              <Inline shrink={0} style={{ gap: 6 }}>
                 <Kbd size="sm">
                   <MdKeyboardCommandKey />
                   <MdKeyboardBackspace />
-                </Kbd>{' '}
-                del
-              </span>
-            </div>
-            <div className="flex shrink-0 items-center gap-1.5">
-              <span>
+                </Kbd>
+                <Text size={11} tone="tertiary">
+                  del
+                </Text>
+              </Inline>
+            </Inline>
+            <Inline shrink={0} style={{ gap: 6 }}>
+              <Text size={11} tone="tertiary">
                 {results.length > MAX_VISIBLE
                   ? `${MAX_VISIBLE} of ${results.length}`
                   : results.length}{' '}
                 {query ? 'matches' : 'items'}
-              </span>
-            </div>
-          </div>
-        </div>
+              </Text>
+            </Inline>
+          </Inline>
+        </Stack>
 
-        <div className="flex min-w-0 flex-1 flex-col bg-subtle">
+        <Stack grow={1} bg="subtle" style={{ minWidth: 0 }}>
           {selectedItem ? (
             <>
-              <div className="border-b border-border-subtle bg-surface px-5 py-3.5">
-                <div className="mb-2 flex min-h-4 items-center gap-2.5">
+              <Box
+                px={5}
+                bg="surface"
+                style={{
+                  paddingTop: 14,
+                  paddingBottom: 14,
+                  borderBottom: '1px solid var(--border-subtle)',
+                }}
+              >
+                <Inline gap={3} style={{ marginBottom: 8, minHeight: 16 }}>
                   <CategoryChip t={t} cat={selectedItem.category} mode="chip" />
-                  <span className="flex-1 overflow-hidden text-ellipsis whitespace-nowrap font-mono text-[11px] tabular-nums text-fg-faint">
+                  <Text family="mono" size={11} tabularNums tone="tertiary" truncate grow>
                     {selectedItem.source} · {relTime(selectedItem.minutesAgo)}
-                  </span>
+                  </Text>
                   {selectedItem.pinned && (
                     <LuPin
                       size={12}
-                      className="shrink-0 fill-current text-accent"
+                      color="var(--accent-ember-500)"
+                      style={{ flexShrink: 0, fill: 'currentColor' }}
                       aria-label="pinned"
                     />
                   )}
-                </div>
-                <div className="flex items-center gap-2.5 text-[15px] font-semibold leading-[1.3] tracking-[-0.2px] text-fg">
-                  <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
+                </Inline>
+                <Inline gap={3} style={{ gap: 10 }}>
+                  <Text
+                    as="span"
+                    size={15}
+                    weight="semibold"
+                    leading={1.3}
+                    tracking="tight"
+                    truncate
+                    grow
+                  >
                     {selectedItem.label}
-                  </span>
+                  </Text>
                   {!selectedItem.labelGenerated && (
-                    <span className="shrink-0 rounded-[3px] border border-border-subtle px-1.5 py-0.5 font-mono text-[10px] font-medium uppercase leading-none tracking-widest text-fg-faint">
-                      Pending
-                    </span>
+                    <Box
+                      as="span"
+                      shrink={0}
+                      border="subtle"
+                      radius="sm"
+                      style={{ padding: '2px 6px' }}
+                    >
+                      <Text
+                        family="mono"
+                        size={10}
+                        weight="medium"
+                        tone="tertiary"
+                        transform="uppercase"
+                        tracking="widest"
+                      >
+                        Pending
+                      </Text>
+                    </Box>
                   )}
-                </div>
-              </div>
-              <div className="flex flex-1 items-start justify-center overflow-auto p-4">
+                </Inline>
+              </Box>
+              <Box grow={1} display="flex" align="start" justify="center" overflow="auto" p={4}>
                 {selectedItem.category === 'image' ? (
                   <ImagePreview item={selectedItem} getImage={app.getImage} maxHeight="280px" />
                 ) : (
-                  <div className="w-full max-w-[400px] whitespace-pre-wrap break-all font-mono text-[13px] leading-[1.5] text-fg">
+                  <Box fullWidth style={{ maxWidth: 400 }}>
                     <ItemBody t={t} item={selectedItem} />
-                  </div>
+                  </Box>
                 )}
-              </div>
-              <div className="flex items-center gap-1 border-t border-border-subtle bg-surface/60 px-4 py-2.5">
+              </Box>
+              <Inline
+                gap={1}
+                px={4}
+                py={2}
+                style={{
+                  borderTop: '1px solid var(--border-subtle)',
+                  background: 'color-mix(in oklab, var(--bg-surface) 60%, transparent)',
+                }}
+              >
                 <CopyButton
                   onClick={() => {
                     app.copyItem(selectedItem.id);
@@ -483,23 +613,17 @@ export function Palette({
                   }}
                   variant="ghost"
                 />
-              </div>
+              </Inline>
             </>
           ) : (
-            <div className="flex flex-1 items-center justify-center text-[13px] text-fg-faint">
-              Select an item to preview
-            </div>
+            <Box grow={1} display="flex" align="center" justify="center">
+              <Text size={13} tone="tertiary">
+                Select an item to preview
+              </Text>
+            </Box>
           )}
-        </div>
-      </div>
-
-      <style>{`
-        @keyframes paletteFadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes paletteScaleIn {
-          from { opacity: 0; transform: translateY(-12px) scale(0.98); }
-          to { opacity: 1; transform: none; }
-        }
-      `}</style>
-    </div>
+        </Stack>
+      </Inline>
+    </Box>
   );
 }

@@ -1,13 +1,19 @@
 import { useEffect, useState } from 'react';
-import { Input, Kbd } from 'ember-design-system';
+import { Badge, Box, Inline, Input, Kbd, Stack, Text } from 'ember-design-system';
 import { LuPin } from 'react-icons/lu';
-import { MdKeyboardReturn } from 'react-icons/md';
+import { MdKeyboardBackspace, MdKeyboardReturn } from 'react-icons/md';
 import { relTime } from '../lib/time';
 import type { ClipItem, Theme } from '../lib/types';
 import type { AppState } from '../hooks/useAppState';
 import { CategoryChip, ItemBody } from './Primitives';
 import { ImagePreview } from './ImagePreview';
-import { CopyButton, PinButton, DeleteButton, RenameButton, ActionSeparator } from './ActionButtons';
+import {
+  CopyButton,
+  PinButton,
+  DeleteButton,
+  RenameButton,
+  ActionSeparator,
+} from './ActionButtons';
 
 interface PreviewPaneProps {
   t: Theme;
@@ -35,17 +41,22 @@ export function PreviewPane({
   }, [item.id, item.label]);
 
   return (
-    <div className="flex min-w-0 flex-1 flex-col bg-subtle">
-      <div className="border-b border-border-subtle px-5 pb-3 pt-4">
-        <div className="mb-2 flex min-h-[18px] items-center gap-2.5">
+    <Stack grow={1} bg="subtle" style={{ minWidth: 0 }}>
+      <Box px={5} pt={4} pb={3} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+        <Inline gap={3} style={{ marginBottom: 8, minHeight: 18 }}>
           <CategoryChip t={t} cat={item.category} mode="chip" />
-          <span className="flex-1 overflow-hidden text-ellipsis whitespace-nowrap font-mono text-[11px] leading-none tabular-nums text-fg-faint">
+          <Text family="mono" size={11} tone="tertiary" tabularNums truncate grow>
             {item.source} · {relTime(item.minutesAgo)}
-          </span>
+          </Text>
           {item.pinned && (
-            <LuPin size={12} className="shrink-0 fill-current text-accent" aria-label="pinned" />
+            <LuPin
+              size={12}
+              color="var(--accent-ember-500)"
+              style={{ flexShrink: 0, fill: 'currentColor' }}
+              aria-label="pinned"
+            />
           )}
-        </div>
+        </Inline>
         {showLabels &&
           (editing ? (
             <Input
@@ -68,38 +79,53 @@ export function PreviewPane({
               }}
             />
           ) : (
-            <div
+            <Inline
+              gap={3}
               onDoubleClick={() => setEditing(true)}
               title={
                 item.labelGenerated
                   ? 'Double-click to rename'
                   : 'Awaiting AI label — double-click to rename'
               }
-              className={`flex cursor-text items-center gap-2.5 text-[17px] leading-[1.3] tracking-[-0.3px] ${
-                item.labelGenerated
-                  ? 'font-semibold not-italic text-fg'
-                  : 'font-medium italic text-fg-muted'
-              }`}
+              style={{ cursor: 'text' }}
             >
-              <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
+              <Text
+                as="span"
+                size={17}
+                leading={1.3}
+                tracking="tight"
+                truncate
+                grow
+                weight={item.labelGenerated ? 'semibold' : 'medium'}
+                italic={!item.labelGenerated}
+                tone={item.labelGenerated ? 'primary' : 'secondary'}
+              >
                 {item.label}
-              </span>
+              </Text>
               {!item.labelGenerated && anthropicEnabled && (
-                <span className="shrink-0 rounded-[3px] border border-border-subtle px-1.5 py-[3px] font-mono text-[10px] font-medium not-italic uppercase leading-none tracking-widest text-fg-faint">
+                <Badge tone="neutral" variant="outline" size="sm">
                   Labeling…
-                </span>
+                </Badge>
               )}
-            </div>
+            </Inline>
           ))}
-      </div>
-      <div className="flex-1 overflow-auto p-5">
+      </Box>
+      <Box grow={1} overflow="auto" p={5}>
         {item.category === 'image' ? (
           <ImagePreview item={item} getImage={app.getImage} maxHeight="400px" />
         ) : (
           <ItemBody t={t} item={item} />
         )}
-      </div>
-      <div className="flex items-center gap-1 border-t border-border-subtle bg-surface/60 px-4 py-2.5">
+      </Box>
+      <Inline
+        gap={1}
+        px={4}
+        py={2}
+        style={{
+          borderTop: '1px solid var(--border-subtle)',
+          background: 'color-mix(in oklab, var(--bg-surface) 60%, transparent)',
+        }}
+      >
         <CopyButton
           onClick={() => app.copyItem(item.id)}
           trailingKbd={<MdKeyboardReturn size={10} />}
@@ -117,13 +143,12 @@ export function PreviewPane({
           onClick={() => app.deleteItem(item.id)}
           variant="secondary"
           kbd={
-            <>
-              <Kbd size="sm">Shift</Kbd>
-              <Kbd size="sm">X</Kbd>
-            </>
+            <Kbd size="sm">
+              <MdKeyboardBackspace size={10} />
+            </Kbd>
           }
         />
-      </div>
-    </div>
+      </Inline>
+    </Stack>
   );
 }

@@ -1,5 +1,18 @@
 import { useState } from 'react';
-import { Button, Card, FormField, Input, Modal, Select } from 'ember-design-system';
+import {
+  Box,
+  Button,
+  Card,
+  Dot,
+  FormField,
+  Inline,
+  Input,
+  Modal,
+  Overline,
+  Select,
+  Stack,
+  Text,
+} from 'ember-design-system';
 import type { Theme } from '../lib/types';
 import type { EmbedProvider, EmbedSettings } from '../hooks/useSettings';
 
@@ -30,8 +43,21 @@ const LOCAL_MODELS: { id: string; label: string; note: string }[] = [
   },
 ];
 
-const FIELD_LABEL_CLS = 'mb-1.5 font-mono text-[10.5px] uppercase tracking-wide text-fg-muted';
-const HINT_CLS = 'mt-1.5 mb-3.5 text-[10.5px] leading-[1.5] text-fg-faint';
+function FieldLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <Overline as="div" size={10.5} weight="regular" tracking="wide" tone="secondary">
+      {children}
+    </Overline>
+  );
+}
+
+function Hint({ children }: { children: React.ReactNode }) {
+  return (
+    <Text as="p" size={10.5} tone="tertiary" leading={1.5} style={{ marginTop: 6, marginBottom: 14 }}>
+      {children}
+    </Text>
+  );
+}
 
 export function AIPanel({ settings, onChange, onClose }: AIPanelProps) {
   const [local, setLocal] = useState<EmbedSettings>(settings);
@@ -92,9 +118,9 @@ export function AIPanel({ settings, onChange, onClose }: AIPanelProps) {
         detail={labelStatus}
       />
 
-      <div className="mb-4 mt-4">
-        <div className={FIELD_LABEL_CLS}>Provider</div>
-        <div className="flex flex-wrap gap-1.5">
+      <Stack gap={2} style={{ marginTop: 16, marginBottom: 16 }}>
+        <FieldLabel>Provider</FieldLabel>
+        <Inline gap={2} wrap>
           {PROVIDERS.map((p) => (
             <Button
               key={p.id}
@@ -105,8 +131,8 @@ export function AIPanel({ settings, onChange, onClose }: AIPanelProps) {
               {p.label}
             </Button>
           ))}
-        </div>
-      </div>
+        </Inline>
+      </Stack>
 
       {local.provider === 'local' && (
         <>
@@ -118,11 +144,11 @@ export function AIPanel({ settings, onChange, onClose }: AIPanelProps) {
               aria-label="Embedding model"
             />
           </Field>
-          <p className={HINT_CLS}>
+          <Hint>
             {LOCAL_MODELS.find((m) => m.id === local.local_model)?.note ??
               'Runs entirely on your machine via ONNX.'}{' '}
             The first embedding may take a few seconds while the model downloads.
-          </p>
+          </Hint>
         </>
       )}
 
@@ -156,16 +182,24 @@ export function AIPanel({ settings, onChange, onClose }: AIPanelProps) {
               onChange={(e) => set('ollama_model', e.target.value)}
             />
           </Field>
-          <p className={HINT_CLS}>
+          <Hint>
             Install an embedding model first:{' '}
-            <code className="rounded-[3px] bg-subtle px-1.5 py-px font-mono text-fg-muted">
-              ollama pull {local.ollama_model}
-            </code>
-          </p>
+            <Box
+              as="code"
+              display="inline"
+              bg="subtle"
+              radius="sm"
+              style={{ padding: '1px 6px' }}
+            >
+              <Text family="mono" size={10.5} tone="secondary">
+                ollama pull {local.ollama_model}
+              </Text>
+            </Box>
+          </Hint>
         </>
       )}
 
-      <div className="mt-[18px] border-t border-border-subtle pt-3.5">
+      <Box style={{ marginTop: 18, paddingTop: 14, borderTop: '1px solid var(--border-subtle)' }}>
         <Field label="Anthropic API key — AI labels">
           <Input
             type="password"
@@ -174,20 +208,22 @@ export function AIPanel({ settings, onChange, onClose }: AIPanelProps) {
             placeholder="sk-ant-…"
           />
         </Field>
-        <p className={HINT_CLS}>
+        <Hint>
           Each clip gets a one-line intent summary (e.g. "Stripe Webhook Debug"). Runs on Claude
           Haiku in the background. A few hundred clips cost pennies.
-        </p>
-      </div>
+        </Hint>
+      </Box>
 
       {error && (
         <Card
           role="alert"
           padding="none"
-          className="mt-3.5 !bg-subtle px-2.5 py-2 text-[11.5px] text-danger"
+          className="mt-3.5 !bg-subtle px-2.5 py-2"
           style={{ borderColor: 'var(--status-danger)' }}
         >
-          {error}
+          <Text size={11.5} tone="danger">
+            {error}
+          </Text>
         </Card>
       )}
     </Modal>
@@ -196,10 +232,7 @@ export function AIPanel({ settings, onChange, onClose }: AIPanelProps) {
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <FormField
-      className="mb-3.5 !gap-1.5"
-      label={<span className={FIELD_LABEL_CLS.replace('mb-1.5 ', '')}>{label}</span>}
-    >
+    <FormField className="mb-3.5 !gap-1.5" label={<FieldLabel>{label}</FieldLabel>}>
       {children}
     </FormField>
   );
@@ -214,27 +247,20 @@ interface StatusRowProps {
 }
 
 function StatusRow({ kind, label, detail }: StatusRowProps) {
-  const colour =
-    kind === 'ok'
-      ? 'var(--status-success)'
-      : kind === 'warn'
-        ? 'var(--status-warning)'
-        : 'var(--text-tertiary)';
+  const tone = kind === 'ok' ? 'success' : kind === 'warn' ? 'warning' : 'neutral';
   return (
-    <Card padding="none" className="mb-2 flex items-start gap-3 !rounded-lg !bg-subtle px-3 py-2.5">
-      <span
-        className="mt-[5px] h-2 w-2 shrink-0 rounded-full"
-        style={{
-          background: colour,
-          boxShadow: `0 0 0 3px color-mix(in oklab, ${colour} 18%, transparent)`,
-        }}
-      />
-      <div className="flex min-w-0 flex-col gap-[3px]">
-        <span className="font-mono text-[10px] font-semibold uppercase leading-none tracking-wider text-fg-muted">
-          {label}
-        </span>
-        <span className="text-[11.5px] leading-[1.5] text-fg">{detail}</span>
-      </div>
+    <Card padding="none" className="mb-2 !rounded-lg !bg-subtle px-3 py-2.5">
+      <Inline gap={3} align="start">
+        <Dot tone={tone} size="md" ring style={{ marginTop: 5 }} />
+        <Stack gap={1} grow={1}>
+          <Overline as="span" size="2xs" tone="secondary">
+            {label}
+          </Overline>
+          <Text size={11.5} tone="primary" leading={1.5}>
+            {detail}
+          </Text>
+        </Stack>
+      </Inline>
     </Card>
   );
 }

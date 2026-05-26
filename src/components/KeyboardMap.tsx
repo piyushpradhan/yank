@@ -1,4 +1,4 @@
-import { Kbd } from 'ember-design-system';
+import { Box, Grid, Inline, Kbd, Overline, Stack, Text } from 'ember-design-system';
 import { getKeyIcon } from '../lib/keyIcons';
 
 interface KeyRow {
@@ -32,7 +32,7 @@ const GROUPS: [string, KeyRow[]][] = [
       { keys: ['↵'], label: 'Copy + paste · close palette' },
       { keys: ['↵'], label: 'Promote fuzzy → semantic', scope: 'in search' },
       { keys: ['Ctrl', 'P'], label: 'Pin / unpin' },
-      { keys: ['Ctrl', 'Shift', 'X'], label: 'Delete item' },
+      { keys: ['Ctrl', '⌫'], label: 'Delete item' },
       { keys: ['E'], label: 'Rename label', scope: 'library' },
       { keys: ['Ctrl', 'I'], label: 'Toggle preview pane', scope: 'library' },
     ],
@@ -41,35 +41,55 @@ const GROUPS: [string, KeyRow[]][] = [
 
 export function KeyboardMap() {
   return (
-    <div className="grid h-full w-full grid-cols-3 gap-8 overflow-auto bg-surface p-8 font-sans text-fg">
+    <Grid
+      columns={3}
+      gap={6}
+      bg="surface"
+      overflow="auto"
+      fullHeight
+      fullWidth
+      style={{ padding: 'var(--space-6)' }}
+    >
       {GROUPS.map(([heading, rows]) => (
-        <div key={heading} className="flex flex-col">
-          <div className="mb-3.5 border-b border-border-subtle pb-2.5 font-mono text-[10px] font-semibold uppercase leading-none tracking-[1.5px] text-accent-ink">
-            {heading}
-          </div>
-          <div className="flex flex-col gap-2.5">
+        <Stack key={heading}>
+          <Box
+            pb={3}
+            style={{ marginBottom: 14, borderBottom: '1px solid var(--border-subtle)' }}
+          >
+            <Overline tone="accent-ink" size="2xs">
+              {heading}
+            </Overline>
+          </Box>
+          <Stack gap={3}>
             {rows.map((row, i) => (
-              <div key={i} className="grid grid-cols-[108px_1fr] items-center gap-3.5">
-                <div className="flex flex-wrap items-center gap-1">
+              <Grid key={i} columns="108px 1fr" gap={3} align="center">
+                <Inline gap={1} wrap>
                   {row.keys.map((k, j) => (
                     <Kbd key={j} size="sm">
                       {getKeyIcon(k)}
                     </Kbd>
                   ))}
-                </div>
-                <div className="text-[12.5px] leading-[1.4] text-fg-muted">
+                </Inline>
+                <Text as="div" size={12.5} tone="secondary" leading={1.4}>
                   {row.label}
                   {row.scope && (
-                    <span className="ml-1.5 font-mono text-[10px] uppercase tracking-wider text-fg-faint">
+                    <Text
+                      family="mono"
+                      size={10}
+                      tone="tertiary"
+                      transform="uppercase"
+                      tracking="wider"
+                      style={{ marginLeft: 6 }}
+                    >
                       · {row.scope}
-                    </span>
+                    </Text>
                   )}
-                </div>
-              </div>
+                </Text>
+              </Grid>
             ))}
-          </div>
-        </div>
+          </Stack>
+        </Stack>
       ))}
-    </div>
+    </Grid>
   );
 }
