@@ -5,14 +5,16 @@ import "../styles/global.css";
 interface Props {
   title?: string;
   description?: string;
+  ogImage?: string;
 }
 
 const {
-  title = "Yank — A clipboard that remembers, and finds, anything.",
-  description = "Local-first clipboard manager. Fuzzy + semantic search across text, code, images, colors, and links. Native on macOS, Windows, Linux.",
+  title = "Yank — Open-Source Clipboard Manager for macOS, Windows & Linux | Yank App",
+  description = "Yank is a local-first, privacy-focused clipboard manager with fuzzy search, semantic search, image capture, and smart auto-labeling. Free, open source, and keyboard-driven. Download for macOS, Windows, or Linux.",
+  ogImage = "/media/library-image-filter.png",
 } = Astro.props;
 
-const ogImage = "/media/library-image-filter.png";
+const canonical = "https://recall.vercel.app";
 ---
 
 <!doctype html>
@@ -20,17 +22,45 @@ const ogImage = "/media/library-image-filter.png";
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="icon" type="image/png" href="/logo.png" />
+
+    <!-- Primary Meta -->
     <title>{title}</title>
+    <meta name="title" content={title} />
     <meta name="description" content={description} />
+    <meta name="keywords" content="clipboard manager, clipboard history, copy paste tool, fuzzy search, semantic search, productivity, macOS, Windows, Linux, open source, Tauri, local-first, privacy, utility, clipboard tool, Yank, yank app" />
+    <meta name="author" content="Piyush Pradhan" />
+    <meta name="robots" content="index, follow" />
+    <meta name="language" content="English" />
+    <meta name="theme-color" content="#0f0f0e" />
+    <link rel="canonical" href={canonical} />
+
+    <!-- Open Graph -->
+    <meta property="og:site_name" content="Yank" />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:type" content="website" />
-    <meta property="og:image" content={ogImage} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={`${canonical}${ogImage}`} />
+    <meta property="og:image:width" content="1440" />
+    <meta property="og:image:height" content="900" />
+    <meta property="og:image:alt" content="Yank clipboard manager — library view showing categorized clips, search, and preview pane" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:locale" content="en_US" />
+
+    <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@piyushpradhan" />
+    <meta name="twitter:creator" content="@piyushpradhan" />
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
-    <meta name="twitter:image" content={ogImage} />
+    <meta name="twitter:image" content={`${canonical}${ogImage}`} />
+    <meta name="twitter:image:alt" content="Yank clipboard manager — library view showing categorized clips, search, and preview pane" />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="/logo.png" />
+    <link rel="apple-touch-icon" href="/logo.png" />
+
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link

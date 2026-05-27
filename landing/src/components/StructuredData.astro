@@ -1,0 +1,60 @@
+---
+export interface Props {
+  baseUrl?: string
+}
+
+const { baseUrl = 'https://recall.vercel.app' } = Astro.props
+---
+
+<script type="application/ld+json" set:html={JSON.stringify({
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: 'Yank',
+  applicationCategory: 'UtilitiesApplication',
+  operatingSystem: 'macOS, Windows, Linux',
+  description: 'Local-first clipboard manager with fuzzy and semantic search. Captures text, code, images, colors, links, and files — every clip you\'ve ever made, one keystroke away.',
+  url: baseUrl,
+  image: `${baseUrl}/logo.png`,
+  author: {
+    '@type': 'Person',
+    name: 'Piyush Pradhan',
+    url: 'https://github.com/piyushpradhan',
+  },
+  offers: {
+    '@type': 'Offer',
+    price: '0',
+    priceCurrency: 'USD',
+  },
+  softwareVersion: '0.6',
+  datePublished: '2025-01-01',
+  license: 'https://opensource.org/licenses/MIT',
+  downloadUrl: 'https://github.com/piyushpradhan/recall/releases/latest',
+  featureList: [
+    'Fuzzy and semantic search across clipboard history',
+    'Native image clip capture and preview',
+    'Smart AI-powered auto-labeling of clips',
+    'Automatic categorization (URLs, code, colors, paths, emails)',
+    'Local-first architecture with SQLite storage',
+    'Global hotkey palette accessible from any application',
+    'Keyboard-driven navigation with shortcuts',
+    'Privacy-focused — no telemetry, no accounts required',
+  ],
+  browserRequirements: 'Requires Windows 10+, macOS 12+, or Linux with GTK',
+})} />
+
+<script type="application/ld+json" set:html={JSON.stringify({
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: 'Yank — Clipboard Manager',
+  url: baseUrl,
+  description: 'A local-first clipboard manager that remembers and finds anything. Fuzzy + semantic search across text, code, images, colors, and links.',
+  inLanguage: 'en',
+  potentialAction: {
+    '@type': 'SearchAction',
+    target: {
+      '@type': 'EntryPoint',
+      urlTemplate: `${baseUrl}/?q={search_term_string}`,
+    },
+    'query-input': 'required name=search_term_string',
+  },
+})} />
