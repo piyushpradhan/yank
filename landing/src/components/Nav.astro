@@ -4,24 +4,24 @@ import { Icon } from "astro-icon/components";
 
 <nav
   class="sticky top-0 z-50 border-b border-border-subtle backdrop-blur-xl backdrop-saturate-150"
-  style="background: color-mix(in oklab, var(--bg-canvas) 70%, transparent);"
+  style="background: color-mix(in oklab, var(--bg-canvas) 72%, transparent);"
 >
   <div class="mx-auto flex h-[60px] max-w-[1120px] items-center justify-between px-6 max-[720px]:px-[18px]">
-    <a href="/" class="flex items-center gap-2.5 text-fg" aria-label="Yank home">
-      <img src="/logo.png" alt="" width="28" height="28" />
+    <a href="/" class="flex items-center gap-2.5 text-fg no-underline" aria-label="Yank home">
+      <img src="/logo.png" alt="Yank logo" width="28" height="28" />
       <span class="text-base font-semibold tracking-[-0.02em]">Yank</span>
     </a>
 
     <div class="flex items-center gap-[26px] text-[13.5px] text-fg-muted">
-      <a href="#features" class="transition-colors duration-150 hover:text-fg max-[720px]:hidden">Features</a>
-      <a href="#showcase" class="transition-colors duration-150 hover:text-fg max-[720px]:hidden">Screenshots</a>
-      <a href="#download" class="transition-colors duration-150 hover:text-fg max-[720px]:hidden">Download</a>
+      <a href="#features" class="transition-colors duration-150 hover:text-fg no-underline max-[720px]:hidden">Features</a>
+      <a href="#showcase" class="transition-colors duration-150 hover:text-fg no-underline max-[720px]:hidden">Screenshots</a>
+      <a href="#download" class="transition-colors duration-150 hover:text-fg no-underline max-[720px]:hidden">Download</a>
       <a
         href="https://github.com/piyushpradhan/recall"
         target="_blank"
         rel="noopener noreferrer"
         class="transition-colors duration-150 hover:text-fg"
-        aria-label="GitHub repository"
+        aria-label="Yank on GitHub"
       >
         <Icon name="simple-icons:github" width={18} height={18} aria-hidden="true" />
       </a>

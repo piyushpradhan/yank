@@ -1,9 +1,6 @@
 @import 'tailwindcss';
 
-/* Bridge ember-design-system tokens into Tailwind v4 utilities. Bundle-time
- * the @theme block makes `bg-canvas`, `text-fg`, `text-accent`, etc. resolve
- * to the ember CSS variables — so `data-theme=dark` on <html> still swaps
- * the palette without component changes. */
+/* Bridge ember-design-system tokens into Tailwind v4 utilities. */
 @theme {
   --font-sans:
     'Geist', 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
@@ -39,9 +36,6 @@
   --shadow-ember-md: var(--shadow-md);
 }
 
-/* Aurora gradient backdrop — kept as a CSS var because Tailwind cannot
- * compose a multi-stop radial gradient through utilities without verbose
- * arbitrary-value syntax. data-theme swaps the underlying ember tokens. */
 :root {
   --aurora:
     radial-gradient(
@@ -63,7 +57,13 @@
   box-sizing: border-box;
 }
 
-html,
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 80px;
+  margin: 0;
+  padding: 0;
+}
+
 body {
   margin: 0;
   padding: 0;
@@ -91,7 +91,8 @@ video {
 
 h1,
 h2,
-h3 {
+h3,
+h4 {
   margin: 0;
   letter-spacing: -0.03em;
   font-weight: 600;
@@ -102,6 +103,23 @@ p {
 }
 
 ::selection {
-  background: var(--accent-ember-100);
-  color: var(--text-primary);
+  background: var(--accent-ember-500);
+  color: var(--text-inverse);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent-ember-500);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
