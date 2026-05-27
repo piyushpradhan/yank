@@ -3,7 +3,7 @@
 /* Bridge ember-design-system tokens into Tailwind v4 utilities. */
 @theme {
   --font-sans:
-    'Geist', 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    'Geist Sans', 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --font-mono:
     'Geist Mono', 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
 
