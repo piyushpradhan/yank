@@ -44,6 +44,16 @@
    Tokens supplied by ember-design-system. Local aliases below.
    ------------------------------------------------------------------ */
 :root {
+  /* Font overrides — ember-design-system's tokens.css sets --font-sans/mono/display
+     to Inter/JetBrains Mono which we don't load. Re-declare here so cascade wins. */
+  --font-sans:
+    'Geist Sans', 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono:
+    'Geist Mono', 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --font-serif:
+    'Source Serif 4', ui-serif, Georgia, 'Times New Roman', serif;
+  --font-display: var(--font-serif);
+
   /* Aliases so design rules using --accent-* resolve against ember vars */
   --accent-50: var(--accent-ember-50);
   --accent-100: var(--accent-ember-100);
