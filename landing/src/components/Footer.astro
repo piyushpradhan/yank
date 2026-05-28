@@ -2,42 +2,85 @@
 const year = new Date().getFullYear();
 ---
 
-<footer class="mt-10 border-t border-border-subtle py-10 pb-[60px]">
-  <div class="mx-auto flex max-w-[1120px] flex-col items-center gap-[18px] px-6 text-center max-[720px]:px-[18px]">
-    <div class="flex items-center gap-2 font-semibold text-fg">
-      <img src="/logo.png" alt="Yank logo" width="22" height="22" />
-      <span>Yank</span>
+<footer class="foot" data-screen-label="footer">
+  <div class="wrap">
+    <div class="foot-grid">
+      <div class="about">
+        <a class="brand" href="#top" aria-label="Yank">
+          <span class="dot" aria-hidden="true"></span>
+          <span>yank</span>
+        </a>
+        <p>
+          A smart clipboard for people who copy a lot, and resent looking for
+          what they copied.
+        </p>
+      </div>
+
+      <div>
+        <h5>Product</h5>
+        <ul>
+          <li><a href="#features">Features</a></li>
+          <li><a href="#how">How it works</a></li>
+          <li><a href="#pricing">Pricing</a></li>
+          <li><a href="#top">Download</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <h5>Project</h5>
+        <ul>
+          <li>
+            <a
+              href="https://github.com/piyushpradhan/recall"
+              target="_blank"
+              rel="noopener noreferrer">GitHub</a
+            >
+          </li>
+          <li>
+            <a
+              href="https://github.com/piyushpradhan/recall/releases"
+              target="_blank"
+              rel="noopener noreferrer">Changelog</a
+            >
+          </li>
+          <li>
+            <a
+              href="https://github.com/piyushpradhan/recall/issues"
+              target="_blank"
+              rel="noopener noreferrer">Roadmap</a
+            >
+          </li>
+          <li>
+            <a
+              href="https://github.com/piyushpradhan/recall/issues"
+              target="_blank"
+              rel="noopener noreferrer">Issues</a
+            >
+          </li>
+        </ul>
+      </div>
+
+      <div>
+        <h5>Elsewhere</h5>
+        <ul>
+          <li><a href="#">Privacy</a></li>
+          <li><a href="#">Security</a></li>
+          <li>
+            <a
+              href="https://github.com/piyushpradhan/recall/blob/main/LICENSE"
+              target="_blank"
+              rel="noopener noreferrer">License (MIT)</a
+            >
+          </li>
+          <li><a href="mailto:hi@yankapp.io">hi@yankapp.io</a></li>
+        </ul>
+      </div>
     </div>
 
-    <div class="flex flex-wrap justify-center gap-6 text-[13.5px] text-fg-muted">
-      <a
-        href="https://github.com/piyushpradhan/recall"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="transition-colors duration-150 hover:text-accent-ink no-underline">GitHub</a
-      >
-      <a
-        href="https://github.com/piyushpradhan/recall/releases"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="transition-colors duration-150 hover:text-accent-ink no-underline">Releases</a
-      >
-      <a
-        href="https://github.com/piyushpradhan/recall/issues"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="transition-colors duration-150 hover:text-accent-ink no-underline">Issues</a
-      >
-      <a
-        href="https://github.com/piyushpradhan/recall/blob/main/README.md"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="transition-colors duration-150 hover:text-accent-ink no-underline">README</a
-      >
+    <div class="foot-bottom">
+      <span>© {year} · Made in a small room with a lot of coffee.</span>
+      <span class="signature" aria-label="hand-drawn signature: p.p.">p.p.</span>
+      <span>Built on Ember.</span>
     </div>
-
-    <p class="font-mono text-[11.5px] tracking-[0.02em] text-fg-faint">
-      &copy; {year} Yank &middot; MIT licensed &middot; Built with Tauri
-    </p>
   </div>
 </footer>

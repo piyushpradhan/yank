@@ -1,0 +1,55 @@
+---
+const faqs = [
+  {
+    q: "Does Yank send my clipboard anywhere?",
+    a:
+      "No. The local app runs the classifier and the natural-language search on your device. Sync (Pro) is opt-in and end-to-end encrypted — we can't read it either. We don't collect analytics events tied to clip content.",
+    open: true,
+  },
+  {
+    q: "How does the natural-language search actually work?",
+    a:
+      "Two layers. A lightweight on-device model tags each clip with a type and extracts entities (phone, date, repo, color, etc). When you ask a question, a second pass matches your phrasing against those tags, the time window you mentioned, and the source app. No round trip required.",
+  },
+  {
+    q: "What about passwords and credit cards?",
+    a:
+      "Yank detects sensitive patterns — credit cards, API tokens, things that look like passwords — and either skips them entirely or stores them with a short expiry. Pro adds custom redaction rules per pattern.",
+  },
+  {
+    q: "Will it work with my password manager / 1Password / Raycast?",
+    a:
+      "Yes. Yank co-exists with other tools that touch the clipboard. It respects the \"concealed\" flag password managers set, so secrets aren't archived. Raycast and Alfred users can keep their launchers; Yank only intercepts the paste flow.",
+  },
+  {
+    q: "Is it really open-source?",
+    a:
+      "The local app is MIT-licensed and on GitHub. The Pro sync server is source-available — you can read it, you can self-host it, you just can't resell it.",
+  },
+  {
+    q: "Linux support?",
+    a:
+      "Beta. Wayland is solid, X11 is solid, the system tray integration on KDE is still a little awkward. Help us out — issues welcome.",
+  },
+];
+---
+
+<section class="section" id="faq" data-screen-label="faq">
+  <div class="wrap faq">
+    <div>
+      <span class="eyebrow">FAQ</span>
+      <h2>Reasonable questions, honest answers.</h2>
+    </div>
+
+    <div class="faq-list">
+      {
+        faqs.map((item) => (
+          <details class="q" open={item.open}>
+            <summary>{item.q}</summary>
+            <p class="a">{item.a}</p>
+          </details>
+        ))
+      }
+    </div>
+  </div>
+</section>

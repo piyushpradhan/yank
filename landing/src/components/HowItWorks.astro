@@ -1,0 +1,78 @@
+---
+const queries = [
+  { q: "the calendar invite from Tuesday", out: "→ date" },
+  { q: "that hex value from Figma", out: "→ color" },
+  { q: "my landlord's number", out: "→ phone · contacts" },
+  { q: 'the repo with "design-system" in it', out: "→ repo" },
+  { q: "the screenshot of the bug", out: "→ image · slack" },
+  { q: "the address I copied from gmaps", out: "→ address" },
+  { q: "that order confirmation", out: "→ text · mail" },
+  { q: "the SSH command from terminal", out: "→ code" },
+];
+---
+
+<section class="section" id="how" data-screen-label="how">
+  <div class="wrap">
+    <div class="section-head">
+      <div>
+        <span class="eyebrow">How it works</span>
+        <h2>Copy normally. Ask normally. Paste exactly.</h2>
+      </div>
+      <p>
+        You don't change how you copy. You just gain a smarter way to retrieve.
+      </p>
+    </div>
+
+    <div class="how">
+      <ol class="steps">
+        <li>
+          <span class="n">01</span>
+          <div>
+            <h3>Copy anything, anywhere</h3>
+            <p>
+              Yank watches the system clipboard. Every <kbd>⌘C</kbd> is captured,
+              classified, and quietly archived — text, images, files, code, URLs,
+              the lot.
+            </p>
+          </div>
+        </li>
+        <li>
+          <span class="n">02</span>
+          <div>
+            <h3>Summon the picker</h3>
+            <p>
+              Hit <kbd>⌘⇧V</kbd> in any app. Yank floats above your work — never
+              steals focus, never opens a window you have to dismiss.
+            </p>
+          </div>
+        </li>
+        <li>
+          <span class="n">03</span>
+          <div>
+            <h3>Ask in your own words</h3>
+            <p>
+              Type a phrase: <em>"github repo from yesterday"</em>,
+              <em>"the long phone number"</em>,
+              <em>"that color from the Figma file."</em> Press <kbd>↵</kbd> to paste
+              the top match — or arrow to pick another.
+            </p>
+          </div>
+        </li>
+      </ol>
+
+      <div class="queries" aria-label="Example queries">
+        <h4>Things people ask Yank</h4>
+        <ul>
+          {
+            queries.map((item) => (
+              <li>
+                {item.q}
+                <span class="out">{item.out}</span>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>

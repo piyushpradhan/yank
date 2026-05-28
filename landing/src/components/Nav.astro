@@ -1,30 +1,81 @@
 ---
-import { Icon } from "astro-icon/components";
+import { getLatestRelease } from "../lib/releases";
+
+const { release, downloads } = await getLatestRelease();
+const version = release?.version ?? "v1.0";
+const releaseTag = version.startsWith("v") ? version : `v${version}`;
+
+// Pre-bake fallback URLs in case JS-side OS detection runs late.
+const fallbackDownload = downloads.macos?.url ?? release?.html_url ?? "https://github.com/piyushpradhan/recall/releases/latest";
 ---
 
-<nav
-  class="sticky top-0 z-50 border-b border-border-subtle backdrop-blur-xl backdrop-saturate-150"
-  style="background: color-mix(in oklab, var(--bg-canvas) 72%, transparent);"
->
-  <div class="mx-auto flex h-[60px] max-w-[1120px] items-center justify-between px-6 max-[720px]:px-[18px]">
-    <a href="/" class="flex items-center gap-2.5 text-fg no-underline" aria-label="Yank home">
-      <img src="/logo.png" alt="Yank logo" width="28" height="28" />
-      <span class="text-base font-semibold tracking-[-0.02em]">Yank</span>
+<header class="topbar" data-screen-label="topbar">
+  <div class="wrap row">
+    <a class="brand" href="#top" aria-label="Yank — home">
+      <span class="dot" aria-hidden="true"></span>
+      <span>yank</span>
+      <span class="tag">{releaseTag} · open beta</span>
     </a>
 
-    <div class="flex items-center gap-[26px] text-[13.5px] text-fg-muted">
-      <a href="#features" class="transition-colors duration-150 hover:text-fg no-underline max-[720px]:hidden">Features</a>
-      <a href="#showcase" class="transition-colors duration-150 hover:text-fg no-underline max-[720px]:hidden">Screenshots</a>
-      <a href="#download" class="transition-colors duration-150 hover:text-fg no-underline max-[720px]:hidden">Download</a>
+    <nav class="nav" aria-label="Primary">
+      <a href="#features">Features</a>
+      <a href="#how">How it works</a>
+      <a href="#pricing">Pricing</a>
+      <a href="#faq">FAQ</a>
+    </nav>
+
+    <div class="nav-cluster">
       <a
+        class="icon-btn"
         href="https://github.com/piyushpradhan/recall"
         target="_blank"
         rel="noopener noreferrer"
-        class="transition-colors duration-150 hover:text-fg"
-        aria-label="Yank on GitHub"
+        aria-label="GitHub repository"
+        title="GitHub"
       >
-        <Icon name="simple-icons:github" width={18} height={18} aria-hidden="true" />
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+          <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.69-.01-1.36-2.22.48-2.69-1.07-2.69-1.07-.36-.92-.89-1.17-.89-1.17-.73-.5.05-.49.05-.49.81.06 1.23.83 1.23.83.72 1.23 1.88.87 2.34.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.83-2.15-.08-.2-.36-1.02.08-2.13 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.03 2.2-.82 2.2-.82.44 1.11.16 1.93.08 2.13.52.56.83 1.28.83 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.19 0 .21.15.46.55.38A8 8 0 0 0 16 8c0-4.42-3.58-8-8-8Z" />
+        </svg>
+      </a>
+      <button class="icon-btn" id="theme-toggle" aria-label="Toggle color theme" title="Toggle theme">
+        <svg class="i-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
+        </svg>
+        <svg class="i-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:none">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79Z" />
+        </svg>
+      </button>
+      <a class="btn btn--primary" id="download-cta" href={fallbackDownload}>
+        <span class="os-icon" id="download-os-icon" aria-hidden="true"></span>
+        <span id="download-label">Download</span>
+        <span class="kbd" id="download-kbd">⌘⇧V</span>
       </a>
     </div>
   </div>
-</nav>
+</header>
+
+<script>
+  (function () {
+    var root = document.documentElement;
+
+    function updateIcons() {
+      var dark = root.getAttribute('data-theme') === 'dark';
+      var sun = document.querySelector('.i-sun');
+      var moon = document.querySelector('.i-moon');
+      if (sun instanceof HTMLElement) sun.style.display = dark ? 'none' : '';
+      if (moon instanceof HTMLElement) moon.style.display = dark ? '' : 'none';
+    }
+
+    updateIcons();
+    var toggle = document.getElementById('theme-toggle');
+    if (toggle) {
+      toggle.addEventListener('click', function () {
+        var dark = root.getAttribute('data-theme') === 'dark';
+        var next = dark ? 'light' : 'dark';
+        root.setAttribute('data-theme', next);
+        try { localStorage.setItem('yank-theme', next); } catch (_) {}
+        updateIcons();
+      });
+    }
+  })();
+</script>
