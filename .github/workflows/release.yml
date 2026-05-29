@@ -146,7 +146,10 @@ jobs:
           tmp=$(mktemp)
           jq --arg v "$VERSION" '.version = $v' src-tauri/tauri.conf.json > "$tmp" && mv "$tmp" src-tauri/tauri.conf.json
 
-          sed -i "s/^version = \".*\"/version = \"$VERSION\"/" src-tauri/Cargo.toml
+          # Portable in-place edit: BSD sed (macOS) and GNU sed (Linux) disagree
+          # on `-i` semantics, so route the rewrite through perl which behaves
+          # identically on every runner.
+          perl -pi -e "s/^version = \"[^\"]*\"/version = \"$VERSION\"/" src-tauri/Cargo.toml
 
       - name: Build Tauri release bundles
         shell: bash
