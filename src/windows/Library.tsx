@@ -1,7 +1,6 @@
 import type { ReactNode } from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useImageUrl } from '../hooks/useImageUrl';
-import { getCurrentWindow } from '@tauri-apps/api/window';
 import { listen } from '@tauri-apps/api/event';
 import { CATEGORIES, CATEGORY_META } from '../lib/category';
 import { groupByTime, highlightMatch, searchItems } from '../lib/search';
@@ -22,7 +21,6 @@ import {
   Button,
   Dot,
   Grid,
-  IconButton,
   Image,
   Inline,
   Input,
@@ -32,17 +30,7 @@ import {
   Text,
 } from 'ember-design-system';
 import { getKeyIcon } from '../lib/keyIcons';
-import {
-  LuClock,
-  LuList,
-  LuMaximize2,
-  LuMinus,
-  LuEllipsis,
-  LuPin,
-  LuSearch,
-  LuSparkles,
-  LuX,
-} from 'react-icons/lu';
+import { LuClock, LuList, LuEllipsis, LuPin, LuSearch } from 'react-icons/lu';
 import { CategoryChip } from '../components/Primitives';
 import { PreviewPane } from '../components/PreviewPane';
 import { SidebarRow } from '../components/SidebarRow';
@@ -525,95 +513,6 @@ export function Library({
       bg="surface"
       style={{ outline: 'none' }}
     >
-      {/* Title bar */}
-      <Inline
-        data-tauri-drag-region
-        justify="between"
-        shrink={0}
-        style={{
-          height: 40,
-          paddingLeft: 14,
-          userSelect: 'none',
-          borderBottom: '1px solid var(--border-subtle)',
-        }}
-      >
-        <Inline data-tauri-drag-region gap={2} style={{ gap: 10 }}>
-          <Box
-            data-tauri-drag-region
-            display="grid"
-            radius="sm"
-            style={{
-              height: 18,
-              width: 18,
-              placeItems: 'center',
-              color: 'var(--text-inverse)',
-              background:
-                'linear-gradient(135deg, var(--accent-ember-500) 0%, var(--accent-ember-700) 100%)',
-              boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.18), 0 1px 2px rgba(0,0,0,0.15)',
-            }}
-          >
-            <LuSparkles size={11} />
-          </Box>
-          <Text data-tauri-drag-region size={13} weight="semibold" tracking="tight">
-            Yank
-          </Text>
-          <Box data-tauri-drag-region border="subtle" radius="sm" style={{ padding: '2px 6px' }}>
-            <Overline as="span" size="2xs" tracking="wider">
-              v0.6.4
-            </Overline>
-          </Box>
-        </Inline>
-        <Inline align="stretch" style={{ alignSelf: 'stretch' }}>
-          {(
-            [
-              [
-                <LuMinus size={12} />,
-                'Minimize',
-                async () => {
-                  await getCurrentWindow().minimize();
-                },
-              ],
-              [
-                <LuMaximize2 size={11} />,
-                'Maximize',
-                async () => {
-                  await getCurrentWindow().toggleMaximize();
-                },
-              ],
-              [
-                <LuX size={12} />,
-                'Close',
-                async () => {
-                  await getCurrentWindow().close();
-                },
-              ],
-            ] as const
-          ).map(([g, title, action], i) => {
-            const isClose = i === 2;
-            return (
-              <IconButton
-                key={i}
-                aria-label={title}
-                title={title}
-                icon={g}
-                variant="ghost"
-                data-tauri-drag-region="false"
-                onPointerDown={(e) => e.stopPropagation()}
-                onMouseDown={(e) => e.stopPropagation()}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  action();
-                }}
-                className={`!h-10 !w-[46px] !rounded-none ${
-                  isClose ? 'hover:!bg-danger hover:!text-fg-inverse' : ''
-                }`}
-              />
-            );
-          })}
-        </Inline>
-      </Inline>
-
-      {/* Main body */}
       <Inline align="stretch" grow={1} style={{ minHeight: 0 }}>
         {/* Sidebar */}
         <Stack
@@ -693,7 +592,13 @@ export function Library({
             columns="auto 1fr auto 1fr"
             align="center"
             px={2}
-            style={{ marginTop: 'auto', paddingTop: 16, paddingBottom: 4, columnGap: 6, rowGap: 8 }}
+            py={2}
+            style={{
+              paddingBottom: 4,
+              columnGap: 6,
+              rowGap: 8,
+              borderTop: '1px solid var(--border-subtle)',
+            }}
           >
             <Kbd size="sm">/</Kbd>
             <Text family="mono" size={10.5} tone="tertiary">

@@ -79,9 +79,12 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
-  background: transparent;
   color: var(--text-primary);
   color-scheme: light dark;
+}
+
+[data-window='palette'] body {
+  background: transparent;
 }
 
 button {

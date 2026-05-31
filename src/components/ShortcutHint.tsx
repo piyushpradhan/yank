@@ -12,7 +12,7 @@ export function ShortcutHint({ keys, onDismiss }: ShortcutHintProps) {
     <Card
       elevated
       padding="none"
-      className="absolute right-5 top-[52px] z-[400] !rounded-[10px] !border-border px-5 py-3.5 shadow-ember-md"
+      className="absolute right-5 top-[56px] z-[400] !rounded-[10px] !border-border px-5 py-3.5 shadow-ember-md"
     >
       <Inline gap={2}>
         <Text tone="secondary" size={13}>

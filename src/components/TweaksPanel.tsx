@@ -101,6 +101,17 @@ export function TweaksPanel({ tweaks, onChange, onClose, onAfterClear }: TweaksP
   tweaksRef.current = tweaks;
 
   useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !recording) {
+        e.preventDefault();
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [recording, onClose]);
+
+  useEffect(() => {
     if (!recording) return;
 
     const onKeyDown = (e: KeyboardEvent) => {
@@ -162,11 +173,19 @@ export function TweaksPanel({ tweaks, onChange, onClose, onAfterClear }: TweaksP
   };
 
   return (
-    <Card
-      padding="none"
-      className="fixed right-4 top-[52px] z-[600] w-80 overflow-hidden !rounded-xl !border-border shadow-ember-md"
-      style={{ animation: 'tweaksIn 180ms var(--easing-standard)' }}
-    >
+    <>
+      <Box
+        position="fixed"
+        onClick={onClose}
+        style={{ inset: 0, zIndex: 599, background: 'transparent' }}
+        aria-hidden
+      />
+      <Card
+        padding="none"
+        onClick={(e: React.MouseEvent) => e.stopPropagation()}
+        className="fixed right-3 top-[48px] z-[600] w-80 overflow-hidden !rounded-xl !border-border shadow-ember-md"
+        style={{ animation: 'tweaksIn 180ms var(--easing-standard)' }}
+      >
       <Box
         position="relative"
         px={4}
@@ -335,6 +354,7 @@ export function TweaksPanel({ tweaks, onChange, onClose, onAfterClear }: TweaksP
           </Text>
         )}
       </Box>
-    </Card>
+      </Card>
+    </>
   );
 }

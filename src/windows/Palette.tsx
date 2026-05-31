@@ -335,7 +335,7 @@ export function Palette({
         bg="surface"
         style={{
           maxHeight: '100%',
-          borderRadius: 14,
+          borderRadius: 8,
           backdropFilter: 'blur(40px) saturate(160%)',
           WebkitBackdropFilter: 'blur(40px) saturate(160%)',
           boxShadow: `inset 0 0 0 1px var(--border-default),

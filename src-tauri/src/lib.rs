@@ -375,6 +375,57 @@ pub fn run() {
                 });
             }
 
+            // Apply OS-standard corner rounding to both windows.
+            #[cfg(target_os = "macos")]
+            {
+                use objc::{msg_send, sel, sel_impl, runtime::{Object, BOOL, YES}};
+                let radius: f64 = 8.0;
+                for label in &["library", "palette"] {
+                    if let Some(w) = app.get_webview_window(label) {
+                        if let Ok(ptr) = w.ns_window() {
+                            let ns_window = ptr as *mut Object;
+                            unsafe {
+                                let content_view: *mut Object = msg_send![ns_window, contentView];
+                                if !content_view.is_null() {
+                                    let _: () = msg_send![content_view, setWantsLayer: YES];
+                                    let layer: *mut Object = msg_send![content_view, layer];
+                                    if !layer.is_null() {
+                                        let _: () = msg_send![layer, setCornerRadius: radius];
+                                        let _: () = msg_send![layer, setMasksToBounds: YES];
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            #[cfg(target_os = "windows")]
+            {
+                use windows::Win32::Graphics::Dwm::{
+                    DwmSetWindowAttribute,
+                    DWMWA_WINDOW_CORNER_PREFERENCE,
+                    DWMWCP_ROUND,
+                };
+                for label in &["library", "palette"] {
+                    if let Some(w) = app.get_webview_window(label) {
+                        if let Ok(hwnd_tauri) = w.hwnd() {
+                            let raw: *mut std::ffi::c_void = hwnd_tauri.0;
+                            let hwnd = windows::Win32::Foundation::HWND(raw);
+                            unsafe {
+                                let pref = DWMWCP_ROUND;
+                                let _ = DwmSetWindowAttribute(
+                                    hwnd,
+                                    DWMWA_WINDOW_CORNER_PREFERENCE,
+                                    &pref as *const _ as *const _,
+                                    std::mem::size_of_val(&pref) as u32,
+                                );
+                            }
+                        }
+                    }
+                }
+            }
+
             // Cold-start with `--palette` should also open the palette,
             // so a Wayland user pressing their DE shortcut for the first
             // time (before the app is running) gets the palette instead

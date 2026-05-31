@@ -24,6 +24,10 @@ if (!rootEl) throw new Error('Root element not found');
 const params = new URLSearchParams(window.location.search);
 const isPalette = params.get('window') === 'palette';
 
+if (isPalette) {
+  document.documentElement.setAttribute('data-window', 'palette');
+}
+
 ReactDOM.createRoot(rootEl).render(
   <React.StrictMode>{isPalette ? <PaletteWindow /> : <App />}</React.StrictMode>
 );

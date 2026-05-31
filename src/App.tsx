@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
-import { Box, Button, Dot, Inline, Text, useTheme } from 'ember-design-system';
+import { Box, Dot, Stack, Text, useTheme } from 'ember-design-system';
 import { AIPanel } from './components/AIPanel';
 import { KeyboardMap } from './components/KeyboardMap';
 import { ShortcutHint } from './components/ShortcutHint';
+import { TitleBar } from './components/TitleBar';
 import { Toast } from './components/Toast';
 import { TweaksPanel } from './components/TweaksPanel';
 import { useAppState } from './hooks/useAppState';
@@ -111,15 +112,24 @@ function App() {
 
   return (
     <Box position="relative" fullHeight fullWidth overflow="hidden" bg="canvas">
-      <Library
-        t={t}
-        showLabels={tweaks.showLabels}
-        categoryMode={tweaks.categoryDisplay}
-        previewMode={tweaks.previewMode}
-        app={app}
-        semanticAvailable={semanticAvailable}
-        anthropicEnabled={anthropicEnabled}
-      />
+      <Stack fullHeight fullWidth>
+        <TitleBar
+          aiActive={settings.provider !== 'disabled'}
+          onOpenAI={() => setAiOpen(true)}
+          onToggleTweaks={() => setTweaksOpen((v) => !v)}
+        />
+        <Box grow={1} style={{ minHeight: 0, position: 'relative' }}>
+          <Library
+            t={t}
+            showLabels={tweaks.showLabels}
+            categoryMode={tweaks.categoryDisplay}
+            previewMode={tweaks.previewMode}
+            app={app}
+            semanticAvailable={semanticAvailable}
+            anthropicEnabled={anthropicEnabled}
+          />
+        </Box>
+      </Stack>
 
       {app.backfill && app.backfill.remaining > 0 && (
         <Box
@@ -133,7 +143,7 @@ function App() {
           position="fixed"
           style={{
             height: 24,
-            top: 8,
+            top: 48,
             left: '50%',
             transform: 'translateX(-50%)',
             zIndex: 300,
@@ -157,25 +167,6 @@ function App() {
           }}
         />
       )}
-
-      <Inline position="fixed" style={{ right: 150, top: 8, zIndex: 200, gap: 6 }}>
-        <Button
-          size="sm"
-          variant={settings.provider !== 'disabled' ? 'primary' : 'ghost'}
-          onClick={() => setAiOpen(true)}
-          title="Semantic search"
-        >
-          AI
-        </Button>
-        <Button
-          size="sm"
-          variant="secondary"
-          onClick={() => setTweaksOpen((v) => !v)}
-          title="Tweaks"
-        >
-          Tweaks
-        </Button>
-      </Inline>
 
       {aiOpen && (
         <AIPanel
