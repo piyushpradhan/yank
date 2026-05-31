@@ -3,11 +3,12 @@ name: Release
 # Cross-platform installer build.
 #
 # Triggers:
-#   - Pushing a tag that starts with "v" (e.g. v0.1.0, v1.0.0-rc1) — publishes
-#     a draft GitHub Release with installers attached for every platform.
-#   - Pushing a branch named "release/vX.Y.Z" — same as above, creates the tag
-#     automatically if it doesn't exist.
-#   - Manual dispatch with a tag_name input — builds + creates a draft release.
+#   - Every push (commit) — runs lint/typecheck/tests + cross-platform build
+#     and uploads artifacts; release-specific steps are skipped.
+#   - Pushing a tag that starts with "v" (e.g. v0.1.0) or a branch named
+#     "release/vX.Y.Z" — same as above plus publishes a GitHub Release with
+#     installers attached.
+#   - Manual dispatch with a tag_name input — builds + publishes a release.
 #
 # Outputs per platform:
 #   - windows-latest : .msi + .exe (NSIS)
@@ -16,8 +17,6 @@ name: Release
 
 on:
   push:
-    tags: ['v*']
-    branches: ['release/v*']
   workflow_dispatch:
     inputs:
       tag_name:
@@ -172,6 +171,25 @@ jobs:
             src-tauri/target/${{ matrix.target }}/release/bundle/deb/*.deb
           if-no-files-found: warn
 
+      - name: Collect release assets
+        if: needs.prepare.outputs.is_release == 'true'
+        id: assets
+        shell: bash
+        run: |
+          shopt -s nullglob
+          dir="src-tauri/target/${{ matrix.target }}/release/bundle"
+          assets=""
+          for sub in msi nsis dmg appimage deb; do
+            for f in "$dir/$sub"/*; do
+              [ -f "$f" ] && assets+="$f"$'\n'
+            done
+          done
+          assets="${assets%$'\n'}"
+          echo "files<<EOF" >> "$GITHUB_OUTPUT"
+          printf '%s' "$assets" >> "$GITHUB_OUTPUT"
+          echo "" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+
       - name: Attach to GitHub Release
         if: needs.prepare.outputs.is_release == 'true'
         uses: softprops/action-gh-release@v2
@@ -179,9 +197,4 @@ jobs:
           tag_name: ${{ needs.prepare.outputs.tag }}
           draft: false
           generate_release_notes: true
-          files: |
-            src-tauri/target/${{ matrix.target }}/release/bundle/msi/*.msi
-            src-tauri/target/${{ matrix.target }}/release/bundle/nsis/*setup.exe
-            src-tauri/target/${{ matrix.target }}/release/bundle/dmg/*.dmg
-            src-tauri/target/${{ matrix.target }}/release/bundle/appimage/*.AppImage
-            src-tauri/target/${{ matrix.target }}/release/bundle/deb/*.deb
+          files: ${{ steps.assets.outputs.files }}

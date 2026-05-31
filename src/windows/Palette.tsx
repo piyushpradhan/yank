@@ -335,11 +335,11 @@ export function Palette({
         bg="surface"
         style={{
           maxHeight: '100%',
-          borderRadius: 8,
+          border: '1px solid var(--border-default)',
+          borderRadius: 'var(--window-radius)',
           backdropFilter: 'blur(40px) saturate(160%)',
           WebkitBackdropFilter: 'blur(40px) saturate(160%)',
-          boxShadow: `inset 0 0 0 1px var(--border-default),
-                      0 80px 160px -30px rgba(0,0,0,${t.dark ? 0.75 : 0.3}),
+          boxShadow: `0 80px 160px -30px rgba(0,0,0,${t.dark ? 0.75 : 0.3}),
                       0 20px 40px -10px rgba(0,0,0,${t.dark ? 0.5 : 0.14})`,
           animation: 'paletteScaleIn 180ms cubic-bezier(.2,.9,.3,1.1)',
         }}

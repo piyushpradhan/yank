@@ -379,7 +379,7 @@ pub fn run() {
             #[cfg(target_os = "macos")]
             {
                 use objc::{msg_send, sel, sel_impl, runtime::{Object, BOOL, YES}};
-                let radius: f64 = 8.0;
+                let radius: f64 = 10.0;
                 for label in &["library", "palette"] {
                     if let Some(w) = app.get_webview_window(label) {
                         if let Ok(ptr) = w.ns_window() {

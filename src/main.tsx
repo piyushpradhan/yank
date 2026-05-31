@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
+import { WINDOW_RADIUS_PX } from './lib/platform';
 import { PaletteWindow } from './windows/PaletteWindow';
 // Self-hosted Geist via @fontsource — Tauri's CSP locks out external font
 // CDNs, so we ship the woff2 with the bundle instead of relying on Google
@@ -27,6 +28,8 @@ const isPalette = params.get('window') === 'palette';
 if (isPalette) {
   document.documentElement.setAttribute('data-window', 'palette');
 }
+
+document.documentElement.style.setProperty('--window-radius', `${WINDOW_RADIUS_PX}px`);
 
 ReactDOM.createRoot(rootEl).render(
   <React.StrictMode>{isPalette ? <PaletteWindow /> : <App />}</React.StrictMode>

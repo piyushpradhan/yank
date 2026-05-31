@@ -62,3 +62,9 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git tag -a "$TAG" -m "Release $TAG"
           git push origin "$TAG"
+
+          # Pushing via GITHUB_TOKEN suppresses downstream workflow triggers
+          # (GitHub prevents recursion), so explicitly dispatch the Release
+          # workflow with the new tag.
+          echo "Dispatching release workflow for $TAG"
+          gh workflow run release.yml --ref main -f tag_name="$TAG"

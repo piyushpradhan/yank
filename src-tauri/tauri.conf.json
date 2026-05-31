@@ -21,6 +21,7 @@
         "minHeight": 520,
         "center": true,
         "decorations": false,
+        "transparent": true,
         "windowEffects": {
           "effects": ["mica"],
           "state": "active"
