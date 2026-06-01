@@ -48,9 +48,9 @@ export function TitleBar({ aiActive, onOpenAI, onToggleTweaks }: TitleBarProps) 
         </Text>
       </Inline>
 
-      <Inline gap={1} align="center">
+      <Inline gap={2} align="center">
         <Box style={{ paddingRight: IS_MAC ? 0 : 8 }}>
-          <Inline gap={1} align="center">
+          <Inline gap={2} align="center">
             <IconButton
               aria-label="AI settings"
               title="AI settings"
