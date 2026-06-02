@@ -5,6 +5,7 @@ import { listen } from '@tauri-apps/api/event';
 import { Box, useTheme } from 'ember-design-system';
 import { Palette } from './Palette';
 import { useAppState } from '../hooks/useAppState';
+import { useFeature } from '../hooks/useFeature';
 import { isSemanticAvailable, useSettings } from '../hooks/useSettings';
 import { buildTheme } from '../lib/theme';
 import type { ThemeMode, Tweaks } from '../lib/types';
@@ -21,9 +22,10 @@ export function PaletteWindow() {
   const [tweaks, setTweaks] = useState<Tweaks>(DEFAULT_TWEAKS);
   const app = useAppState();
   const { settings } = useSettings();
+  const { allowed: semanticFeatureAllowed } = useFeature("semantic_search");
   const { setTheme } = useTheme();
 
-  const semanticAvailable = isSemanticAvailable(settings);
+  const semanticAvailable = isSemanticAvailable(settings) && semanticFeatureAllowed !== false;
 
   const t = useMemo(() => buildTheme(tweaks.theme, tweaks.density), [tweaks.theme, tweaks.density]);
 

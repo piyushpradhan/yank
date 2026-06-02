@@ -8,6 +8,7 @@ import { TitleBar } from './components/TitleBar';
 import { Toast } from './components/Toast';
 import { TweaksPanel } from './components/TweaksPanel';
 import { useAppState } from './hooks/useAppState';
+import { useFeature } from './hooks/useFeature';
 import { isSemanticAvailable, useSettings } from './hooks/useSettings';
 import { buildTheme } from './lib/theme';
 import type { Tweaks } from './lib/types';
@@ -68,6 +69,7 @@ function App() {
   const [hintDismissed, setHintDismissedState] = useState(false);
   const app = useAppState();
   const { settings, save: saveSettings } = useSettings();
+  const { allowed: semanticFeatureAllowed } = useFeature("semantic_search");
   const { setTheme } = useTheme();
 
   // Mirror Tweaks → ember CSS-var theme. data-theme drives all token colors.
@@ -78,7 +80,7 @@ function App() {
 
   const t = useMemo(() => buildTheme(tweaks.theme, tweaks.density), [tweaks.theme, tweaks.density]);
 
-  const semanticAvailable = isSemanticAvailable(settings);
+  const semanticAvailable = isSemanticAvailable(settings) && semanticFeatureAllowed !== false;
   const anthropicEnabled = settings.anthropic_api_key.trim().length > 0;
 
   useEffect(() => {
