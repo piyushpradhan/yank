@@ -157,28 +157,22 @@ const sizeLabel =
     var ua = navigator.userAgent + ' ' + (navigator.platform || '');
     var os = 'mac';
     var osLabel = 'macOS';
-    var kbd = '⌘⇧V';
     if (/Win(dows)?/i.test(ua)) {
       os = 'win';
       osLabel = 'Windows';
-      kbd = 'Ctrl+Shift+V';
     } else if (/Linux|X11/i.test(ua) && !/Android/i.test(ua)) {
       os = 'linux';
       osLabel = 'Linux';
-      kbd = 'Ctrl+Shift+V';
     } else if (/Mac|iPhone|iPad/i.test(ua)) {
       os = 'mac';
       osLabel = 'macOS';
-      kbd = '⌘⇧V';
     }
 
     document.body.dataset.os = os;
 
     var navLabel = document.getElementById('download-label');
-    var navKbd = document.getElementById('download-kbd');
     var ctaLabel = document.getElementById('cta-download-label');
     if (navLabel) navLabel.textContent = 'Download';
-    if (navKbd) navKbd.textContent = kbd;
     if (ctaLabel) ctaLabel.textContent = 'Download for ' + osLabel;
 
     var url = downloads[os] || downloads.mac;
