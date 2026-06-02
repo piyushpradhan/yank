@@ -1,5 +1,6 @@
 ---
 import { getLatestRelease } from "../lib/releases";
+import rootPkg from "../../../package.json";
 
 const { release, downloads } = await getLatestRelease();
 const fallbackUrl =
@@ -11,7 +12,7 @@ const downloadMap = {
   linux: downloads.linux?.url ?? fallbackUrl,
 };
 
-const version = release?.version ?? "v1.0";
+const version = release?.version ?? `v${rootPkg.version}`;
 const versionLabel = version.startsWith("v") ? version : `v${version}`;
 
 const sizeLabel =

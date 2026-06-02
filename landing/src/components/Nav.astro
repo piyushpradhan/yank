@@ -1,8 +1,9 @@
 ---
 import { getLatestRelease } from "../lib/releases";
+import rootPkg from "../../../package.json";
 
 const { release, downloads } = await getLatestRelease();
-const version = release?.version ?? "v1.0";
+const version = release?.version ?? `v${rootPkg.version}`;
 const releaseTag = version.startsWith("v") ? version : `v${version}`;
 
 // Pre-bake fallback URLs in case JS-side OS detection runs late.
