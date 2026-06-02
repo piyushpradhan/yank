@@ -3,7 +3,6 @@ import { invoke } from '@tauri-apps/api/core';
 import { Box, Dot, Stack, Text, useTheme } from 'ember-design-system';
 import { AIPanel } from './components/AIPanel';
 import { KeyboardMap } from './components/KeyboardMap';
-import { ShortcutHint } from './components/ShortcutHint';
 import { TitleBar } from './components/TitleBar';
 import { Toast } from './components/Toast';
 import { TweaksPanel } from './components/TweaksPanel';
@@ -22,51 +21,11 @@ const DEFAULT_TWEAKS: Tweaks = {
   previewMode: 'split',
 };
 
-async function loadHintDismissed(): Promise<boolean> {
-  try {
-    return await invoke<boolean>('get_hint_dismissed');
-  } catch {
-    return false;
-  }
-}
-
-async function loadShortcut(): Promise<{ modifiers: number; key: string } | null> {
-  try {
-    return await invoke<{ modifiers: number; key: string }>('get_shortcut');
-  } catch {
-    return null;
-  }
-}
-
-async function saveHintDismissed(dismissed: boolean) {
-  try {
-    await invoke('set_hint_dismissed', { dismissed });
-  } catch {
-    // non-critical
-  }
-}
-
-const MOD_CONTROL = 0x08;
-const MOD_SHIFT = 0x200;
-const MOD_ALT = 0x01;
-const MOD_META = 0x40;
-
-function labelForShortcut(modifiers: number, key: string): string {
-  const parts: string[] = [];
-  if (modifiers & MOD_CONTROL) parts.push('Ctrl');
-  if (modifiers & MOD_ALT) parts.push('Alt');
-  if (modifiers & MOD_SHIFT) parts.push('Shift');
-  if (modifiers & MOD_META) parts.push('Meta');
-  parts.push(key.startsWith('Key') ? key.slice(3) : key);
-  return parts.join('+');
-}
-
 function App() {
   const [tweaks, setTweaks] = useState<Tweaks>(DEFAULT_TWEAKS);
   const [tweaksOpen, setTweaksOpen] = useState(false);
   const [aiOpen, setAiOpen] = useState(false);
   const [keymapOpen, setKeymapOpen] = useState(false);
-  const [hintDismissed, setHintDismissedState] = useState(false);
   const app = useAppState();
   const { settings, save: saveSettings } = useSettings();
   const { allowed: semanticFeatureAllowed } = useFeature("semantic_search");
@@ -84,13 +43,6 @@ function App() {
   const anthropicEnabled = settings.anthropic_api_key.trim().length > 0;
 
   useEffect(() => {
-    void loadHintDismissed().then(setHintDismissedState);
-    void loadShortcut().then((sc) => {
-      if (sc) {
-        const label = labelForShortcut(sc.modifiers, sc.key);
-        setTweaks((prev) => ({ ...prev, paletteShortcut: label }));
-      }
-    });
     void invoke<boolean>('get_autostart')
       .then((enabled) => setTweaks((prev) => ({ ...prev, autostart: enabled })))
       .catch(() => {});
@@ -158,16 +110,6 @@ function App() {
             {app.backfill.remaining === 1 ? '' : 's'}…
           </Text>
         </Box>
-      )}
-
-      {!hintDismissed && (
-        <ShortcutHint
-          keys={(tweaks.paletteShortcut ?? 'Ctrl+Shift+Space').split('+')}
-          onDismiss={() => {
-            setHintDismissedState(true);
-            void saveHintDismissed(true);
-          }}
-        />
       )}
 
       {aiOpen && (
