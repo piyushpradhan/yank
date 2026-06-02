@@ -7,7 +7,6 @@ import { useImageUrl } from '../hooks/useImageUrl';
 import {
   Box,
   Button,
-  Dot,
   Image,
   Inline,
   Input,
@@ -16,7 +15,14 @@ import {
   Text,
   Tooltip,
 } from 'ember-design-system';
-import { LuArrowUpDown, LuEllipsis, LuPin, LuSearch } from 'react-icons/lu';
+import {
+  LuArrowUpDown,
+  LuEllipsis,
+  LuPin,
+  LuSearch,
+  LuSparkles,
+  LuTextSearch,
+} from 'react-icons/lu';
 import { getKeyIcon } from '../lib/keyIcons';
 import { CategoryChip } from '../components/Primitives';
 import { ItemBody } from '../components/Primitives';
@@ -254,13 +260,15 @@ export function Palette({
   }, [query, mode, app, semanticAvailable]);
 
   const results = useMemo(() => {
-    if (mode === 'semantic') {
-      return semanticResults ?? [];
+    if (mode === 'semantic' && semanticResults !== null) {
+      return semanticResults;
     }
+    // Fuzzy mode, or semantic mode while results are still loading — keep
+    // rows populated to avoid a flash of empty state and a preview reset.
     const pinned = app.items.filter((i) => i.pinned);
     const rest = app.items.filter((i) => !i.pinned);
     const ordered = [...pinned, ...rest];
-    return searchItems(ordered, query, mode);
+    return searchItems(ordered, query, 'fuzzy');
   }, [app.items, query, mode, semanticResults]);
 
   const MAX_VISIBLE = 8;
@@ -297,6 +305,7 @@ export function Palette({
       }
     } else if (e.key === 'Tab') {
       e.preventDefault();
+      if (mode === 'fuzzy' && !semanticAvailable) return;
       setMode((m) => (m === 'fuzzy' ? 'semantic' : 'fuzzy'));
     } else if (e.key === 'Escape') {
       e.preventDefault();
@@ -314,6 +323,7 @@ export function Palette({
       }
     } else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
       e.preventDefault();
+      if (mode === 'fuzzy' && !semanticAvailable) return;
       setMode((m) => (m === 'fuzzy' ? 'semantic' : 'fuzzy'));
     }
   };
@@ -366,18 +376,29 @@ export function Palette({
                 mode === 'semantic' ? 'Describe what you need…' : 'Search clipboard history'
               }
               className="!border-none !bg-transparent !text-lg"
+              disableFocus
             />
             <Tooltip content={<Kbd size="sm">{getKeyIcon('Tab')}</Kbd>}>
               <Button
                 size="sm"
                 variant={mode === 'semantic' ? 'primary' : 'secondary'}
-                onClick={() => setMode((m) => (m === 'fuzzy' ? 'semantic' : 'fuzzy'))}
+                onClick={() => {
+                  if (mode === 'fuzzy' && !semanticAvailable) return;
+                  setMode((m) => (m === 'fuzzy' ? 'semantic' : 'fuzzy'));
+                }}
                 leadingIcon={
-                  <Dot
-                    size="xs"
-                    color={mode === 'semantic' ? 'var(--text-inverse)' : 'var(--text-tertiary)'}
-                  />
+                  mode === 'semantic' ? (
+                    <LuSparkles size={13} color="var(--text-inverse)" />
+                  ) : (
+                    <LuTextSearch size={13} color="var(--text-tertiary)" />
+                  )
                 }
+                style={{
+                  width: 112,
+                  minWidth: 0,
+                  justifyContent: 'flex-start',
+                  flexShrink: 0,
+                }}
               >
                 {mode}
               </Button>

@@ -30,7 +30,15 @@ import {
   Text,
 } from 'ember-design-system';
 import { getKeyIcon } from '../lib/keyIcons';
-import { LuClock, LuList, LuEllipsis, LuPin, LuSearch } from 'react-icons/lu';
+import {
+  LuClock,
+  LuList,
+  LuEllipsis,
+  LuPin,
+  LuSearch,
+  LuSparkles,
+  LuTextSearch,
+} from 'react-icons/lu';
 import { CategoryChip } from '../components/Primitives';
 import { PreviewPane } from '../components/PreviewPane';
 import { SidebarRow } from '../components/SidebarRow';
@@ -464,11 +472,13 @@ export function Library({
     }
     if (inSearch && e.key === 'Tab') {
       e.preventDefault();
+      if (mode === 'fuzzy' && !semanticAvailable) return;
       if (mode === 'fuzzy') setMode('semantic');
       else setMode('fuzzy');
     }
     if (inSearch && e.key === 'Enter') {
       e.preventDefault();
+      if (mode === 'fuzzy' && !semanticAvailable) return;
       if (mode === 'fuzzy') setMode('semantic');
       else if (current) app.copyItem(current.id);
       return;
@@ -517,78 +527,88 @@ export function Library({
         {/* Sidebar */}
         <Stack
           shrink={0}
-          overflow="auto"
+          grow={1}
           px={2}
           py={3}
-          style={{ width: 200, borderRight: '1px solid var(--border-subtle)', fontSize: 13 }}
+          style={{
+            flexBasis: '18%',
+            minWidth: 200,
+            maxWidth: 260,
+            minHeight: 0,
+            borderRight: '1px solid var(--border-subtle)',
+            fontSize: 13,
+          }}
         >
-          <SidebarRow t={t} active={filter === 'all'} onClick={() => setFilter('all')}>
-            <SidebarIcon t={t} active={filter === 'all'}>
-              <LuList size={12} />
-            </SidebarIcon>
-            <Box grow={1} style={{ minWidth: 0 }}>
-              All items
-            </Box>
-            <SidebarCount t={t}>{counts.all}</SidebarCount>
-          </SidebarRow>
-          <SidebarRow t={t} active={filter === 'pinned'} onClick={() => setFilter('pinned')}>
-            <SidebarIcon t={t} active={filter === 'pinned'}>
-              <LuPin size={12} style={filter === 'pinned' ? { fill: 'currentColor' } : undefined} />
-            </SidebarIcon>
-            <Box grow={1} style={{ minWidth: 0 }}>
-              Pinned
-            </Box>
-            <SidebarCount t={t}>{counts.pinned}</SidebarCount>
-          </SidebarRow>
-
-          <SidebarHeading t={t}>Time</SidebarHeading>
-          {(
-            [
-              ['all', 'Any time'],
-              ['today', 'Today'],
-              ['yesterday', 'Yesterday'],
-              ['week', 'Last 7 days'],
-              ['month', 'Last 30 days'],
-            ] as [TimeFilter, string][]
-          ).map(([value, label]) => (
-            <SidebarRow
-              key={value}
-              t={t}
-              active={timeFilter === value}
-              onClick={() => setTimeFilter(value)}
-            >
-              <SidebarIcon t={t} active={timeFilter === value}>
-                <LuClock size={12} />
+          <Stack grow={1} overflow="auto" style={{ minHeight: 0 }}>
+            <SidebarRow t={t} active={filter === 'all'} onClick={() => setFilter('all')}>
+              <SidebarIcon t={t} active={filter === 'all'}>
+                <LuList size={12} />
               </SidebarIcon>
               <Box grow={1} style={{ minWidth: 0 }}>
-                {label}
+                All items
               </Box>
+              <SidebarCount t={t}>{counts.all}</SidebarCount>
             </SidebarRow>
-          ))}
+            <SidebarRow t={t} active={filter === 'pinned'} onClick={() => setFilter('pinned')}>
+              <SidebarIcon t={t} active={filter === 'pinned'}>
+                <LuPin size={12} style={filter === 'pinned' ? { fill: 'currentColor' } : undefined} />
+              </SidebarIcon>
+              <Box grow={1} style={{ minWidth: 0 }}>
+                Pinned
+              </Box>
+              <SidebarCount t={t}>{counts.pinned}</SidebarCount>
+            </SidebarRow>
 
-          <SidebarHeading t={t}>Categories</SidebarHeading>
-          {CATEGORIES.map((cat: Category) => {
-            const meta = CATEGORY_META[cat];
-            return (
-              <SidebarRow key={cat} t={t} active={filter === cat} onClick={() => setFilter(cat)}>
-                <Box
-                  display="inline-flex"
-                  align="center"
-                  justify="center"
-                  shrink={0}
-                  style={{ width: 16 }}
-                >
-                  <CategoryChip t={t} cat={cat} mode="dot" />
-                </Box>
+            <SidebarHeading t={t}>Time</SidebarHeading>
+            {(
+              [
+                ['all', 'Any time'],
+                ['today', 'Today'],
+                ['yesterday', 'Yesterday'],
+                ['week', 'Last 7 days'],
+                ['month', 'Last 30 days'],
+              ] as [TimeFilter, string][]
+            ).map(([value, label]) => (
+              <SidebarRow
+                key={value}
+                t={t}
+                active={timeFilter === value}
+                onClick={() => setTimeFilter(value)}
+              >
+                <SidebarIcon t={t} active={timeFilter === value}>
+                  <LuClock size={12} />
+                </SidebarIcon>
                 <Box grow={1} style={{ minWidth: 0 }}>
-                  {meta.label}
+                  {label}
                 </Box>
-                <SidebarCount t={t}>{counts[cat] || 0}</SidebarCount>
               </SidebarRow>
-            );
-          })}
+            ))}
+
+            <SidebarHeading t={t}>Categories</SidebarHeading>
+            {CATEGORIES.map((cat: Category) => {
+              const meta = CATEGORY_META[cat];
+              return (
+                <SidebarRow key={cat} t={t} active={filter === cat} onClick={() => setFilter(cat)}>
+                  <Box
+                    display="inline-flex"
+                    align="center"
+                    justify="center"
+                    shrink={0}
+                    style={{ width: 16 }}
+                  >
+                    <CategoryChip t={t} cat={cat} mode="dot" />
+                  </Box>
+                  <Box grow={1} style={{ minWidth: 0 }}>
+                    {meta.label}
+                  </Box>
+                  <SidebarCount t={t}>{counts[cat] || 0}</SidebarCount>
+                </SidebarRow>
+              );
+            })}
+          </Stack>
 
           <Grid
+            shrink={0}
             columns="auto 1fr auto 1fr"
             align="center"
             px={2}
@@ -627,8 +647,10 @@ export function Library({
           grow={localPreview === 'split' ? undefined : 1}
           style={{
             minHeight: 0,
-            minWidth: 320,
-            width: localPreview === 'split' ? 340 : 'auto',
+            flexBasis: localPreview === 'split' ? '36%' : undefined,
+            minWidth: localPreview === 'split' ? 320 : 320,
+            maxWidth: localPreview === 'split' ? 460 : undefined,
+            width: localPreview === 'split' ? undefined : 'auto',
             borderRight: localPreview === 'split' ? '1px solid var(--border-subtle)' : undefined,
           }}
         >
@@ -652,20 +674,25 @@ export function Library({
               <Button
                 size="md"
                 variant={mode === 'semantic' ? 'primary' : 'ghost'}
-                onClick={() => setMode((m) => (m === 'fuzzy' ? 'semantic' : 'fuzzy'))}
+                onClick={() => {
+                  if (mode === 'fuzzy' && !semanticAvailable) return;
+                  setMode((m) => (m === 'fuzzy' ? 'semantic' : 'fuzzy'));
+                }}
                 leadingIcon={
-                  <Dot
-                    size="xs"
-                    color={mode === 'semantic' ? 'var(--text-inverse)' : 'var(--text-tertiary)'}
-                  />
+                  mode === 'semantic' ? (
+                    <LuSparkles size={13} color="var(--text-inverse)" />
+                  ) : (
+                    <LuTextSearch size={13} color="var(--text-tertiary)" />
+                  )
                 }
+                style={{ width: 100, justifyContent: 'center', flexShrink: 0 }}
               >
                 {mode}
               </Button>
             </Inline>
           </Box>
 
-          {query && mode === 'semantic' && (
+          {query && mode === 'semantic' ? (
             <SemanticBanner
               t={t}
               count={searched.length}
@@ -673,6 +700,8 @@ export function Library({
               error={semanticError}
               loading={semanticResults === null && !semanticError}
             />
+          ) : (
+            <Box aria-hidden style={{ height: 34, borderBottom: '1px solid transparent' }} />
           )}
 
           <Box ref={listRef} grow={1} overflow="auto" p={1}>
