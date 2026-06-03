@@ -42,13 +42,15 @@ const GROUPS: [string, KeyRow[]][] = [
 export function KeyboardMap() {
   return (
     <Grid
-      columns={3}
       gap={6}
       bg="surface"
       overflow="auto"
       fullHeight
       fullWidth
-      style={{ padding: 'var(--space-6)' }}
+      style={{
+        padding: 'var(--space-6)',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+      }}
     >
       {GROUPS.map(([heading, rows]) => (
         <Stack key={heading}>

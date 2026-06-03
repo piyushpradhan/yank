@@ -1,19 +1,21 @@
 import { useEffect, useState } from 'react';
 import { getCurrentWindow } from '@tauri-apps/api/window';
-import { Box, IconButton, Inline, Text } from 'ember-design-system';
+import { Box, Dot, IconButton, Inline, Text } from 'ember-design-system';
 import { LuChevronsDownUp, LuMinus, LuSlidersHorizontal, LuSparkles, LuSquare, LuX } from 'react-icons/lu';
 import { IS_MAC } from '../lib/platform';
+import type { BackfillState } from '../hooks/useAppState';
 
 interface TitleBarProps {
   aiActive: boolean;
   onOpenAI: () => void;
   onToggleTweaks: () => void;
+  backfill: BackfillState | null;
 }
 
 const HEIGHT = 40;
 const TRAFFIC_LIGHT_RESERVED = 84;
 
-export function TitleBar({ aiActive, onOpenAI, onToggleTweaks }: TitleBarProps) {
+export function TitleBar({ aiActive, onOpenAI, onToggleTweaks, backfill }: TitleBarProps) {
   return (
     <Inline
       data-tauri-drag-region
@@ -48,6 +50,8 @@ export function TitleBar({ aiActive, onOpenAI, onToggleTweaks }: TitleBarProps) 
         </Text>
       </Inline>
 
+      {backfill && backfill.remaining > 0 && <BackfillPill remaining={backfill.remaining} />}
+
       <Inline gap={2} align="center">
         <Box style={{ paddingRight: IS_MAC ? 0 : 8 }}>
           <Inline gap={2} align="center">
@@ -72,6 +76,35 @@ export function TitleBar({ aiActive, onOpenAI, onToggleTweaks }: TitleBarProps) 
         {!IS_MAC && <WindowsControls />}
       </Inline>
     </Inline>
+  );
+}
+
+function BackfillPill({ remaining }: { remaining: number }) {
+  return (
+    <Box
+      display="inline-flex"
+      align="center"
+      gap={2}
+      px={3}
+      radius="pill"
+      bg="accent-soft"
+      shadow="sm"
+      position="absolute"
+      style={{
+        height: 22,
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        border: '1px solid color-mix(in oklab, var(--accent-ember-500) 24%, transparent)',
+        pointerEvents: 'none',
+      }}
+      aria-live="polite"
+    >
+      <Dot tone="accent" size="sm" pulse />
+      <Text family="mono" size={10.5} tabularNums tone="accent-ink">
+        Embedding {remaining} item{remaining === 1 ? '' : 's'}…
+      </Text>
+    </Box>
   );
 }
 

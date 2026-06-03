@@ -1,8 +1,9 @@
 use std::sync::{Arc, RwLock};
+use std::time::Duration;
 use tauri::{AppHandle, Emitter, Manager, State};
 use tauri_plugin_store::StoreExt;
 
-use crate::embed::EmbedConfig;
+use crate::embed::{embed, EmbedConfig, EmbedTask, Provider};
 
 pub struct SettingsState(pub Arc<RwLock<EmbedConfig>>);
 
@@ -75,6 +76,34 @@ pub fn set_settings(
         crate::label_queue::kick(&app);
     }
     Ok(())
+}
+
+/// Probe a candidate `EmbedConfig` to verify the user can reach the provider
+/// they picked. Used by the AI settings modal so configuration errors and
+/// network failures surface upfront instead of only at search time.
+///
+/// `Disabled` — semantic search is intentionally off; reported as such.
+/// `Local`    — bundled model; skipped (would download/load on first call).
+/// `Openai`/`Ollama` — short live embed against the configured endpoint.
+#[tauri::command]
+pub async fn test_embed_provider(cfg: EmbedConfig) -> Result<(), String> {
+    match cfg.provider {
+        Provider::Disabled => Err("Semantic search is turned off.".into()),
+        Provider::Local => Ok(()),
+        Provider::Openai | Provider::Ollama => {
+            if matches!(cfg.provider, Provider::Openai) && cfg.openai_api_key.trim().is_empty() {
+                return Err("OpenAI API key is required.".into());
+            }
+            if matches!(cfg.provider, Provider::Ollama) && cfg.ollama_url.trim().is_empty() {
+                return Err("Ollama URL is required.".into());
+            }
+            let client = reqwest::Client::builder()
+                .timeout(Duration::from_secs(8))
+                .build()
+                .map_err(|e| format!("http client: {e}"))?;
+            embed(&cfg, &client, "ping", EmbedTask::Query).await.map(|_| ())
+        }
+    }
 }
 
 const HINT_KEY: &str = "hintDismissed";

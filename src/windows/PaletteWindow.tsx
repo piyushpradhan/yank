@@ -5,7 +5,6 @@ import { listen } from '@tauri-apps/api/event';
 import { Box, useTheme } from 'ember-design-system';
 import { Palette } from './Palette';
 import { useAppState } from '../hooks/useAppState';
-import { useFeature } from '../hooks/useFeature';
 import { isSemanticAvailable, useSettings } from '../hooks/useSettings';
 import { buildTheme } from '../lib/theme';
 import type { ThemeMode, Tweaks } from '../lib/types';
@@ -22,10 +21,20 @@ export function PaletteWindow() {
   const [tweaks, setTweaks] = useState<Tweaks>(DEFAULT_TWEAKS);
   const app = useAppState();
   const { settings } = useSettings();
-  const { allowed: semanticFeatureAllowed } = useFeature("semantic_search");
   const { setTheme } = useTheme();
 
-  const semanticAvailable = isSemanticAvailable(settings) && semanticFeatureAllowed !== false;
+  // Mode-switching is gated on config only — runtime failures surface through
+  // `semanticOffMessage` (banner / empty state / toast) but never lock the user
+  // out of retrying semantic mode.
+  const semanticAvailable = isSemanticAvailable(settings);
+  const semanticOffMessage = !semanticAvailable
+    ? settings.provider === 'disabled'
+      ? 'Semantic search is turned off.'
+      : 'Semantic search is unavailable — finish configuring your provider.'
+    : app.providerHealth.status === 'error'
+      ? `Semantic search is unavailable — ${app.providerHealth.error ?? 'provider error'}.`
+      : null;
+  const anthropicEnabled = settings.anthropic_api_key.trim().length > 0;
 
   const t = useMemo(() => buildTheme(tweaks.theme, tweaks.density), [tweaks.theme, tweaks.density]);
 
@@ -76,6 +85,8 @@ export function PaletteWindow() {
         app={app}
         onClose={close}
         semanticAvailable={semanticAvailable}
+        semanticOffMessage={semanticOffMessage}
+        anthropicEnabled={anthropicEnabled}
       />
     </Box>
   );

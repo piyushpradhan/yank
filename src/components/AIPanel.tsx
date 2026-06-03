@@ -1,8 +1,9 @@
 import { useState } from 'react';
+import { invoke } from '@tauri-apps/api/core';
 import {
   Box,
   Button,
-  Card,
+  Divider,
   Dot,
   FormField,
   Inline,
@@ -13,11 +14,9 @@ import {
   Stack,
   Text,
 } from 'ember-design-system';
-import type { Theme } from '../lib/types';
 import type { EmbedProvider, EmbedSettings } from '../hooks/useSettings';
 
 interface AIPanelProps {
-  t: Theme;
   settings: EmbedSettings;
   onChange: (next: EmbedSettings) => void;
   onClose: () => void;
@@ -43,6 +42,13 @@ const LOCAL_MODELS: { id: string; label: string; note: string }[] = [
   },
 ];
 
+type ErrorField = 'openai_key' | 'ollama_url' | 'connection';
+type TestState =
+  | { kind: 'idle' }
+  | { kind: 'running' }
+  | { kind: 'ok' }
+  | { kind: 'err'; msg: string };
+
 function FieldLabel({ children }: { children: React.ReactNode }) {
   return (
     <Overline as="div" size={10.5} weight="regular" tracking="wide" tone="secondary">
@@ -51,194 +57,284 @@ function FieldLabel({ children }: { children: React.ReactNode }) {
   );
 }
 
-function Hint({ children }: { children: React.ReactNode }) {
+function SectionHeading({ children }: { children: React.ReactNode }) {
   return (
-    <Text as="p" size={10.5} tone="tertiary" leading={1.5} style={{ marginTop: 6, marginBottom: 14 }}>
+    <Overline as="div" size={10.5} weight="medium" tracking="wider" tone="accent-ink">
       {children}
-    </Text>
+    </Overline>
   );
+}
+
+function needsRemoteProbe(p: EmbedProvider): boolean {
+  return p === 'openai' || p === 'ollama';
+}
+
+function toErrorMessage(err: unknown): string {
+  if (err instanceof Error) return err.message;
+  if (typeof err === 'string') return err;
+  return 'Unknown error.';
 }
 
 export function AIPanel({ settings, onChange, onClose }: AIPanelProps) {
   const [local, setLocal] = useState<EmbedSettings>(settings);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<{ field: ErrorField; msg: string } | null>(null);
+  const [test, setTest] = useState<TestState>({ kind: 'idle' });
+  const [saving, setSaving] = useState(false);
 
   const set = <K extends keyof EmbedSettings>(k: K, v: EmbedSettings[K]) => {
     setLocal((prev) => ({ ...prev, [k]: v }));
     setError(null);
+    // Editing any field invalidates the prior test result.
+    setTest({ kind: 'idle' });
   };
 
-  const validate = (): string | null => {
+  const validateConfig = (): { field: ErrorField; msg: string } | null => {
     if (local.provider === 'openai' && !local.openai_api_key.trim()) {
-      return 'OpenAI API key is required.';
+      return { field: 'openai_key', msg: 'OpenAI API key is required.' };
     }
     if (local.provider === 'ollama' && !local.ollama_url.trim()) {
-      return 'Ollama URL is required.';
+      return { field: 'ollama_url', msg: 'Ollama URL is required.' };
     }
     return null;
   };
 
-  const save = () => {
-    const problem = validate();
+  const probe = async (): Promise<{ ok: true } | { ok: false; msg: string }> => {
+    try {
+      await invoke<void>('test_embed_provider', { cfg: local });
+      return { ok: true };
+    } catch (e) {
+      return { ok: false, msg: toErrorMessage(e) };
+    }
+  };
+
+  const runTest = async () => {
+    const problem = validateConfig();
+    if (problem) {
+      setError(problem);
+      setTest({ kind: 'idle' });
+      return;
+    }
+    setError(null);
+    setTest({ kind: 'running' });
+    const res = await probe();
+    setTest(res.ok ? { kind: 'ok' } : { kind: 'err', msg: res.msg });
+  };
+
+  const save = async () => {
+    const problem = validateConfig();
     if (problem) {
       setError(problem);
       return;
     }
+    setError(null);
+
+    if (needsRemoteProbe(local.provider)) {
+      setSaving(true);
+      setTest({ kind: 'running' });
+      const res = await probe();
+      setSaving(false);
+      if (!res.ok) {
+        setTest({ kind: 'err', msg: res.msg });
+        setError({
+          field: 'connection',
+          msg: `Could not reach ${local.provider === 'openai' ? 'OpenAI' : 'Ollama'}: ${res.msg}`,
+        });
+        return;
+      }
+      setTest({ kind: 'ok' });
+    }
+
     onChange(local);
     onClose();
   };
 
-  const embedStatus = summariseEmbedStatus(local);
-  const labelStatus = local.anthropic_api_key.trim()
-    ? 'On — Claude Haiku generates labels in the background.'
-    : 'Off — items show a content preview as their label.';
+  const embedStatus = summariseEmbedStatus(local, test);
+  const labelsOn = local.anthropic_api_key.trim().length > 0;
+  const localNote =
+    LOCAL_MODELS.find((m) => m.id === local.local_model)?.note ??
+    'Runs entirely on your machine via ONNX.';
 
   return (
     <Modal
       open
       onClose={onClose}
-      title="Semantic search"
+      title="AI features"
       description="Two independent AI features: local-by-default embeddings for search, plus optional Claude Haiku for one-line intent labels."
       size="md"
       footer={
         <>
-          <Button variant="ghost" onClick={onClose}>
+          <Button variant="ghost" onClick={onClose} disabled={saving}>
             Cancel
           </Button>
-          <Button variant="primary" onClick={save}>
-            Save
+          <Button variant="primary" onClick={() => void save()} loading={saving}>
+            {saving ? 'Testing…' : 'Save'}
           </Button>
         </>
       }
     >
-      <StatusRow kind={embedStatus.kind} label="Semantic search" detail={embedStatus.text} />
-      <StatusRow
-        kind={local.anthropic_api_key.trim() ? 'ok' : 'off'}
-        label="AI labels"
-        detail={labelStatus}
-      />
+      <Stack gap={5}>
+        <Stack gap={2}>
+          <StatusRow kind={embedStatus.kind} label="Semantic search" detail={embedStatus.text} />
+          <StatusRow
+            kind={labelsOn ? 'ok' : 'off'}
+            label="AI labels"
+            detail={
+              labelsOn
+                ? 'On — Claude Haiku generates labels in the background.'
+                : 'Off — items show a content preview as their label.'
+            }
+          />
+        </Stack>
 
-      <Stack gap={2} style={{ marginTop: 16, marginBottom: 16 }}>
-        <FieldLabel>Provider</FieldLabel>
-        <Inline gap={2} wrap>
-          {PROVIDERS.map((p) => (
-            <Button
-              key={p.id}
-              size="sm"
-              variant={local.provider === p.id ? 'primary' : 'secondary'}
-              onClick={() => set('provider', p.id)}
+        {local.provider === 'disabled' && (
+          <Box bg="subtle" radius="lg" border="subtle" p={3}>
+            <Stack gap={1}>
+              <Text size={12} weight="medium" tone="primary">
+                Semantic search is turned off.
+              </Text>
+              <Text size={11.5} tone="secondary" leading="snug">
+                The palette will use fuzzy matching only. Pick Local, OpenAI, or Ollama to turn
+                semantic search back on.
+              </Text>
+            </Stack>
+          </Box>
+        )}
+
+        <Stack gap={3}>
+          <SectionHeading>Semantic search</SectionHeading>
+
+          <FormField label={<FieldLabel>Provider</FieldLabel>}>
+            <Inline gap={2} wrap>
+              {PROVIDERS.map((p) => (
+                <Button
+                  key={p.id}
+                  size="sm"
+                  variant={local.provider === p.id ? 'primary' : 'secondary'}
+                  onClick={() => set('provider', p.id)}
+                >
+                  {p.label}
+                </Button>
+              ))}
+            </Inline>
+          </FormField>
+
+          {local.provider === 'local' && (
+            <FormField
+              label={<FieldLabel>Embedding model</FieldLabel>}
+              hint={`${localNote} The first embedding may take a few seconds while the model downloads.`}
             >
-              {p.label}
-            </Button>
-          ))}
-        </Inline>
-      </Stack>
+              <Select
+                value={local.local_model}
+                onChange={(v) => set('local_model', v)}
+                options={LOCAL_MODELS.map((m) => ({ value: m.id, label: m.label }))}
+                aria-label="Embedding model"
+              />
+            </FormField>
+          )}
 
-      {local.provider === 'local' && (
-        <>
-          <Field label="Embedding model">
-            <Select
-              value={local.local_model}
-              onChange={(v) => set('local_model', v)}
-              options={LOCAL_MODELS.map((m) => ({ value: m.id, label: m.label }))}
-              aria-label="Embedding model"
-            />
-          </Field>
-          <Hint>
-            {LOCAL_MODELS.find((m) => m.id === local.local_model)?.note ??
-              'Runs entirely on your machine via ONNX.'}{' '}
-            The first embedding may take a few seconds while the model downloads.
-          </Hint>
-        </>
-      )}
+          {local.provider === 'openai' && (
+            <>
+              <FormField
+                label={<FieldLabel>OpenAI API key</FieldLabel>}
+                error={error?.field === 'openai_key' ? error.msg : undefined}
+              >
+                <Input
+                  type="password"
+                  value={local.openai_api_key}
+                  onChange={(e) => set('openai_api_key', e.target.value)}
+                  placeholder="sk-…"
+                />
+              </FormField>
+              <FormField label={<FieldLabel>Model</FieldLabel>}>
+                <Input
+                  value={local.openai_model}
+                  onChange={(e) => set('openai_model', e.target.value)}
+                />
+              </FormField>
+            </>
+          )}
 
-      {local.provider === 'openai' && (
-        <>
-          <Field label="OpenAI API key">
+          {local.provider === 'ollama' && (
+            <>
+              <FormField
+                label={<FieldLabel>Ollama URL</FieldLabel>}
+                error={error?.field === 'ollama_url' ? error.msg : undefined}
+              >
+                <Input
+                  value={local.ollama_url}
+                  onChange={(e) => set('ollama_url', e.target.value)}
+                />
+              </FormField>
+              <FormField
+                label={<FieldLabel>Embedding model</FieldLabel>}
+                hint={
+                  <>
+                    Install an embedding model first:{' '}
+                    <Text as="code" family="mono" size={10.5} tone="secondary">
+                      ollama pull {local.ollama_model}
+                    </Text>
+                  </>
+                }
+              >
+                <Input
+                  value={local.ollama_model}
+                  onChange={(e) => set('ollama_model', e.target.value)}
+                />
+              </FormField>
+            </>
+          )}
+
+          {needsRemoteProbe(local.provider) && (
+            <Inline gap={3} align="center" wrap>
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={() => void runTest()}
+                disabled={test.kind === 'running' || saving}
+                loading={test.kind === 'running'}
+              >
+                {test.kind === 'running' ? 'Testing…' : 'Test connection'}
+              </Button>
+              {test.kind === 'ok' && (
+                <Inline gap={2} align="center">
+                  <Dot tone="success" size="sm" />
+                  <Text size={11.5} tone="success">
+                    Connected.
+                  </Text>
+                </Inline>
+              )}
+              {test.kind === 'err' && (
+                <Text size={11.5} tone="danger" leading="snug">
+                  {test.msg}
+                </Text>
+              )}
+            </Inline>
+          )}
+        </Stack>
+
+        <Divider />
+
+        <Stack gap={3}>
+          <SectionHeading>AI labels</SectionHeading>
+
+          <FormField
+            label={<FieldLabel>Anthropic API key</FieldLabel>}
+            hint="Each clip gets a one-line intent summary (e.g. “Stripe Webhook Debug”). Runs on Claude Haiku in the background. A few hundred clips cost pennies."
+          >
             <Input
               type="password"
-              value={local.openai_api_key}
-              onChange={(e) => set('openai_api_key', e.target.value)}
-              placeholder="sk-…"
+              value={local.anthropic_api_key}
+              onChange={(e) => set('anthropic_api_key', e.target.value)}
+              placeholder="sk-ant-…"
             />
-          </Field>
-          <Field label="Model">
-            <Input
-              value={local.openai_model}
-              onChange={(e) => set('openai_model', e.target.value)}
-            />
-          </Field>
-        </>
-      )}
-
-      {local.provider === 'ollama' && (
-        <>
-          <Field label="Ollama URL">
-            <Input value={local.ollama_url} onChange={(e) => set('ollama_url', e.target.value)} />
-          </Field>
-          <Field label="Embedding model">
-            <Input
-              value={local.ollama_model}
-              onChange={(e) => set('ollama_model', e.target.value)}
-            />
-          </Field>
-          <Hint>
-            Install an embedding model first:{' '}
-            <Box
-              as="code"
-              display="inline"
-              bg="subtle"
-              radius="sm"
-              style={{ padding: '1px 6px' }}
-            >
-              <Text family="mono" size={10.5} tone="secondary">
-                ollama pull {local.ollama_model}
-              </Text>
-            </Box>
-          </Hint>
-        </>
-      )}
-
-      <Box style={{ marginTop: 18, paddingTop: 14, borderTop: '1px solid var(--border-subtle)' }}>
-        <Field label="Anthropic API key — AI labels">
-          <Input
-            type="password"
-            value={local.anthropic_api_key}
-            onChange={(e) => set('anthropic_api_key', e.target.value)}
-            placeholder="sk-ant-…"
-          />
-        </Field>
-        <Hint>
-          Each clip gets a one-line intent summary (e.g. "Stripe Webhook Debug"). Runs on Claude
-          Haiku in the background. A few hundred clips cost pennies.
-        </Hint>
-      </Box>
-
-      {error && (
-        <Card
-          role="alert"
-          padding="none"
-          className="mt-3.5 !bg-subtle px-2.5 py-2"
-          style={{ borderColor: 'var(--status-danger)' }}
-        >
-          <Text size={11.5} tone="danger">
-            {error}
-          </Text>
-        </Card>
-      )}
+          </FormField>
+        </Stack>
+      </Stack>
     </Modal>
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <FormField className="mb-3.5 !gap-1.5" label={<FieldLabel>{label}</FieldLabel>}>
-      {children}
-    </FormField>
-  );
-}
-
-type StatusKind = 'ok' | 'off' | 'warn';
+type StatusKind = 'ok' | 'off' | 'warn' | 'err';
 
 interface StatusRowProps {
   kind: StatusKind;
@@ -247,28 +343,29 @@ interface StatusRowProps {
 }
 
 function StatusRow({ kind, label, detail }: StatusRowProps) {
-  const tone = kind === 'ok' ? 'success' : kind === 'warn' ? 'warning' : 'neutral';
+  const tone =
+    kind === 'ok' ? 'success' : kind === 'warn' ? 'warning' : kind === 'err' ? 'danger' : 'neutral';
   return (
-    <Card padding="none" className="mb-2 !rounded-lg !bg-subtle px-3 py-2.5">
-      <Inline gap={3} align="start">
-        <Dot tone={tone} size="md" ring style={{ marginTop: 5 }} />
+    <Box bg="subtle" radius="lg" px={3} py={2}>
+      <Inline gap={3} align="center">
+        <Dot tone={tone} size="md" ring />
         <Stack gap={1} grow={1}>
           <Overline as="span" size="2xs" tone="secondary">
             {label}
           </Overline>
-          <Text size={11.5} tone="primary" leading={1.5}>
+          <Text size={11.5} tone="primary" leading="snug">
             {detail}
           </Text>
         </Stack>
       </Inline>
-    </Card>
+    </Box>
   );
 }
 
-function summariseEmbedStatus(s: EmbedSettings): {
-  kind: StatusKind;
-  text: string;
-} {
+function summariseEmbedStatus(
+  s: EmbedSettings,
+  test: TestState,
+): { kind: StatusKind; text: string } {
   if (s.provider === 'disabled') {
     return { kind: 'off', text: 'Off — fuzzy search only.' };
   }
@@ -282,10 +379,16 @@ function summariseEmbedStatus(s: EmbedSettings): {
     if (!s.openai_api_key.trim()) {
       return { kind: 'warn', text: 'OpenAI selected but no API key yet.' };
     }
+    if (test.kind === 'err') {
+      return { kind: 'err', text: `OpenAI unreachable — ${test.msg}` };
+    }
     return { kind: 'ok', text: `OpenAI — ${s.openai_model}` };
   }
   if (!s.ollama_url.trim()) {
     return { kind: 'warn', text: 'Ollama selected but no URL yet.' };
+  }
+  if (test.kind === 'err') {
+    return { kind: 'err', text: `Ollama unreachable — ${test.msg}` };
   }
   return { kind: 'ok', text: `Ollama — ${s.ollama_model} at ${s.ollama_url}` };
 }

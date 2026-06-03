@@ -41,6 +41,8 @@ interface PaletteRowProps {
   query: string;
   showLabels: boolean;
   categoryMode: CategoryDisplay;
+  /** When false, AI labels are off — `!labelGenerated` is the final state, not pending. */
+  aiLabelsEnabled: boolean;
   getImage: (id: string) => Promise<Blob | null>;
   onMouseEnter: () => void;
   onClick: () => void;
@@ -54,10 +56,12 @@ function PaletteRow({
   query,
   showLabels,
   categoryMode,
+  aiLabelsEnabled,
   getImage,
   onMouseEnter,
   onClick,
 }: PaletteRowProps) {
+  const labelPending = !item.labelGenerated && aiLabelsEnabled;
   const isImage = item.category === 'image';
   const imageUrl = useImageUrl(isImage ? item.id : '', isImage ? getImage : NO_IMAGE);
 
@@ -104,7 +108,7 @@ function PaletteRow({
       <Box grow={1} style={{ minWidth: 0 }}>
         {showLabels && (
           <Inline
-            title={item.labelGenerated ? undefined : 'Awaiting AI label'}
+            title={labelPending ? 'Awaiting AI label' : undefined}
             style={{ gap: 6, overflow: 'hidden' }}
           >
             <Text
@@ -112,13 +116,13 @@ function PaletteRow({
               size={t.dense ? 13.5 : 14.5}
               tracking="tight"
               truncate
-              weight={item.labelGenerated ? 'medium' : 'regular'}
-              italic={!item.labelGenerated}
-              tone={item.labelGenerated ? 'primary' : 'secondary'}
+              weight={labelPending ? 'regular' : 'medium'}
+              italic={labelPending}
+              tone={labelPending ? 'secondary' : 'primary'}
             >
               {highlightMatch(t, item.label, query)}
             </Text>
-            {!item.labelGenerated && (
+            {labelPending && (
               <LuEllipsis
                 size={11}
                 aria-hidden="true"
@@ -188,6 +192,12 @@ interface PaletteProps {
   onClose: () => void;
   /** Whether semantic search (embedding) provider is active. */
   semanticAvailable: boolean;
+  /** Human-readable reason semantic is off (drives the inline empty-state and
+   *  the one-shot toast when the user switches to semantic mode). */
+  semanticOffMessage: string | null;
+  /** Whether Anthropic-backed AI labeling is configured. When false,
+   *  `!labelGenerated` is the final state, not a pending one. */
+  anthropicEnabled: boolean;
   initialQuery?: string;
   initialMode?: SearchMode;
   initialSelected?: number;
@@ -200,6 +210,8 @@ export function Palette({
   app,
   onClose,
   semanticAvailable,
+  semanticOffMessage,
+  anthropicEnabled,
   initialQuery = '',
   initialMode = 'fuzzy',
   initialSelected = 0,
@@ -212,10 +224,22 @@ export function Palette({
   const [semanticLoading, setSemanticLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
+  const offToastShownRef = useRef(false);
 
   useEffect(() => {
     inputRef.current?.focus();
   }, []);
+
+  // One-shot toast per mount whenever the user is in semantic mode but the
+  // feature is off, misconfigured, or the provider has errored — saves them
+  // from staring at empty results wondering why.
+  useEffect(() => {
+    if (mode !== 'semantic') return;
+    if (!semanticOffMessage) return;
+    if (offToastShownRef.current) return;
+    offToastShownRef.current = true;
+    app.showToast(semanticOffMessage, 'info');
+  }, [mode, semanticOffMessage, app]);
 
   useEffect(() => {
     if (mode !== 'semantic' || !query.trim()) {
@@ -356,11 +380,18 @@ export function Palette({
       >
         <Stack
           overflow="hidden"
-          style={{ flex: '0 0 380px', borderRight: '1px solid var(--border-subtle)' }}
+          shrink={0}
+          grow={0}
+          style={{
+            flexBasis: 'auto',
+            width: 'clamp(280px, 52%, 380px)',
+            borderRight: '1px solid var(--border-subtle)',
+          }}
         >
           <Inline
-            gap={3}
+            gap={2}
             px={4}
+            shrink={0}
             style={{ height: 56, borderBottom: '1px solid var(--border-subtle)' }}
           >
             <LuSearch
@@ -394,7 +425,6 @@ export function Palette({
                   )
                 }
                 style={{
-                  width: 112,
                   minWidth: 0,
                   justifyContent: 'flex-start',
                   flexShrink: 0,
@@ -412,7 +442,7 @@ export function Palette({
                   {mode === 'semantic' && !semanticAvailable ? (
                     <>
                       <Text as="b" tone="primary" weight="semibold">
-                        Semantic search is off.
+                        {semanticOffMessage ?? 'Semantic search is unavailable.'}
                       </Text>
                       <br />
                       <Text size={11.5}>
@@ -468,6 +498,7 @@ export function Palette({
                 query={query}
                 showLabels={showLabels}
                 categoryMode={categoryMode}
+                aiLabelsEnabled={anthropicEnabled}
                 getImage={app.getImage}
                 onMouseEnter={() => setSelected(i)}
                 onClick={() => {
@@ -480,9 +511,10 @@ export function Palette({
 
           <Inline
             justify="between"
+            shrink={0}
             px={3}
             style={{
-              height: 34,
+              minHeight: 34,
               borderTop: '1px solid var(--border-subtle)',
               background: t.dark ? 'rgba(0,0,0,0.15)' : 'rgba(0,0,0,0.015)',
             }}
@@ -522,8 +554,8 @@ export function Palette({
                 </Text>
               </Inline>
             </Inline>
-            <Inline shrink={0} style={{ gap: 6 }}>
-              <Text size={11} tone="tertiary">
+            <Inline shrink={0} style={{ gap: 6, paddingLeft: 8 }}>
+              <Text size={11} tone="tertiary" truncate>
                 {results.length > MAX_VISIBLE
                   ? `${MAX_VISIBLE} of ${results.length}`
                   : results.length}{' '}
@@ -533,7 +565,7 @@ export function Palette({
           </Inline>
         </Stack>
 
-        <Stack grow={1} bg="subtle" style={{ minWidth: 0 }}>
+        <Stack grow={1} shrink={1} bg="subtle" style={{ minWidth: 0, flexBasis: 0 }}>
           {selectedItem ? (
             <>
               <Box
@@ -571,7 +603,7 @@ export function Palette({
                   >
                     {selectedItem.label}
                   </Text>
-                  {!selectedItem.labelGenerated && (
+                  {!selectedItem.labelGenerated && anthropicEnabled && (
                     <Box
                       as="span"
                       shrink={0}
@@ -597,7 +629,7 @@ export function Palette({
                 {selectedItem.category === 'image' ? (
                   <ImagePreview item={selectedItem} getImage={app.getImage} maxHeight="280px" />
                 ) : (
-                  <Box fullWidth style={{ maxWidth: 400 }}>
+                  <Box fullWidth style={{ maxWidth: 400, minWidth: 0 }}>
                     <ItemBody t={t} item={selectedItem} />
                   </Box>
                 )}

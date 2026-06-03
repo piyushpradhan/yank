@@ -17,11 +17,12 @@
         "title": "Yank",
         "width": 1080,
         "height": 720,
-        "minWidth": 820,
-        "minHeight": 520,
+        "minWidth": 520,
+        "minHeight": 400,
         "center": true,
         "decorations": false,
         "transparent": true,
+        "resizable": true,
         "windowEffects": {
           "effects": ["mica"],
           "state": "active"

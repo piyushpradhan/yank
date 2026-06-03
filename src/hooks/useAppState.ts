@@ -11,6 +11,15 @@ export interface BackfillState {
   total: number;
 }
 
+/// Runtime health of the configured embedding provider. `'ok'` is the resting
+/// state; we only flip to `'error'` after `semanticSearch` actually fails, and
+/// reset to `'ok'` when the user updates settings (since the failure may have
+/// been provoked by the now-stale config).
+export interface ProviderHealth {
+  status: 'ok' | 'error';
+  error: string | null;
+}
+
 export interface AppState {
   items: ClipItem[];
   toast: Toast | null;
@@ -27,6 +36,8 @@ export interface AppState {
   refresh: () => Promise<void>;
   semanticSearch: (query: string, limit?: number) => Promise<ClipItem[]>;
   getImage: (id: string) => Promise<Blob | null>;
+  providerHealth: ProviderHealth;
+  resetProviderHealth: () => void;
 }
 
 let toastSeq = 0;
@@ -46,6 +57,10 @@ export function useAppState(): AppState {
   const [backfill, setBackfill] = useState<BackfillState | null>(null);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [libraryOpen, setLibraryOpen] = useState(true);
+  const [providerHealth, setProviderHealth] = useState<ProviderHealth>({
+    status: 'ok',
+    error: null,
+  });
   const backfillCount = useRef(0);
   const backfillTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const itemsRef = useRef<ClipItem[]>([]);
@@ -163,14 +178,29 @@ export function useAppState(): AppState {
     async (query: string, limit = 20): Promise<ClipItem[]> => {
       if (!query.trim()) return [];
       try {
-        return await invoke<ClipItem[]>("search_semantic", { query, limit });
+        const rows = await invoke<ClipItem[]>("search_semantic", { query, limit });
+        setProviderHealth((prev) =>
+          prev.status === "ok" ? prev : { status: "ok", error: null },
+        );
+        return rows;
       } catch (err) {
         console.error("search_semantic failed", err);
+        const msg =
+          err instanceof Error
+            ? err.message
+            : typeof err === "string"
+              ? err
+              : "Semantic search failed.";
+        setProviderHealth({ status: "error", error: msg });
         throw err;
       }
     },
     [],
   );
+
+  const resetProviderHealth = useCallback(() => {
+    setProviderHealth({ status: "ok", error: null });
+  }, []);
 
   const getImage = useCallback(async (id: string): Promise<Blob | null> => {
     try {
@@ -202,5 +232,7 @@ export function useAppState(): AppState {
     refresh,
     semanticSearch,
     getImage,
+    providerHealth,
+    resetProviderHealth,
   };
 }

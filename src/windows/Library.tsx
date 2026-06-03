@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useImageUrl } from '../hooks/useImageUrl';
+import { useWindowSize } from '../hooks/useWindowSize';
 import { listen } from '@tauri-apps/api/event';
 import { CATEGORIES, CATEGORY_META } from '../lib/category';
 import { groupByTime, highlightMatch, searchItems } from '../lib/search';
@@ -21,6 +22,7 @@ import {
   Button,
   Dot,
   Grid,
+  IconButton,
   Image,
   Inline,
   Input,
@@ -28,12 +30,17 @@ import {
   Overline,
   Stack,
   Text,
+  Tooltip,
 } from 'ember-design-system';
 import { getKeyIcon } from '../lib/keyIcons';
 import {
   LuClock,
   LuList,
   LuEllipsis,
+  LuPanelLeftClose,
+  LuPanelLeftOpen,
+  LuPanelRightClose,
+  LuPanelRightOpen,
   LuPin,
   LuSearch,
   LuSparkles,
@@ -44,6 +51,9 @@ import { PreviewPane } from '../components/PreviewPane';
 import { SidebarRow } from '../components/SidebarRow';
 import { MdKeyboardCommandKey } from 'react-icons/md';
 
+const SIDEBAR_BREAKPOINT = 640;
+const PREVIEW_BREAKPOINT = 960;
+
 interface LibraryProps {
   t: Theme;
   showLabels: boolean;
@@ -52,6 +62,9 @@ interface LibraryProps {
   app: AppState;
   /** Whether semantic search (embedding) provider is active. */
   semanticAvailable: boolean;
+  /** When semantic is unavailable, the reason in human-readable form. Drives
+   *  the inline strip in the empty state so users know *why* it's off. */
+  semanticOffMessage: string | null;
   /** Whether Anthropic labels are configured — controls the "Labeling…" hint. */
   anthropicEnabled: boolean;
   initialQuery?: string;
@@ -66,6 +79,8 @@ interface ListRowProps {
   item: ClipItem;
   showLabels: boolean;
   categoryMode: CategoryDisplay;
+  /** When false, AI labels are off — `!labelGenerated` is the final state, not pending. */
+  aiLabelsEnabled: boolean;
   selected: boolean;
   onClick: () => void;
   onDouble: () => void;
@@ -77,23 +92,21 @@ interface SemanticBannerProps {
   t: Theme;
   count: number;
   available: boolean;
+  offMessage: string | null;
   error: string | null;
   loading: boolean;
 }
 
 const BANNER_BORDER = { borderBottom: '1px solid var(--border-subtle)' } as const;
 
-function SemanticBanner({ t, count, available, error, loading }: SemanticBannerProps) {
+function SemanticBanner({ t, count, available, offMessage, error, loading }: SemanticBannerProps) {
   void t;
   if (!available) {
     return (
       <Inline gap={2} px={3} py={2} bg="subtle" style={BANNER_BORDER}>
         <Dot tone="danger" size="xs" />
-        <Text family="mono" size={11} weight="medium" tone="secondary">
-          Semantic search is off
-        </Text>
-        <Text family="mono" size={11} tone="secondary" style={{ opacity: 0.7 }}>
-          configure a provider in the AI panel
+        <Text family="mono" size={11} weight="medium" tone="secondary" truncate grow>
+          {offMessage ?? 'Semantic search is off'}
         </Text>
       </Inline>
     );
@@ -183,6 +196,7 @@ function ListRow({
   item,
   showLabels,
   categoryMode,
+  aiLabelsEnabled,
   selected,
   onClick,
   onDouble,
@@ -199,6 +213,7 @@ function ListRow({
     item.category === 'number';
   const isImage = item.category === 'image';
   const imageUrl = useImageUrl(isImage ? item.id : '', getImage ?? NO_IMAGE);
+  const labelPending = !item.labelGenerated && aiLabelsEnabled;
 
   return (
     <Box
@@ -231,7 +246,7 @@ function ListRow({
       </Inline>
       {showLabels && (
         <Inline
-          title={item.labelGenerated ? undefined : 'Awaiting AI label'}
+          title={labelPending ? 'Awaiting AI label' : undefined}
           style={{ gap: 6, marginBottom: 4, overflow: 'hidden' }}
         >
           <Text
@@ -240,13 +255,13 @@ function ListRow({
             leading={1.3}
             tracking="tight"
             truncate
-            weight={item.labelGenerated ? 'medium' : 'regular'}
-            italic={!item.labelGenerated}
-            tone={item.labelGenerated ? 'primary' : 'secondary'}
+            weight={labelPending ? 'regular' : 'medium'}
+            italic={labelPending}
+            tone={labelPending ? 'secondary' : 'primary'}
           >
             {highlightMatch(t, item.label, query)}
           </Text>
-          {!item.labelGenerated && (
+          {labelPending && (
             <LuEllipsis
               size={11}
               aria-hidden="true"
@@ -292,6 +307,7 @@ export function Library({
   previewMode,
   app,
   semanticAvailable,
+  semanticOffMessage,
   anthropicEnabled,
   initialQuery = '',
   initialMode = 'fuzzy',
@@ -310,10 +326,30 @@ export function Library({
     initialEditing ? (initialSelectedId ?? app.items[0]?.id ?? null) : null
   );
   const [localPreview, setLocalPreview] = useState<PreviewMode>(previewMode);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [previewOverlayOpen, setPreviewOverlayOpen] = useState(false);
+
+  const { width: viewportWidth } = useWindowSize();
+  const sidebarFloating = viewportWidth < SIDEBAR_BREAKPOINT;
+  const previewAllowed = viewportWidth >= PREVIEW_BREAKPOINT;
+  const effectivePreview: PreviewMode = previewAllowed ? localPreview : 'inline';
+  const previewOverlayAvailable = !previewAllowed;
 
   useEffect(() => {
     setLocalPreview(previewMode);
   }, [previewMode]);
+
+  useEffect(() => {
+    if (!sidebarFloating) setSidebarOpen(false);
+  }, [sidebarFloating]);
+
+  useEffect(() => {
+    if (!previewOverlayAvailable) setPreviewOverlayOpen(false);
+  }, [previewOverlayAvailable]);
+
+  useEffect(() => {
+    if (!selectedId) setPreviewOverlayOpen(false);
+  }, [selectedId]);
 
   useEffect(() => {
     const unlisten = listen<string>('library-filter', (ev) => {
@@ -461,6 +497,14 @@ export function Library({
     if (editingId) return;
     const inSearch = document.activeElement === searchRef.current;
     if (e.key === 'Escape') {
+      if (previewOverlayOpen) {
+        setPreviewOverlayOpen(false);
+        return;
+      }
+      if (sidebarFloating && sidebarOpen) {
+        setSidebarOpen(false);
+        return;
+      }
       if (query) setQuery('');
       else searchRef.current?.blur();
       return;
@@ -483,7 +527,8 @@ export function Library({
       else if (current) app.copyItem(current.id);
       return;
     }
-    if (inSearch && e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+    const hasMod = e.metaKey || e.ctrlKey;
+    if (inSearch && !hasMod && e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
 
     if (e.key === 'ArrowDown' || e.key === 'j') {
       e.preventDefault();
@@ -505,7 +550,11 @@ export function Library({
       if (current) setEditingId(current.id);
     } else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'i') {
       e.preventDefault();
-      setLocalPreview((p) => (p === 'split' ? 'inline' : 'split'));
+      if (previewAllowed) {
+        setLocalPreview((p) => (p === 'split' ? 'inline' : 'split'));
+      } else if (current) {
+        setPreviewOverlayOpen((v) => !v);
+      }
     } else if (e.key >= '1' && e.key <= '9' && !inSearch) {
       e.preventDefault();
       const idx = parseInt(e.key, 10) - 1;
@@ -521,22 +570,46 @@ export function Library({
       fullHeight
       fullWidth
       bg="surface"
-      style={{ outline: 'none' }}
+      style={{ outline: 'none', position: 'relative' }}
     >
-      <Inline align="stretch" grow={1} style={{ minHeight: 0 }}>
+      <Inline align="stretch" grow={1} style={{ minHeight: 0, position: 'relative' }}>
+        {/* Backdrop for floating sidebar */}
+        {sidebarFloating && sidebarOpen && (
+          <Box
+            onClick={() => setSidebarOpen(false)}
+            position="absolute"
+            style={{
+              inset: 0,
+              zIndex: 90,
+              background: 'rgba(0,0,0,0.32)',
+              animation: 'paletteFadeIn 140ms ease',
+            }}
+            aria-hidden
+          />
+        )}
+
         {/* Sidebar */}
         <Stack
           shrink={0}
-          grow={1}
+          grow={0}
           px={2}
           py={3}
+          bg="surface"
           style={{
-            flexBasis: '18%',
-            minWidth: 200,
-            maxWidth: 260,
+            flexBasis: 'auto',
+            width: sidebarFloating ? 240 : 'clamp(180px, 22%, 220px)',
             minHeight: 0,
             borderRight: '1px solid var(--border-subtle)',
             fontSize: 13,
+            position: sidebarFloating ? 'absolute' : 'relative',
+            top: 0,
+            bottom: 0,
+            left: 0,
+            zIndex: sidebarFloating ? 100 : undefined,
+            transform: sidebarFloating && !sidebarOpen ? 'translateX(-100%)' : 'translateX(0)',
+            transition: sidebarFloating ? 'transform 180ms cubic-bezier(.2,.9,.3,1.1)' : undefined,
+            boxShadow: sidebarFloating && sidebarOpen ? '0 12px 32px rgba(0,0,0,0.18)' : undefined,
+            pointerEvents: sidebarFloating && !sidebarOpen ? 'none' : undefined,
           }}
         >
           <Stack grow={1} overflow="auto" style={{ minHeight: 0 }}>
@@ -643,20 +716,37 @@ export function Library({
 
         {/* List column */}
         <Stack
-          shrink={0}
-          grow={localPreview === 'split' ? undefined : 1}
+          shrink={1}
+          grow={1}
           style={{
             minHeight: 0,
-            flexBasis: localPreview === 'split' ? '36%' : undefined,
-            minWidth: localPreview === 'split' ? 320 : 320,
-            maxWidth: localPreview === 'split' ? 460 : undefined,
-            width: localPreview === 'split' ? undefined : 'auto',
-            borderRight: localPreview === 'split' ? '1px solid var(--border-subtle)' : undefined,
+            minWidth: 0,
+            flexBasis: 0,
+            borderRight: effectivePreview === 'split' ? '1px solid var(--border-subtle)' : undefined,
           }}
         >
           {/* Search row */}
           <Box style={{ borderBottom: '1px solid var(--border-subtle)' }}>
             <Inline gap={2} px={3} py={3} overflow="hidden">
+              {sidebarFloating && (
+                <Tooltip
+                  content={
+                    <Text size={11} tone="secondary">
+                      {sidebarOpen ? 'Hide filters' : 'Show filters'}
+                    </Text>
+                  }
+                >
+                  <IconButton
+                    aria-label={sidebarOpen ? 'Hide filters' : 'Show filters'}
+                    icon={
+                      sidebarOpen ? <LuPanelLeftClose size={14} /> : <LuPanelLeftOpen size={14} />
+                    }
+                    variant={sidebarOpen ? 'primary' : 'ghost'}
+                    size="sm"
+                    onClick={() => setSidebarOpen((v) => !v)}
+                  />
+                </Tooltip>
+              )}
               <Input
                 leadingIcon={
                   <LuSearch
@@ -685,10 +775,46 @@ export function Library({
                     <LuTextSearch size={13} color="var(--text-tertiary)" />
                   )
                 }
-                style={{ width: 100, justifyContent: 'center', flexShrink: 0 }}
+                style={{
+                  minWidth: 0,
+                  width: viewportWidth < 600 ? 38 : 100,
+                  paddingLeft: viewportWidth < 600 ? 8 : undefined,
+                  paddingRight: viewportWidth < 600 ? 8 : undefined,
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                }}
               >
-                {mode}
+                {viewportWidth < 600 ? '' : mode}
               </Button>
+              {previewOverlayAvailable && current && (
+                <Tooltip
+                  content={
+                    <Inline gap={1} align="center">
+                      <Text size={11} tone="secondary">
+                        {previewOverlayOpen ? 'Hide preview' : 'Show preview'}
+                      </Text>
+                      <Kbd size="sm">
+                        <MdKeyboardCommandKey size={10} />
+                      </Kbd>
+                      <Kbd size="sm">I</Kbd>
+                    </Inline>
+                  }
+                >
+                  <IconButton
+                    aria-label={previewOverlayOpen ? 'Hide preview' : 'Show preview'}
+                    icon={
+                      previewOverlayOpen ? (
+                        <LuPanelRightClose size={14} />
+                      ) : (
+                        <LuPanelRightOpen size={14} />
+                      )
+                    }
+                    variant={previewOverlayOpen ? 'primary' : 'ghost'}
+                    size="sm"
+                    onClick={() => setPreviewOverlayOpen((v) => !v)}
+                  />
+                </Tooltip>
+              )}
             </Inline>
           </Box>
 
@@ -697,6 +823,7 @@ export function Library({
               t={t}
               count={searched.length}
               available={semanticAvailable}
+              offMessage={semanticOffMessage}
               error={semanticError}
               loading={semanticResults === null && !semanticError}
             />
@@ -717,7 +844,9 @@ export function Library({
                   ) : query ? (
                     mode === 'semantic' && !semanticAvailable ? (
                       <>
-                        Semantic search is off.
+                        <Text as="b" weight="semibold" tone="primary">
+                          {semanticOffMessage ?? 'Semantic search is unavailable.'}
+                        </Text>
                         <br />
                         Click{' '}
                         <Text as="b" weight="semibold" tone="primary">
@@ -773,6 +902,7 @@ export function Library({
                           item={item}
                           showLabels={showLabels}
                           categoryMode={categoryMode}
+                          aiLabelsEnabled={anthropicEnabled}
                           selected={item.id === selectedId}
                           onClick={() => setSelectedId(item.id)}
                           onDouble={() => app.copyItem(item.id)}
@@ -790,6 +920,7 @@ export function Library({
                     item={item}
                     showLabels={showLabels}
                     categoryMode={categoryMode}
+                    aiLabelsEnabled={anthropicEnabled}
                     selected={item.id === selectedId}
                     onClick={() => setSelectedId(item.id)}
                     onDouble={() => app.copyItem(item.id)}
@@ -836,16 +967,73 @@ export function Library({
           </Inline>
         </Stack>
 
-        {localPreview === 'split' && current && (
-          <PreviewPane
-            t={t}
-            item={current}
-            showLabels={showLabels}
-            editing={editingId === current.id}
-            setEditing={(v) => setEditingId(v ? current.id : null)}
-            app={app}
-            anthropicEnabled={anthropicEnabled}
-          />
+        {effectivePreview === 'split' && current && (
+          <Box
+            grow={0}
+            shrink={0}
+            style={{
+              flexBasis: 'auto',
+              width: 'clamp(340px, 42%, 520px)',
+              minWidth: 0,
+              display: 'flex',
+            }}
+          >
+            <PreviewPane
+              t={t}
+              item={current}
+              showLabels={showLabels}
+              editing={editingId === current.id}
+              setEditing={(v) => setEditingId(v ? current.id : null)}
+              app={app}
+              anthropicEnabled={anthropicEnabled}
+            />
+          </Box>
+        )}
+
+        {/* Right-side preview drawer for narrow widths */}
+        {previewOverlayAvailable && current && (
+          <>
+            {previewOverlayOpen && (
+              <Box
+                onClick={() => setPreviewOverlayOpen(false)}
+                position="absolute"
+                style={{
+                  inset: 0,
+                  zIndex: 90,
+                  background: 'rgba(0,0,0,0.32)',
+                  animation: 'paletteFadeIn 140ms ease',
+                }}
+                aria-hidden
+              />
+            )}
+            <Box
+              position="absolute"
+              style={{
+                top: 0,
+                right: 0,
+                bottom: 0,
+                width: `min(${Math.max(360, Math.min(480, viewportWidth - 80))}px, 100%)`,
+                zIndex: 100,
+                display: 'flex',
+                transform: previewOverlayOpen ? 'translateX(0)' : 'translateX(100%)',
+                transition: 'transform 180ms cubic-bezier(.2,.9,.3,1.1)',
+                boxShadow: previewOverlayOpen ? '-12px 0 32px rgba(0,0,0,0.18)' : undefined,
+                pointerEvents: previewOverlayOpen ? undefined : 'none',
+                borderLeft: '1px solid var(--border-subtle)',
+                background: 'var(--bg-surface)',
+              }}
+            >
+              <PreviewPane
+                t={t}
+                item={current}
+                showLabels={showLabels}
+                editing={editingId === current.id}
+                setEditing={(v) => setEditingId(v ? current.id : null)}
+                app={app}
+                anthropicEnabled={anthropicEnabled}
+              />
+            </Box>
+          </>
         )}
       </Inline>
     </Stack>

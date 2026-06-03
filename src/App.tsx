@@ -1,13 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
-import { Box, Dot, Stack, Text, useTheme } from 'ember-design-system';
+import { Box, Stack, useTheme } from 'ember-design-system';
 import { AIPanel } from './components/AIPanel';
 import { KeyboardMap } from './components/KeyboardMap';
 import { TitleBar } from './components/TitleBar';
 import { Toast } from './components/Toast';
 import { TweaksPanel } from './components/TweaksPanel';
 import { useAppState } from './hooks/useAppState';
-import { useFeature } from './hooks/useFeature';
 import { isSemanticAvailable, useSettings } from './hooks/useSettings';
 import { buildTheme } from './lib/theme';
 import type { Tweaks } from './lib/types';
@@ -28,7 +27,6 @@ function App() {
   const [keymapOpen, setKeymapOpen] = useState(false);
   const app = useAppState();
   const { settings, save: saveSettings } = useSettings();
-  const { allowed: semanticFeatureAllowed } = useFeature("semantic_search");
   const { setTheme } = useTheme();
 
   // Mirror Tweaks → ember CSS-var theme. data-theme drives all token colors.
@@ -39,7 +37,17 @@ function App() {
 
   const t = useMemo(() => buildTheme(tweaks.theme, tweaks.density), [tweaks.theme, tweaks.density]);
 
-  const semanticAvailable = isSemanticAvailable(settings) && semanticFeatureAllowed !== false;
+  // `semanticAvailable` gates mode-switching (Tab) — driven by config only so a
+  // transient runtime error can never lock the user out of retrying.
+  // `semanticOffMessage` is informational and *also* reflects runtime errors.
+  const semanticAvailable = isSemanticAvailable(settings);
+  const semanticOffMessage = !semanticAvailable
+    ? settings.provider === 'disabled'
+      ? 'Semantic search is turned off. Using fuzzy matching only.'
+      : 'Semantic search is unavailable — finish configuring your provider in AI settings.'
+    : app.providerHealth.status === 'error'
+      ? `Semantic search is unavailable — ${app.providerHealth.error ?? 'provider error'}.`
+      : null;
   const anthropicEnabled = settings.anthropic_api_key.trim().length > 0;
 
   useEffect(() => {
@@ -71,6 +79,7 @@ function App() {
           aiActive={settings.provider !== 'disabled'}
           onOpenAI={() => setAiOpen(true)}
           onToggleTweaks={() => setTweaksOpen((v) => !v)}
+          backfill={app.backfill}
         />
         <Box grow={1} style={{ minHeight: 0, position: 'relative' }}>
           <Library
@@ -80,43 +89,19 @@ function App() {
             previewMode={tweaks.previewMode}
             app={app}
             semanticAvailable={semanticAvailable}
+            semanticOffMessage={semanticOffMessage}
             anthropicEnabled={anthropicEnabled}
           />
         </Box>
       </Stack>
 
-      {app.backfill && app.backfill.remaining > 0 && (
-        <Box
-          display="inline-flex"
-          align="center"
-          gap={2}
-          px={3}
-          radius="pill"
-          bg="accent-soft"
-          shadow="sm"
-          position="fixed"
-          style={{
-            height: 24,
-            top: 48,
-            left: '50%',
-            transform: 'translateX(-50%)',
-            zIndex: 300,
-            border: '1px solid color-mix(in oklab, var(--accent-ember-500) 24%, transparent)',
-          }}
-        >
-          <Dot tone="accent" size="sm" pulse />
-          <Text family="mono" size={10.5} tabularNums tone="accent-ink">
-            Embedding {app.backfill.remaining} item
-            {app.backfill.remaining === 1 ? '' : 's'}…
-          </Text>
-        </Box>
-      )}
-
       {aiOpen && (
         <AIPanel
-          t={t}
           settings={settings}
-          onChange={(next) => void saveSettings(next)}
+          onChange={(next) => {
+            void saveSettings(next);
+            app.resetProviderHealth();
+          }}
           onClose={() => setAiOpen(false)}
         />
       )}
@@ -138,7 +123,13 @@ function App() {
           onClick={() => setKeymapOpen(false)}
           position="fixed"
           display="grid"
-          style={{ inset: 0, zIndex: 700, placeItems: 'center', background: 'rgba(0,0,0,0.45)' }}
+          style={{
+            inset: 0,
+            zIndex: 700,
+            placeItems: 'center',
+            padding: 16,
+            background: 'rgba(0,0,0,0.45)',
+          }}
         >
           <Box
             onClick={(e) => e.stopPropagation()}
@@ -146,7 +137,12 @@ function App() {
             radius="lg"
             border
             shadow="md"
-            style={{ height: 420, width: 820 }}
+            style={{
+              width: 'min(820px, 100%)',
+              height: 'min(420px, 100%)',
+              maxWidth: '100%',
+              maxHeight: '100%',
+            }}
           >
             <KeyboardMap />
           </Box>

@@ -101,8 +101,13 @@ export function TweaksPanel({ tweaks, onChange, onClose, onAfterClear }: TweaksP
       <Card
         padding="none"
         onClick={(e: React.MouseEvent) => e.stopPropagation()}
-        className="fixed right-3 top-[48px] z-[600] w-80 overflow-hidden !rounded-xl !border-border shadow-ember-md"
-        style={{ animation: 'tweaksIn 180ms var(--easing-standard)' }}
+        className="fixed right-3 top-[48px] z-[600] overflow-hidden !rounded-xl !border-border shadow-ember-md"
+        style={{
+          animation: 'tweaksIn 180ms var(--easing-standard)',
+          width: 'min(320px, calc(100vw - 24px))',
+          maxHeight: 'calc(100vh - 64px)',
+          overflowY: 'auto',
+        }}
       >
       <Box
         position="relative"

@@ -3,7 +3,6 @@ mod commands;
 mod db;
 mod embed;
 mod embed_queue;
-mod features;
 mod label;
 mod label_queue;
 mod local_embed;
@@ -147,6 +146,7 @@ pub fn run() {
             commands::copy_image,
             settings::get_settings,
             settings::set_settings,
+            settings::test_embed_provider,
             settings::get_hint_dismissed,
             settings::set_hint_dismissed,
             settings::get_shortcut,
@@ -155,10 +155,6 @@ pub fn run() {
             settings::set_autostart,
             settings::get_theme,
             settings::set_theme,
-            features::list_features,
-            features::is_feature_available,
-            features::get_license_state,
-            features::set_license_premium,
         ])
         .setup(move |app| {
             let data_dir = app
@@ -173,7 +169,6 @@ pub fn run() {
             let settings_state = settings::init(app.handle());
             app.manage(settings::SettingsState(settings_state));
             app.manage(local_embed::LocalState::new());
-            app.manage(features::LicenseState::new());
 
             watcher::spawn(app.handle().clone());
             commands::spawn_sweeper(app.handle().clone());
