@@ -145,7 +145,8 @@ const sizeLabel =
   </div>
 </section>
 
-<script>
+<script type="module">
+  import { track } from '@vercel/analytics';
   (function () {
     var hero = document.querySelector('.hero');
     var raw = hero ? hero.getAttribute('data-downloads') : null;
@@ -199,10 +200,21 @@ const sizeLabel =
     if (navIcon) navIcon.innerHTML = icon;
     if (heroIcon) heroIcon.innerHTML = icon;
 
+    if (heroCta) {
+      heroCta.addEventListener('click', function () {
+        track('download', { platform: osLabel });
+      });
+    }
+
     var platformLinks = document.querySelectorAll('.hero-platforms a');
     platformLinks.forEach(function (a) {
-      if (a instanceof HTMLElement && a.dataset.os === os) {
-        a.setAttribute('aria-current', 'true');
+      if (a instanceof HTMLElement) {
+        if (a.dataset.os === os) {
+          a.setAttribute('aria-current', 'true');
+        }
+        a.addEventListener('click', function () {
+          track('download', { platform: a.dataset.os });
+        });
       }
     });
 

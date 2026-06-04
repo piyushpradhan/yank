@@ -54,7 +54,8 @@ const fallbackDownload = downloads.macos?.url ?? release?.html_url ?? "https://g
   </div>
 </header>
 
-<script>
+<script type="module">
+  import { track } from '@vercel/analytics';
   (function () {
     var root = document.documentElement;
 
@@ -67,14 +68,23 @@ const fallbackDownload = downloads.macos?.url ?? release?.html_url ?? "https://g
     }
 
     updateIcons();
-    var toggle = document.getElementById('theme-toggle');
-    if (toggle) {
-      toggle.addEventListener('click', function () {
+    var themeToggle = document.getElementById('theme-toggle');
+    if (themeToggle) {
+      themeToggle.addEventListener('click', function () {
         var dark = root.getAttribute('data-theme') === 'dark';
         var next = dark ? 'light' : 'dark';
         root.setAttribute('data-theme', next);
         try { localStorage.setItem('yank-theme', next); } catch (_) {}
         updateIcons();
+      });
+    }
+
+    var navCta = document.getElementById('download-cta');
+    if (navCta) {
+      navCta.addEventListener('click', function () {
+        var bodyOs = document.body.dataset.os || 'mac';
+        var platform = bodyOs === 'win' ? 'Windows' : bodyOs === 'linux' ? 'Linux' : 'macOS';
+        track('download', { platform: platform });
       });
     }
   })();
