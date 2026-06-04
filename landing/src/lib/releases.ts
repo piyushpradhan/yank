@@ -12,8 +12,8 @@ export interface YankRelease {
   assets: ReleaseAsset[]
 }
 
-const GITHUB_API = 'https://api.github.com/repos/piyushpradhan/recall/releases/latest'
-const GITHUB_RELEASES = 'https://github.com/piyushpradhan/recall/releases/latest'
+const GITHUB_API = 'https://api.github.com/repos/piyushpradhan/yank/releases/latest'
+const GITHUB_RELEASES = 'https://github.com/piyushpradhan/yank/releases/latest'
 
 let cachedRelease: YankRelease | null = null
 

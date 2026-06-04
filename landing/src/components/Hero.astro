@@ -4,7 +4,7 @@ import rootPkg from "../../../package.json";
 
 const { release, downloads } = await getLatestRelease();
 const fallbackUrl =
-  release?.html_url ?? "https://github.com/piyushpradhan/recall/releases/latest";
+  release?.html_url ?? "https://github.com/piyushpradhan/yank/releases/latest";
 
 const downloadMap = {
   mac: downloads.macos?.url ?? fallbackUrl,
@@ -96,7 +96,7 @@ const sizeLabel =
       <ul class="app__list" id="result-list">
         <li aria-selected="true">
           <span class="kind kind--repo">repo</span>
-          <span class="body"><em>github.com/piyushpradhan/recall</em></span>
+          <span class="body"><em>github.com/piyushpradhan/yank</em></span>
           <span class="meta-cell">2d ago · Arc</span>
         </li>
         <li>

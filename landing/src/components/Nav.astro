@@ -7,7 +7,7 @@ const version = release?.version ?? `v${rootPkg.version}`;
 const releaseTag = version.startsWith("v") ? version : `v${version}`;
 
 // Pre-bake fallback URLs in case JS-side OS detection runs late.
-const fallbackDownload = downloads.macos?.url ?? release?.html_url ?? "https://github.com/piyushpradhan/recall/releases/latest";
+const fallbackDownload = downloads.macos?.url ?? release?.html_url ?? "https://github.com/piyushpradhan/yank/releases/latest";
 ---
 
 <header class="topbar" data-screen-label="topbar">
@@ -28,7 +28,7 @@ const fallbackDownload = downloads.macos?.url ?? release?.html_url ?? "https://g
     <div class="nav-cluster">
       <a
         class="icon-btn"
-        href="https://github.com/piyushpradhan/recall"
+        href="https://github.com/piyushpradhan/yank"
         target="_blank"
         rel="noopener noreferrer"
         aria-label="GitHub repository"

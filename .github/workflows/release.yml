@@ -81,8 +81,40 @@ jobs:
       - name: Frontend tests
         run: npm test
 
-  build:
+  bump-version:
     needs: [prepare, check]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Bump version files on main
+        run: |
+          VERSION="${{ needs.prepare.outputs.tag }}"
+          VERSION="${VERSION#v}"
+          echo "Bumping version to $VERSION on main"
+
+          npm version "$VERSION" --no-git-tag-version --allow-same-version
+
+          tmp=$(mktemp)
+          jq --arg v "$VERSION" '.version = $v' src-tauri/tauri.conf.json > "$tmp" && mv "$tmp" src-tauri/tauri.conf.json
+
+          perl -pi -e "s/^version = \"[^\"]*\"/version = \"$VERSION\"/" src-tauri/Cargo.toml
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml
+          git commit -m "chore: bump version to $VERSION [skip ci]" || true
+          git push origin main || true
+
+  build:
+    needs: [prepare, check, bump-version]
     strategy:
       fail-fast: false
       matrix:
