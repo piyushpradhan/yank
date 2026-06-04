@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { Box, Button, Card, IconButton, Inline, Overline, Stack, Text } from 'ember-design-system';
-import { LuX } from 'react-icons/lu';
-import type { CategoryDisplay, Density, PreviewMode, ThemeMode, Tweaks } from '../lib/types';
+import { LuMoon, LuSun, LuX } from 'react-icons/lu';
+import type { CategoryDisplay, Density, PreviewMode, Tweaks } from '../lib/types';
 
 interface TweaksPanelProps {
   tweaks: Tweaks;
@@ -11,7 +11,6 @@ interface TweaksPanelProps {
   onAfterClear?: () => void;
 }
 
-const THEME_MODES: ThemeMode[] = ['light', 'dark'];
 const DENSITIES: Density[] = ['comfy', 'compact'];
 const DISPLAYS: CategoryDisplay[] = ['chip', 'icon', 'dot'];
 const PREVIEWS: PreviewMode[] = ['split', 'inline'];
@@ -145,11 +144,14 @@ export function TweaksPanel({ tweaks, onChange, onClose, onAfterClear }: TweaksP
 
       <Section title="Appearance">
         <Row label="Theme">
-          {THEME_MODES.map((m) => (
-            <Chip key={m} active={tweaks.theme === m} onClick={() => set('theme', m)}>
-              {m}
-            </Chip>
-          ))}
+          <Chip active={tweaks.theme === 'light'} onClick={() => set('theme', 'light')}>
+            <LuSun size={13} style={{ marginRight: 4 }} />
+            light
+          </Chip>
+          <Chip active={tweaks.theme === 'dark'} onClick={() => set('theme', 'dark')}>
+            <LuMoon size={13} style={{ marginRight: 4 }} />
+            dark
+          </Chip>
         </Row>
         <Row label="Density">
           {DENSITIES.map((d) => (

@@ -577,15 +577,9 @@ export function Library({
       if (mode === 'fuzzy') setMode('semantic');
       else setMode('fuzzy');
     }
-    if (inSearch && e.key === 'Enter') {
-      e.preventDefault();
-      if (mode === 'fuzzy' && !semanticAvailable) return;
-      if (mode === 'fuzzy') setMode('semantic');
-      else if (current) app.copyItem(current.id);
-      return;
-    }
     const hasMod = e.metaKey || e.ctrlKey;
-    if (inSearch && !hasMod && e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+    if (inSearch && !hasMod && e.key !== 'ArrowDown' && e.key !== 'ArrowUp' && e.key !== 'Enter')
+      return;
 
     if (e.key === 'ArrowDown' || e.key === 'j') {
       e.preventDefault();
@@ -681,7 +675,10 @@ export function Library({
             </SidebarRow>
             <SidebarRow t={t} active={filter === 'pinned'} onClick={() => setFilter('pinned')}>
               <SidebarIcon t={t} active={filter === 'pinned'}>
-                <LuPin size={12} style={filter === 'pinned' ? { fill: 'currentColor' } : undefined} />
+                <LuPin
+                  size={12}
+                  style={filter === 'pinned' ? { fill: 'currentColor' } : undefined}
+                />
               </SidebarIcon>
               <Box grow={1} style={{ minWidth: 0 }}>
                 Pinned
@@ -754,7 +751,8 @@ export function Library({
             minHeight: 0,
             minWidth: 0,
             flexBasis: 0,
-            borderRight: effectivePreview === 'split' ? '1px solid var(--border-subtle)' : undefined,
+            borderRight:
+              effectivePreview === 'split' ? '1px solid var(--border-subtle)' : undefined,
           }}
         >
           {/* Search row */}
@@ -904,7 +902,7 @@ export function Library({
                       <>
                         Nothing matches.
                         <br />
-                        Press <Kbd size="sm">{getKeyIcon('Enter')}</Kbd> to{' '}
+                        Press <Kbd size="sm">{getKeyIcon('Tab')}</Kbd> to{' '}
                         {mode === 'fuzzy' ? 'search semantically' : 'search again'}.
                       </>
                     )

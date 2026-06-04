@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { getCurrentWindow } from '@tauri-apps/api/window';
+import { listen } from '@tauri-apps/api/event';
 import { highlightMatch, searchItems } from '../lib/search';
 import { relTime } from '../lib/time';
 import type { CategoryDisplay, ClipItem, SearchMode, Theme } from '../lib/types';
@@ -227,7 +229,34 @@ export function Palette({
   const offToastShownRef = useRef(false);
 
   useEffect(() => {
+    let paletteShownUnlisten: (() => void) | undefined;
+    let focusUnlisten: (() => void) | undefined;
+
     inputRef.current?.focus();
+
+    listen('palette-shown', () => {
+      inputRef.current?.focus();
+      inputRef.current?.select();
+    }).then((f) => {
+      paletteShownUnlisten = f;
+    }).catch(() => {});
+
+    getCurrentWindow()
+      .onFocusChanged((focused) => {
+        if (focused) {
+          inputRef.current?.focus();
+          inputRef.current?.select();
+        }
+      })
+      .then((f) => {
+        focusUnlisten = f;
+      })
+      .catch(() => {});
+
+    return () => {
+      paletteShownUnlisten?.();
+      focusUnlisten?.();
+    };
   }, []);
 
   // One-shot toast per mount whenever the user is in semantic mode but the

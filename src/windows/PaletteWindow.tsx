@@ -59,17 +59,6 @@ export function PaletteWindow() {
     };
   }, []);
 
-  useEffect(() => {
-    const unlisten = listen('palette-shown', () => {
-      const input = document.querySelector<HTMLInputElement>('input');
-      input?.focus();
-      input?.select();
-    });
-    return () => {
-      unlisten.then((f) => f()).catch(() => {});
-    };
-  }, []);
-
   const close = () => {
     getCurrentWindow()
       .hide()

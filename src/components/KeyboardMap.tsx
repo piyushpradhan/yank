@@ -30,7 +30,7 @@ const GROUPS: [string, KeyRow[]][] = [
     'Actions',
     [
       { keys: ['↵'], label: 'Copy + paste · close palette' },
-      { keys: ['↵'], label: 'Promote fuzzy → semantic', scope: 'in search' },
+
       { keys: ['Ctrl', 'P'], label: 'Pin / unpin' },
       { keys: ['Ctrl', '⌫'], label: 'Delete item' },
       { keys: ['E'], label: 'Rename label', scope: 'library' },
