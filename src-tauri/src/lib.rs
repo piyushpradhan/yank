@@ -188,6 +188,14 @@ pub fn run() {
                 .map_err(|e| e.to_string())?
                 .replace(shortcut);
 
+            // macOS needs an application menu for the OS to route standard
+            // shortcuts (Cmd+W, Cmd+Q, Cmd+M, …). Without it, our chromeless
+            // window swallows them. Windows/Linux get Alt+F4 from the WM.
+            #[cfg(target_os = "macos")]
+            {
+                app.set_menu(Menu::default(app.handle())?)?;
+            }
+
             let open_library_i =
                 MenuItem::with_id(app, "show", "Open Library", true, None::<&str>)?;
             let open_palette_i =
