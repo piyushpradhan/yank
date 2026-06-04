@@ -1,14 +1,16 @@
-name: Auto-tag on version bump
+name: Auto-tag on push to main
 
-# Watches main for version changes in package.json. When the version differs
-# from the most recent vX.Y.Z tag, creates and pushes a matching tag — which
-# in turn triggers .github/workflows/release.yml to build and publish the
-# cross-platform installers as a GitHub Release.
+# Every push to main automatically becomes a new patch release. This workflow
+# computes the next patch version from the latest vX.Y.Z tag, creates and
+# pushes that tag, then dispatches release.yml to build and publish it.
 #
 # Triggers:
-#   - Every push to main (cheap; short-circuits when version == latest tag)
-#   - Manual dispatch (lets you re-run for the current version if a previous
-#     release attempt failed without leaving a tag behind)
+#   - Every push to main
+#   - Manual dispatch (re-run if a previous attempt left no tag behind)
+#
+# To bump major or minor, push the desired tag manually (e.g. `git tag v0.7.0
+# && git push origin v0.7.0`). release.yml will pick it up from the tag push,
+# and the next auto-bump on main will resume from that base.
 
 on:
   push:
@@ -27,44 +29,53 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Detect and push release tag
+      - name: Bump patch, push tag, and dispatch release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
 
-          CURRENT=$(jq -r '.version' package.json)
-          if [ -z "$CURRENT" ] || [ "$CURRENT" = "null" ]; then
-            echo "::error::Could not read version from package.json"
-            exit 1
-          fi
-
-          TAG="v$CURRENT"
-
-          # Skip if this tag already exists — either we've already released
-          # this version, or the user manually pushed the tag.
-          if git rev-parse "refs/tags/$TAG" >/dev/null 2>&1; then
-            echo "Tag $TAG already exists — nothing to do."
+          # If HEAD already carries a vX.Y.Z tag (e.g. one pushed manually
+          # alongside this commit), don't double-tag — just let that tag's
+          # release.yml run handle the publish.
+          EXISTING=$(git tag --points-at HEAD | grep '^v' | head -1 || true)
+          if [ -n "$EXISTING" ]; then
+            echo "HEAD already tagged as $EXISTING — skipping auto-bump."
             exit 0
           fi
 
-          # Sanity check: package.json and tauri.conf.json must agree, otherwise
-          # the Tauri build will produce installers with the wrong version
-          # number relative to the GitHub Release.
-          TAURI_VERSION=$(jq -r '.version' src-tauri/tauri.conf.json)
-          if [ "$CURRENT" != "$TAURI_VERSION" ]; then
-            echo "::error::Version mismatch: package.json=$CURRENT, tauri.conf.json=$TAURI_VERSION"
+          # Compute next patch from the latest semver tag. `--sort=-version:refname`
+          # orders v0.10.0 above v0.9.0 correctly. Prerelease suffixes
+          # (e.g. -alpha1) are stripped so they don't poison the bump.
+          LATEST=$(git tag --list 'v*' --sort=-version:refname | head -1)
+          if [ -z "$LATEST" ]; then
+            NEXT="v0.1.0"
+          else
+            VERSION="${LATEST#v}"
+            VERSION="${VERSION%%-*}"
+            IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
+            NEXT="v${MAJOR}.${MINOR}.$((PATCH + 1))"
+          fi
+
+          # Defensive guard: if our computed tag somehow already exists on the
+          # remote, abort rather than overwrite history.
+          if git rev-parse "refs/tags/$NEXT" >/dev/null 2>&1; then
+            echo "::error::Computed tag $NEXT already exists locally — refusing to overwrite"
+            exit 1
+          fi
+          if git ls-remote --tags origin "$NEXT" | grep -q "$NEXT"; then
+            echo "::error::Computed tag $NEXT already exists on remote — refusing to overwrite"
             exit 1
           fi
 
-          echo "Creating tag $TAG at $(git rev-parse HEAD)"
+          echo "Creating tag $NEXT at $(git rev-parse HEAD)"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git tag -a "$TAG" -m "Release $TAG"
-          git push origin "$TAG"
+          git tag -a "$NEXT" -m "Release $NEXT"
+          git push origin "$NEXT"
 
           # Pushing via GITHUB_TOKEN suppresses downstream workflow triggers
           # (GitHub prevents recursion), so explicitly dispatch the Release
           # workflow with the new tag.
-          echo "Dispatching release workflow for $TAG"
-          gh workflow run release.yml --ref main -f tag_name="$TAG"
+          echo "Dispatching release workflow for $NEXT"
+          gh workflow run release.yml --ref main -f tag_name="$NEXT"

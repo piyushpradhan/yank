@@ -1,14 +1,19 @@
 name: Release
 
-# Cross-platform installer build.
+# Cross-platform installer build + publish.
 #
 # Triggers:
-#   - Every push (commit) — runs lint/typecheck/tests + cross-platform build
-#     and uploads artifacts; release-specific steps are skipped.
+#   - Pushes to any branch except main — runs lint/typecheck/tests +
+#     cross-platform build and uploads artifacts (CI for PRs and feature
+#     branches). No release is published.
 #   - Pushing a tag that starts with "v" (e.g. v0.1.0) or a branch named
-#     "release/vX.Y.Z" — same as above plus publishes a GitHub Release with
+#     "release/vX.Y.Z" — builds and publishes a GitHub Release with
 #     installers attached.
 #   - Manual dispatch with a tag_name input — builds + publishes a release.
+#
+# Pushes to main do NOT trigger this workflow directly. auto-tag.yml runs on
+# every push to main, bumps the patch version, creates a tag, and dispatches
+# this workflow with that tag — which then builds + publishes the release.
 #
 # Outputs per platform:
 #   - windows-latest : .msi + .exe (NSIS)
@@ -17,6 +22,8 @@ name: Release
 
 on:
   push:
+    branches-ignore: [main]
+    tags: ['v*']
   workflow_dispatch:
     inputs:
       tag_name:
@@ -55,6 +62,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare.outputs.tag || github.ref }}
 
       - uses: actions/setup-node@v4
         with:
@@ -101,6 +110,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare.outputs.tag || github.ref }}
 
       - name: Install Linux dependencies
         if: matrix.os == 'ubuntu-22.04'
@@ -159,7 +170,9 @@ jobs:
             npm run tauri -- build --target ${{ matrix.target }}
           fi
 
-      - name: Upload build artifacts (always)
+      - name: Upload build artifacts (non-release CI only)
+        if: needs.prepare.outputs.is_release == 'false'
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: yank-${{ matrix.label }}
@@ -197,4 +210,5 @@ jobs:
           tag_name: ${{ needs.prepare.outputs.tag }}
           draft: false
           generate_release_notes: true
+          fail_on_unmatched_files: false
           files: ${{ steps.assets.outputs.files }}
