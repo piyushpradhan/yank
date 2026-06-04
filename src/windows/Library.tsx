@@ -98,7 +98,14 @@ interface SemanticBannerProps {
   loading: boolean;
 }
 
-const BANNER_BORDER = { borderBottom: '1px solid var(--border-subtle)' } as const;
+// Shared style for every banner variant. The min-height keeps the row visually
+// stable when the inner content changes (loading → results → off), so the list
+// below doesn't jump as the user types.
+const BANNER_BORDER = {
+  borderBottom: '1px solid var(--border-subtle)',
+  minHeight: 34,
+  boxSizing: 'border-box',
+} as const;
 
 function SemanticBanner({ count, available, offMessage, error, loading }: SemanticBannerProps) {
   if (!available) {
@@ -352,7 +359,7 @@ function ListRow({
               style={{ height: 40 }}
             />
           ) : (
-            <Text tone="tertiary">Loading...</Text>
+            <Box aria-hidden radius="sm" bg="subtle" style={{ height: 40, width: 64 }} />
           )
         ) : (
           item.preview
@@ -589,7 +596,9 @@ export function Library({
     } else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'p') {
       e.preventDefault();
       if (current) app.pinItem(current.id);
-    } else if (e.key === 'Backspace' || e.key === 'Delete') {
+    } else if ((e.metaKey || e.ctrlKey) && (e.key === 'Backspace' || e.key === 'Delete')) {
+      // Cmd/Ctrl modifier matches the Palette shortcut — bare Backspace is too
+      // easy to hit while typing in the search input.
       e.preventDefault();
       if (current) app.deleteItem(current.id);
     } else if (e.key.toLowerCase() === 'e' && !inSearch) {
@@ -857,7 +866,14 @@ export function Library({
               loading={semanticResults === null && !semanticError}
             />
           ) : (
-            <Box aria-hidden style={{ height: 34, borderBottom: '1px solid transparent' }} />
+            <Box
+              aria-hidden
+              style={{
+                minHeight: 34,
+                borderBottom: '1px solid transparent',
+                boxSizing: 'border-box',
+              }}
+            />
           )}
 
           <Box ref={listRef} grow={1} overflow="auto" p={1}>
@@ -985,12 +1001,6 @@ export function Library({
                 tracking="widest"
               >
                 local
-              </Text>
-              <Text family="mono" size={10.5} tone="tertiary" style={{ opacity: 0.5 }}>
-                ·
-              </Text>
-              <Text family="mono" size={10.5} tabularNums tone="tertiary">
-                {(app.items.length * 0.4).toFixed(1)} KB
               </Text>
             </Inline>
           </Inline>
