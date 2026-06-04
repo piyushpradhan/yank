@@ -167,8 +167,11 @@ fn load_pending(app: &AppHandle, limit: i64) -> Vec<(i64, String, String)> {
 fn store_label(app: &AppHandle, id: i64, label: &str) -> Result<(), String> {
     let db = app.state::<Arc<Db>>().inner().clone();
     let conn = db.0.lock().map_err(|e| e.to_string())?;
+    // Clearing embedding_model marks the item for re-embedding on the next
+    // queue tick — the label is part of the embedded text, so a fresh
+    // label should retrigger vectorisation.
     conn.execute(
-        "UPDATE items SET label = ?1 WHERE id = ?2",
+        "UPDATE items SET label = ?1, embedding_model = NULL WHERE id = ?2",
         params![label, id],
     )
     .map_err(|e| e.to_string())?;

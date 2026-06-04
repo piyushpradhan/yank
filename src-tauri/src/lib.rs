@@ -1,11 +1,12 @@
 mod categorize;
 mod commands;
-mod db;
-mod embed;
+pub mod db;
+pub mod embed;
 mod embed_queue;
 mod label;
 mod label_queue;
-mod local_embed;
+pub mod local_embed;
+pub mod query_time;
 mod settings;
 mod watcher;
 
@@ -142,6 +143,7 @@ pub fn run() {
             commands::clear_history,
             commands::search_fts,
             commands::search_semantic,
+            commands::strip_time,
             commands::get_image,
             commands::copy_image,
             settings::get_settings,

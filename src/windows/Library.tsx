@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useImageUrl } from '../hooks/useImageUrl';
 import { useWindowSize } from '../hooks/useWindowSize';
 import { listen } from '@tauri-apps/api/event';
@@ -14,8 +14,9 @@ import type {
   PreviewMode,
   SearchMode,
   Theme,
-  TimeFilter,
+  TimeWindowDto,
 } from '../lib/types';
+import { invoke } from '@tauri-apps/api/core';
 import type { AppState } from '../hooks/useAppState';
 import {
   Box,
@@ -34,7 +35,7 @@ import {
 } from 'ember-design-system';
 import { getKeyIcon } from '../lib/keyIcons';
 import {
-  LuClock,
+  LuCalendar,
   LuList,
   LuEllipsis,
   LuPanelLeftClose,
@@ -45,6 +46,7 @@ import {
   LuSearch,
   LuSparkles,
   LuTextSearch,
+  LuX,
 } from 'react-icons/lu';
 import { CategoryChip } from '../components/Primitives';
 import { PreviewPane } from '../components/PreviewPane';
@@ -145,6 +147,70 @@ function SemanticBanner({ t, count, available, offMessage, error, loading }: Sem
       </Text>
       <Text family="mono" size={11} tone="accent-ink" style={{ opacity: 0.6 }}>
         ranked by intent
+      </Text>
+    </Inline>
+  );
+}
+
+interface TimeChipProps {
+  t: Theme;
+  window: TimeWindowDto;
+  onDismiss: () => void;
+}
+
+/// Inline chip shown when the search query contains a date phrase the
+/// backend parsed out ("4 days ago", "last week"). The tooltip exposes
+/// the absolute range; clicking × strips the phrase from the query via
+/// the `strip_time` Tauri command.
+function TimeChip({ t, window: w, onDismiss }: TimeChipProps) {
+  void t;
+  const range = useMemo(() => {
+    const opts: Intl.DateTimeFormatOptions = {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    };
+    const from = new Date(w.fromMs).toLocaleDateString(undefined, opts);
+    const to = new Date(w.toMs).toLocaleDateString(undefined, opts);
+    return from === to ? from : `${from} — ${to}`;
+  }, [w.fromMs, w.toMs]);
+
+  return (
+    <Inline gap={2} px={3} py={2} bg="subtle" style={BANNER_BORDER} align="center">
+      <Tooltip
+        content={
+          <Text size={11} tone="secondary">
+            {range}
+          </Text>
+        }
+      >
+        <Inline
+          gap={1}
+          align="center"
+          px={2}
+          py={1}
+          style={{
+            border: '1px solid var(--border-subtle)',
+            borderRadius: 999,
+            background: 'var(--surface)',
+          }}
+        >
+          <LuCalendar size={11} color="var(--text-secondary)" />
+          <Text family="mono" size={11} weight="medium" tone="secondary">
+            {w.label}
+          </Text>
+          <IconButton
+            aria-label="Clear date filter"
+            icon={<LuX size={10} />}
+            variant="ghost"
+            size="sm"
+            onClick={onDismiss}
+            style={{ marginLeft: 2 }}
+          />
+        </Inline>
+      </Tooltip>
+      <Text family="mono" size={11} tone="tertiary" style={{ opacity: 0.7 }}>
+        filtering by date
       </Text>
     </Inline>
   );
@@ -318,7 +384,6 @@ export function Library({
   const [query, setQuery] = useState(initialQuery);
   const [mode, setMode] = useState<SearchMode>(initialMode);
   const [filter, setFilter] = useState<Filter>(initialFilter);
-  const [timeFilter, setTimeFilter] = useState<TimeFilter>('all');
   const [selectedId, setSelectedId] = useState<string | null>(
     initialSelectedId ?? app.items[0]?.id ?? null
   );
@@ -387,54 +452,34 @@ export function Library({
     } else if (filter !== 'all') {
       items = items.filter((i) => i.category === filter);
     }
-    if (timeFilter !== 'all') {
-      const now = Date.now();
-      const minute = 60 * 1000;
-      const day = 24 * 60 * minute;
-      items = items.filter((i) => {
-        const age = i.minutesAgo * minute;
-        switch (timeFilter) {
-          case 'today':
-            return now - age < day;
-          case 'yesterday': {
-            const yesterdayStart = now - day;
-            const yesterdayEnd = now;
-            const itemTime = now - age;
-            return itemTime >= yesterdayStart && itemTime < yesterdayEnd;
-          }
-          case 'week':
-            return age < 7 * day;
-          case 'month':
-            return age < 30 * day;
-          default:
-            return true;
-        }
-      });
-    }
     return items;
-  }, [app.items, filter, timeFilter]);
+  }, [app.items, filter]);
 
   const [semanticResults, setSemanticResults] = useState<typeof app.items | null>(null);
   const [semanticError, setSemanticError] = useState<string | null>(null);
+  const [detectedTime, setDetectedTime] = useState<TimeWindowDto | null>(null);
 
   useEffect(() => {
     if (mode !== 'semantic' || !query.trim()) {
       setSemanticResults(null);
       setSemanticError(null);
+      setDetectedTime(null);
       return;
     }
     if (!semanticAvailable) {
       setSemanticResults([]);
       setSemanticError(null);
+      setDetectedTime(null);
       return;
     }
     let cancelled = false;
     const h = setTimeout(() => {
       app
         .semanticSearch(query, 50)
-        .then((rows) => {
+        .then((resp) => {
           if (cancelled) return;
-          setSemanticResults(rows);
+          setSemanticResults(resp.items);
+          setDetectedTime(resp.timeWindow);
           setSemanticError(null);
         })
         .catch((err: unknown) => {
@@ -442,6 +487,7 @@ export function Library({
           const msg = err instanceof Error ? err.message : typeof err === 'string' ? err : 'failed';
           setSemanticError(msg);
           setSemanticResults([]);
+          setDetectedTime(null);
         });
     }, 200);
     return () => {
@@ -449,6 +495,17 @@ export function Library({
       clearTimeout(h);
     };
   }, [query, mode, app, semanticAvailable]);
+
+  const dismissTimeChip = useCallback(async () => {
+    try {
+      const stripped = await invoke<string>('strip_time', { query });
+      setQuery(stripped);
+    } catch {
+      // Defensive: if the backend hiccups, just drop the chip and leave the
+      // input as-is — the user can clear the phrase manually.
+      setDetectedTime(null);
+    }
+  }, [query]);
 
   const searched = useMemo(() => {
     if (mode === 'semantic') {
@@ -632,31 +689,6 @@ export function Library({
               <SidebarCount t={t}>{counts.pinned}</SidebarCount>
             </SidebarRow>
 
-            <SidebarHeading t={t}>Time</SidebarHeading>
-            {(
-              [
-                ['all', 'Any time'],
-                ['today', 'Today'],
-                ['yesterday', 'Yesterday'],
-                ['week', 'Last 7 days'],
-                ['month', 'Last 30 days'],
-              ] as [TimeFilter, string][]
-            ).map(([value, label]) => (
-              <SidebarRow
-                key={value}
-                t={t}
-                active={timeFilter === value}
-                onClick={() => setTimeFilter(value)}
-              >
-                <SidebarIcon t={t} active={timeFilter === value}>
-                  <LuClock size={12} />
-                </SidebarIcon>
-                <Box grow={1} style={{ minWidth: 0 }}>
-                  {label}
-                </Box>
-              </SidebarRow>
-            ))}
-
             <SidebarHeading t={t}>Categories</SidebarHeading>
             {CATEGORIES.map((cat: Category) => {
               const meta = CATEGORY_META[cat];
@@ -817,6 +849,10 @@ export function Library({
               )}
             </Inline>
           </Box>
+
+          {detectedTime && mode === 'semantic' && query && (
+            <TimeChip t={t} window={detectedTime} onDismiss={dismissTimeChip} />
+          )}
 
           {query && mode === 'semantic' ? (
             <SemanticBanner

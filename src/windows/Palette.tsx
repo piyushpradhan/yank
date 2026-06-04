@@ -260,9 +260,9 @@ export function Palette({
     const h = setTimeout(() => {
       app
         .semanticSearch(query, 20)
-        .then((rows) => {
+        .then((resp) => {
           if (cancelled) return;
-          setSemanticResults(rows);
+          setSemanticResults(resp.items);
           setSemanticLoading(false);
         })
         .catch((err: unknown) => {

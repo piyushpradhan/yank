@@ -31,7 +31,16 @@ export type PreviewMode = 'split' | 'inline';
 export type SearchMode = 'fuzzy' | 'semantic';
 export type Filter = 'all' | 'pinned' | Category;
 
-export type TimeFilter = 'all' | 'today' | 'yesterday' | 'week' | 'month';
+export interface TimeWindowDto {
+  fromMs: number;
+  toMs: number;
+  label: string;
+}
+
+export interface SemanticSearchResponse {
+  items: ClipItem[];
+  timeWindow: TimeWindowDto | null;
+}
 
 export interface Tweaks {
   theme: ThemeMode;

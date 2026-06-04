@@ -65,7 +65,7 @@ impl EmbedConfig {
     pub fn model_id(&self) -> String {
         // Bump the suffix whenever the document input format or prefix
         // scheme changes so old embeddings are re-generated.
-        const FMT: &str = "v2";
+        const FMT: &str = "v3";
         match self.provider {
             Provider::Disabled => "disabled".into(),
             Provider::Local => format!("local:{}:{FMT}", self.local_model),

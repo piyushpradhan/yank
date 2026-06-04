@@ -126,21 +126,29 @@ fn load_pending(app: &AppHandle, model_id: &str, limit: i64) -> Vec<(i64, String
     .collect()
 }
 
-/// Compose the document text we embed. Ordering matters: the category
-/// and human label appear first so they weight the sentence vector
-/// regardless of truncation. The raw content is capped at
-/// `MAX_DOC_CHARS` — long clips (log dumps, JSON blobs) stay within a
-/// reasonable budget while preserving the head of the buffer.
+/// Compose the document text we embed. BGE-small attends most strongly
+/// to the first ~64 tokens, so the AI label (high-signal, human-readable
+/// summary) leads the input and is repeated once just above the body.
+/// Source app and category come next so queries like "the slack link"
+/// can hit on source even when the raw content is a bare URL. The body
+/// is truncated to `MAX_DOC_CHARS` — long clips (log dumps, JSON blobs)
+/// stay within a reasonable budget while preserving the head.
 fn build_doc_text(category: &str, label: &str, source: &str, content: &str) -> String {
     let trimmed = content.trim();
     let body: String = trimmed.chars().take(MAX_DOC_CHARS).collect();
-    let mut parts: Vec<String> = Vec::with_capacity(4);
-    parts.push(format!("[{}]", category));
-    if !label.trim().is_empty() {
-        parts.push(label.trim().to_string());
+    let label_t = label.trim();
+    let source_t = source.trim();
+
+    let mut parts: Vec<String> = Vec::with_capacity(5);
+    if !label_t.is_empty() {
+        parts.push(label_t.to_string());
     }
-    if !source.trim().is_empty() {
-        parts.push(format!("(from {})", source.trim()));
+    parts.push(format!("[{}]", category));
+    if !source_t.is_empty() {
+        parts.push(format!("(from {})", source_t));
+    }
+    if !label_t.is_empty() {
+        parts.push(label_t.to_string());
     }
     parts.push(body);
     parts.join("\n")

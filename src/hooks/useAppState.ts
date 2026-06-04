@@ -3,7 +3,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { writeText } from "@tauri-apps/plugin-clipboard-manager";
 import { truncate } from "../lib/time";
-import type { ClipItem, Toast, ToastKind } from "../lib/types";
+import type { ClipItem, SemanticSearchResponse, Toast, ToastKind } from "../lib/types";
 import { evictImageUrl } from "./useImageUrl";
 
 export interface BackfillState {
@@ -34,7 +34,7 @@ export interface AppState {
   deleteItem: (id: string) => void;
   updateLabel: (id: string, label: string) => void;
   refresh: () => Promise<void>;
-  semanticSearch: (query: string, limit?: number) => Promise<ClipItem[]>;
+  semanticSearch: (query: string, limit?: number) => Promise<SemanticSearchResponse>;
   getImage: (id: string) => Promise<Blob | null>;
   providerHealth: ProviderHealth;
   resetProviderHealth: () => void;
@@ -175,14 +175,17 @@ export function useAppState(): AppState {
   );
 
   const semanticSearch = useCallback(
-    async (query: string, limit = 20): Promise<ClipItem[]> => {
-      if (!query.trim()) return [];
+    async (query: string, limit = 20): Promise<SemanticSearchResponse> => {
+      if (!query.trim()) return { items: [], timeWindow: null };
       try {
-        const rows = await invoke<ClipItem[]>("search_semantic", { query, limit });
+        const resp = await invoke<SemanticSearchResponse>("search_semantic", {
+          query,
+          limit,
+        });
         setProviderHealth((prev) =>
           prev.status === "ok" ? prev : { status: "ok", error: null },
         );
-        return rows;
+        return resp;
       } catch (err) {
         console.error("search_semantic failed", err);
         const msg =

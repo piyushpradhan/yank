@@ -262,15 +262,36 @@ pub fn restore_item(id: String, db: State<'_, Arc<Db>>) -> Result<(), String> {
 }
 
 #[tauri::command]
-pub fn update_label(id: String, label: String, db: State<'_, Arc<Db>>) -> Result<(), String> {
+pub fn update_label(
+    id: String,
+    label: String,
+    app: tauri::AppHandle,
+    db: State<'_, Arc<Db>>,
+) -> Result<(), String> {
     let conn = db.0.lock().map_err(|e| e.to_string())?;
     let id_num: i64 = id.parse().map_err(map_err)?;
+    // Clearing embedding_model marks the item for re-embedding on the next
+    // queue tick — the label is part of the embedded text now, so an edit
+    // here needs to flow into the vector or semantic search will see stale
+    // content for this id.
     conn.execute(
-        "UPDATE items SET label = ?1 WHERE id = ?2",
+        "UPDATE items SET label = ?1, embedding_model = NULL WHERE id = ?2",
         params![label, id_num],
     )
     .map_err(map_err)?;
+    drop(conn);
+    crate::embed_queue::kick(&app);
     Ok(())
+}
+
+/// Parse a query the same way `search_semantic` does and return only the
+/// semantic residue — used by the UI when the user dismisses the
+/// detected-date chip, so the time phrase is removed from the input
+/// without the user having to find and delete it themselves.
+#[tauri::command]
+pub fn strip_time(query: String) -> String {
+    let now = chrono::Local::now();
+    crate::query_time::parse(now, &query).semantic
 }
 
 #[tauri::command]
@@ -281,6 +302,27 @@ pub fn clear_history(db: State<'_, Arc<Db>>) -> Result<(), String> {
     Ok(())
 }
 
+/// DTO mirroring `query_time::TimeWindow` minus the byte span. Serialised
+/// to the frontend as `{ fromMs, toMs, label }` for the chip caption.
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct TimeWindowDto {
+    #[serde(rename = "fromMs")]
+    pub from_ms: i64,
+    #[serde(rename = "toMs")]
+    pub to_ms: i64,
+    pub label: String,
+}
+
+/// Response shape for `search_semantic`. `time_window` is `Some` when the
+/// query contained a recognised date phrase like "4 days ago" so the UI
+/// can render the dismissible date chip.
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct SearchResponse {
+    pub items: Vec<ClipItem>,
+    #[serde(rename = "timeWindow")]
+    pub time_window: Option<TimeWindowDto>,
+}
+
 #[tauri::command]
 pub async fn search_semantic(
     query: String,
@@ -289,7 +331,7 @@ pub async fn search_semantic(
     db: State<'_, Arc<Db>>,
     settings: State<'_, crate::settings::SettingsState>,
     local: State<'_, crate::local_embed::LocalState>,
-) -> Result<Vec<ClipItem>, String> {
+) -> Result<SearchResponse, String> {
     use crate::embed::{self, EmbedConfig, EmbedTask, Provider};
     use crate::local_embed;
 
@@ -299,17 +341,41 @@ pub async fn search_semantic(
     }
     let q_trimmed = query.trim().to_string();
     if q_trimmed.is_empty() {
-        return Ok(Vec::new());
+        return Ok(SearchResponse { items: Vec::new(), time_window: None });
     }
     let limit = limit.unwrap_or(20);
 
-    // Embed the query outside the DB lock.
+    // Pull any date phrase out of the query before we embed it. The
+    // residue ("semantic") is what hits the vector and BM25 pools; the
+    // window becomes a SQL filter on `created_at` so we never have to
+    // rank items outside it.
+    let parsed = crate::query_time::parse(chrono::Local::now(), &q_trimmed);
+    let time_dto = parsed.time.as_ref().map(|t| TimeWindowDto {
+        from_ms: t.from_ms,
+        to_ms: t.to_ms,
+        label: t.label.clone(),
+    });
+    let time_bounds = parsed.time.as_ref().map(|t| (t.from_ms, t.to_ms));
+    let semantic_q = parsed.semantic.trim().to_string();
+
+    // Pure time query ("yesterday"): skip embedding entirely and return
+    // newest items in the window, pinned first.
+    if semantic_q.is_empty() {
+        if let Some((from, to)) = time_bounds {
+            let conn = db.0.lock().map_err(|e| e.to_string())?;
+            let items = items_in_window(&conn, from, to, limit)?;
+            return Ok(SearchResponse { items, time_window: time_dto });
+        }
+        return Ok(SearchResponse { items: Vec::new(), time_window: None });
+    }
+
+    // Embed the residue outside the DB lock.
     let q_vec = if matches!(cfg.provider, Provider::Local) {
         local_embed::embed_local(
             local.inner(),
             local_embed::cache_dir(&app),
             &cfg.local_model,
-            &q_trimmed,
+            &semantic_q,
             EmbedTask::Query,
         )
         .await?
@@ -318,18 +384,17 @@ pub async fn search_semantic(
             .timeout(std::time::Duration::from_secs(30))
             .build()
             .map_err(|e| e.to_string())?;
-        embed::embed(&cfg, &client, &q_trimmed, EmbedTask::Query).await?
+        embed::embed(&cfg, &client, &semantic_q, EmbedTask::Query).await?
     };
 
-    // Pool A — vector candidates. Score every embedded item by cosine on
-    // the L2-normalised vectors, filter out obvious noise, keep the top K.
-    // K is intentionally wider than `limit` because RRF then re-ranks this
-    // pool against the BM25 pool before we trim to the final window.
+    // Pool A — vector candidates. K is intentionally wider than `limit`
+    // because RRF then re-ranks this pool against the BM25 pool before
+    // we trim to the final window.
     const VEC_POOL: usize = 50;
     const FTS_POOL: usize = 50;
-    // 0.25 is a loose floor — we rely on RRF fusion for final ordering, so
-    // we just want to drop embeddings that are clearly orthogonal.
-    const VEC_THRESHOLD: f32 = 0.25;
+    // Loose floor — RRF fusion does the actual ranking, this just drops
+    // embeddings that are clearly orthogonal to the query.
+    const VEC_THRESHOLD: f32 = 0.15;
     // Standard RRF constant from the original paper; dampens runaway rank
     // differences so the two pools blend smoothly.
     const RRF_K: f32 = 60.0;
@@ -337,6 +402,7 @@ pub async fn search_semantic(
     let db: Arc<Db> = db.inner().clone();
     let conn = db.0.lock().map_err(|e| e.to_string())?;
     let model_id = cfg.model_id();
+    let (from_ms, to_ms) = time_bounds.unwrap_or((i64::MIN, i64::MAX));
 
     // --- Pool A: cosine --------------------------------------------------
     let mut stmt_vec = conn
@@ -344,12 +410,13 @@ pub async fn search_semantic(
             "SELECT id, content, category, label, preview, source, pinned,
                     deleted, deleted_at, last_used_at, embedding
              FROM items
-             WHERE deleted = 0 AND embedding IS NOT NULL AND embedding_model = ?1",
+             WHERE deleted = 0 AND embedding IS NOT NULL AND embedding_model = ?1
+               AND created_at BETWEEN ?2 AND ?3",
         )
         .map_err(map_err)?;
 
     let mut scored: Vec<(f32, ClipItem)> = stmt_vec
-        .query_map(params![model_id], |row| {
+        .query_map(params![model_id, from_ms, to_ms], |row| {
             let item = row_to_item(row)?;
             let bytes: Vec<u8> = row.get("embedding")?;
             let vec = embed::from_bytes(&bytes);
@@ -364,17 +431,13 @@ pub async fn search_semantic(
     scored.truncate(VEC_POOL);
 
     // --- Pool B: BM25 via FTS5 ------------------------------------------
-    // Build a forgiving MATCH query — prefix every term so "cors" matches
-    // "corsair", and escape embedded quotes. If the tokeniser rejects the
-    // query (rare — e.g. only punctuation) we fall through with an empty
-    // BM25 pool.
-    let fts_pool = bm25_pool(&conn, &q_trimmed, FTS_POOL).unwrap_or_default();
+    let fts_pool = bm25_pool(&conn, &semantic_q, FTS_POOL, time_bounds).unwrap_or_default();
 
     // --- Reciprocal Rank Fusion -----------------------------------------
     // For each item present in either pool, score = Σ 1 / (RRF_K + rank_i).
-    // Items unique to one pool still get a contribution from that pool;
-    // items in both are boosted. This is robust to different score scales
-    // (BM25 is unbounded negative, cosine is [-1, 1]).
+    // Items in both pools are boosted; items unique to one still get a
+    // contribution from that pool. Robust to BM25's unbounded scale and
+    // cosine's [-1, 1] scale.
     use std::collections::HashMap;
     let mut fused: HashMap<String, (f32, ClipItem)> = HashMap::new();
 
@@ -393,6 +456,19 @@ pub async fn search_semantic(
             .or_insert((contribution, item.clone()));
     }
 
+    // Soft recency tiebreak — only when the user didn't already constrain
+    // recency via a date phrase. The coefficient stays well below the
+    // single-pool RRF rank-1 contribution (1/(K+1) ≈ 0.016) so it can
+    // *break* ties between similarly-relevant items but cannot promote
+    // an unrelated recent item over a relevant older one. Decays over
+    // ~2 weeks.
+    if time_bounds.is_none() {
+        for (_, (score, item)) in fused.iter_mut() {
+            let age_days = (item.minutes_ago.max(0) as f32) / (60.0 * 24.0);
+            *score += 0.005 * (-age_days / 14.0).exp();
+        }
+    }
+
     let mut ranked: Vec<(f32, ClipItem)> = fused.into_values().collect();
     // Pinned items win ties; otherwise sort strictly by fused score desc.
     ranked.sort_by(|a, b| {
@@ -403,19 +479,49 @@ pub async fn search_semantic(
         b.0.partial_cmp(&a.0).unwrap_or(std::cmp::Ordering::Equal)
     });
 
-    Ok(ranked.into_iter().take(limit).map(|(_, i)| i).collect())
+    let items = ranked.into_iter().take(limit).map(|(_, i)| i).collect();
+    Ok(SearchResponse { items, time_window: time_dto })
 }
 
-/// Run the query through FTS5 and return the top-N item rows in BM25 order.
-/// Returns an empty Vec if the query is unusable (e.g. only punctuation).
+/// Newest items inside `[from_ms, to_ms]` — used when the query is purely
+/// a time phrase ("yesterday") and there's nothing left to embed.
+fn items_in_window(
+    conn: &rusqlite::Connection,
+    from_ms: i64,
+    to_ms: i64,
+    limit: usize,
+) -> Result<Vec<ClipItem>, String> {
+    let mut stmt = conn
+        .prepare(
+            "SELECT id, content, category, label, preview, source, pinned,
+                    deleted, deleted_at, last_used_at
+             FROM items
+             WHERE deleted = 0 AND created_at BETWEEN ?1 AND ?2
+             ORDER BY pinned DESC, created_at DESC
+             LIMIT ?3",
+        )
+        .map_err(map_err)?;
+    let rows = stmt
+        .query_map(params![from_ms, to_ms, limit as i64], row_to_item)
+        .map_err(map_err)?
+        .filter_map(|r| r.ok())
+        .collect();
+    Ok(rows)
+}
+
+/// Run the residue through FTS5 with a time-window filter and return the
+/// top-N item rows ranked by BM25. Tries an AND-form query first for
+/// multi-token residues (precision) and falls back to OR-prefix (recall)
+/// to top up the pool. Returns an empty Vec when the tokeniser rejects
+/// the query (rare — usually only-punctuation residues).
 fn bm25_pool(
     conn: &rusqlite::Connection,
     query: &str,
     limit: usize,
+    time: Option<(i64, i64)>,
 ) -> Result<Vec<ClipItem>, String> {
-    // Split on whitespace, strip quotes, prefix-match each term. `foo bar`
-    // becomes `foo* bar*` — matches documents containing a token that starts
-    // with either.
+    // Split on whitespace, strip quotes, prefix-match each term. `cors`
+    // matches `corsair`. Embedded quotes are escaped per FTS5 syntax.
     let terms: Vec<String> = query
         .split_whitespace()
         .map(|t| t.trim_matches(|c: char| !c.is_alphanumeric()))
@@ -425,8 +531,46 @@ fn bm25_pool(
     if terms.is_empty() {
         return Ok(Vec::new());
     }
-    let match_q = terms.join(" OR ");
+    let (from_ms, to_ms) = time.unwrap_or((i64::MIN, i64::MAX));
 
+    let mut seen: std::collections::HashSet<String> = std::collections::HashSet::new();
+    let mut out: Vec<ClipItem> = Vec::with_capacity(limit);
+
+    // AND form first — FTS5's default operator between bare terms is AND,
+    // so "foo* bar*" demands both. Only worth running for multi-token
+    // residues; a single term degenerates to the same query as OR.
+    if terms.len() >= 2 {
+        let and_q = terms.join(" ");
+        for item in run_bm25(conn, &and_q, from_ms, to_ms, limit)? {
+            if seen.insert(item.id.clone()) {
+                out.push(item);
+            }
+            if out.len() >= limit {
+                return Ok(out);
+            }
+        }
+    }
+
+    // OR-prefix to top up: catches paraphrases the AND form missed.
+    let or_q = terms.join(" OR ");
+    for item in run_bm25(conn, &or_q, from_ms, to_ms, limit)? {
+        if seen.insert(item.id.clone()) {
+            out.push(item);
+        }
+        if out.len() >= limit {
+            break;
+        }
+    }
+    Ok(out)
+}
+
+fn run_bm25(
+    conn: &rusqlite::Connection,
+    match_q: &str,
+    from_ms: i64,
+    to_ms: i64,
+    limit: usize,
+) -> Result<Vec<ClipItem>, String> {
     let mut stmt = conn
         .prepare(
             "SELECT i.id, i.content, i.category, i.label, i.preview, i.source,
@@ -434,12 +578,13 @@ fn bm25_pool(
              FROM items_fts
              JOIN items i ON i.id = items_fts.rowid
              WHERE items_fts MATCH ?1 AND i.deleted = 0
+               AND i.created_at BETWEEN ?2 AND ?3
              ORDER BY bm25(items_fts)
-             LIMIT ?2",
+             LIMIT ?4",
         )
         .map_err(map_err)?;
     let rows = stmt
-        .query_map(params![match_q, limit as i64], row_to_item)
+        .query_map(params![match_q, from_ms, to_ms, limit as i64], row_to_item)
         .map_err(map_err)?
         .filter_map(|r| r.ok())
         .collect();
