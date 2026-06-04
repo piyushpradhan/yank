@@ -60,7 +60,11 @@ function App() {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === '?') {
         const target = e.target as HTMLElement | null;
-        if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) return;
+        if (
+          target &&
+          (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)
+        )
+          return;
         e.preventDefault();
         setKeymapOpen((v) => !v);
       } else if (e.key === 'Escape') {

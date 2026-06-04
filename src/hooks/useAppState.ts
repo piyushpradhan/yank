@@ -105,9 +105,22 @@ export function useAppState(): AppState {
           total: backfillTotal.current,
           stalled: false,
         });
+        if (backfillTimer.current) clearTimeout(backfillTimer.current);
         if (backfillRemaining.current === 0) {
-          if (backfillTimer.current) clearTimeout(backfillTimer.current);
           backfillTimer.current = setTimeout(() => setBackfill(null), 3000);
+        } else {
+          // Reset stall timer on each progress event so a slow but live backfill stays visible.
+          backfillTimer.current = setTimeout(() => {
+            if (backfillRemaining.current > 0) {
+              setBackfill({
+                remaining: backfillRemaining.current,
+                total: backfillTotal.current,
+                stalled: true,
+              });
+            } else {
+              setBackfill(null);
+            }
+          }, 30000);
         }
       }),
     ]);
@@ -120,9 +133,10 @@ export function useAppState(): AppState {
     (msg: string, kind: ToastKind = "info", undo?: () => void) => {
       const id = ++toastSeq;
       setToast({ id, msg, kind, undo });
+      // Undoable toasts linger long enough that a user can actually reach for Undo.
       setTimeout(() => {
         setToast((current) => (current && current.id === id ? null : current));
-      }, 1800);
+      }, undo ? 6000 : 1800);
     },
     [],
   );
