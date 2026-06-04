@@ -313,10 +313,24 @@ h4 {
   flex-shrink: 0;
 }
 .btn .os-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  overflow: visible;
+}
+.btn .os-icon svg {
+  display: block;
   width: 14px;
   height: 14px;
 }
 .btn--lg .os-icon {
+  width: 16px;
+  height: 16px;
+}
+.btn--lg .os-icon svg {
   width: 16px;
   height: 16px;
 }
