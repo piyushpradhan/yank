@@ -3,17 +3,15 @@ name: Release
 # Cross-platform installer build + publish.
 #
 # Triggers:
-#   - Pushes to any branch except main — runs lint/typecheck/tests +
-#     cross-platform build and uploads artifacts (CI for PRs and feature
-#     branches). No release is published.
 #   - Pushing a tag that starts with "v" (e.g. v0.1.0) or a branch named
 #     "release/vX.Y.Z" — builds and publishes a GitHub Release with
 #     installers attached.
 #   - Manual dispatch with a tag_name input — builds + publishes a release.
 #
-# Pushes to main do NOT trigger this workflow directly. auto-tag.yml runs on
-# every push to main, bumps the patch version, creates a tag, and dispatches
-# this workflow with that tag — which then builds + publishes the release.
+# This workflow does NOT run on plain branch pushes (main or feature branches).
+# Releases are driven exclusively by tags: auto-tag.yml runs on every push to
+# main, bumps the patch version, creates a tag, and dispatches this workflow
+# with that tag — which then builds + publishes the release.
 #
 # Outputs per platform:
 #   - windows-latest : .msi + .exe (NSIS)
@@ -22,8 +20,8 @@ name: Release
 
 on:
   push:
-    branches-ignore: [main]
     tags: ['v*']
+    branches: ['release/v*']
   workflow_dispatch:
     inputs:
       tag_name:
@@ -38,23 +36,19 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       tag: ${{ steps.version.outputs.tag }}
-      is_release: ${{ steps.version.outputs.is_release }}
     steps:
       - name: Compute release tag
         id: version
         run: |
           if [[ "$GITHUB_REF" == refs/heads/release/v* ]]; then
             echo "tag=${GITHUB_REF#refs/heads/release/}" >> $GITHUB_OUTPUT
-            echo "is_release=true" >> $GITHUB_OUTPUT
           elif [[ "$GITHUB_REF" == refs/tags/v* ]]; then
             echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
-            echo "is_release=true" >> $GITHUB_OUTPUT
           elif [[ -n "${{ github.event.inputs.tag_name }}" ]]; then
             echo "tag=${{ github.event.inputs.tag_name }}" >> $GITHUB_OUTPUT
-            echo "is_release=true" >> $GITHUB_OUTPUT
           else
-            echo "tag=" >> $GITHUB_OUTPUT
-            echo "is_release=false" >> $GITHUB_OUTPUT
+            echo "::error::No release tag could be resolved from trigger context"
+            exit 1
           fi
 
   check:
@@ -63,7 +57,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ needs.prepare.outputs.tag || github.ref }}
+          ref: ${{ needs.prepare.outputs.tag }}
 
       - uses: actions/setup-node@v4
         with:
@@ -111,7 +105,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ needs.prepare.outputs.tag || github.ref }}
+          ref: ${{ needs.prepare.outputs.tag }}
 
       - name: Install Linux dependencies
         if: matrix.os == 'ubuntu-22.04'
@@ -144,7 +138,6 @@ jobs:
       - run: npm ci
 
       - name: Set release version
-        if: needs.prepare.outputs.is_release == 'true'
         shell: bash
         run: |
           VERSION="${{ needs.prepare.outputs.tag }}"
@@ -170,22 +163,7 @@ jobs:
             npm run tauri -- build --target ${{ matrix.target }}
           fi
 
-      - name: Upload build artifacts (non-release CI only)
-        if: needs.prepare.outputs.is_release == 'false'
-        continue-on-error: true
-        uses: actions/upload-artifact@v4
-        with:
-          name: yank-${{ matrix.label }}
-          path: |
-            src-tauri/target/${{ matrix.target }}/release/bundle/msi/*.msi
-            src-tauri/target/${{ matrix.target }}/release/bundle/nsis/*setup.exe
-            src-tauri/target/${{ matrix.target }}/release/bundle/dmg/*.dmg
-            src-tauri/target/${{ matrix.target }}/release/bundle/appimage/*.AppImage
-            src-tauri/target/${{ matrix.target }}/release/bundle/deb/*.deb
-          if-no-files-found: warn
-
       - name: Collect release assets
-        if: needs.prepare.outputs.is_release == 'true'
         id: assets
         shell: bash
         run: |
@@ -204,7 +182,6 @@ jobs:
           echo "EOF" >> "$GITHUB_OUTPUT"
 
       - name: Attach to GitHub Release
-        if: needs.prepare.outputs.is_release == 'true'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ needs.prepare.outputs.tag }}
