@@ -192,7 +192,11 @@ export function TweaksPanel({ tweaks, onChange, onClose, onAfterClear }: TweaksP
         <Row label="Plain text only">
           <Chip
             active={tweaks.plainTextOnly ?? false}
-            onClick={() => set('plainTextOnly', !(tweaks.plainTextOnly ?? false))}
+            onClick={() => {
+              const next = !(tweaks.plainTextOnly ?? false);
+              set('plainTextOnly', next);
+              void invoke('set_plain_text_only', { enabled: next });
+            }}
           >
             {(tweaks.plainTextOnly ?? false) ? 'always' : 'auto'}
           </Chip>

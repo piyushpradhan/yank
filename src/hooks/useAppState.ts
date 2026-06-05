@@ -9,6 +9,8 @@ import { evictImageUrl } from "./useImageUrl";
 export interface BackfillState {
   remaining: number;
   total: number;
+  /** True when the backfill has stalled (30s with no progress / network error). */
+  stalled: boolean;
 }
 
 /// Runtime health of the configured embedding provider. `'ok'` is the resting
@@ -29,7 +31,7 @@ export interface AppState {
   libraryOpen: boolean;
   setLibraryOpen: (v: boolean) => void;
   showToast: (msg: string, kind?: ToastKind, undo?: () => void) => void;
-  copyItem: (id: string, plainText?: boolean) => void;
+  copyItem: (id: string) => void;
   pinItem: (id: string) => void;
   deleteItem: (id: string) => void;
   updateLabel: (id: string, label: string) => void;
@@ -61,7 +63,8 @@ export function useAppState(): AppState {
     status: 'ok',
     error: null,
   });
-  const backfillCount = useRef(0);
+  const backfillRemaining = useRef(0);
+  const backfillTotal = useRef(0);
   const backfillTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const itemsRef = useRef<ClipItem[]>([]);
   itemsRef.current = items;
@@ -79,18 +82,30 @@ export function useAppState(): AppState {
       listen("clip-labeled", () => void refresh()),
       listen<number>("embed-backfill-started", (ev) => {
         const total = ev.payload;
-        backfillCount.current = total;
-        setBackfill({ remaining: total, total });
+        backfillRemaining.current = total;
+        backfillTotal.current = total;
+        setBackfill({ remaining: total, total, stalled: false });
         if (backfillTimer.current) clearTimeout(backfillTimer.current);
         backfillTimer.current = setTimeout(() => {
-          backfillCount.current = 0;
-          setBackfill(null);
+          if (backfillRemaining.current > 0) {
+            setBackfill({
+              remaining: backfillRemaining.current,
+              total: backfillTotal.current,
+              stalled: true,
+            });
+          } else {
+            setBackfill(null);
+          }
         }, 30000);
       }),
       listen<number>("clip-embedded", () => {
-        backfillCount.current = Math.max(0, backfillCount.current - 1);
-        setBackfill({ remaining: backfillCount.current, total: backfillCount.current });
-        if (backfillCount.current === 0) {
+        backfillRemaining.current = Math.max(0, backfillRemaining.current - 1);
+        setBackfill({
+          remaining: backfillRemaining.current,
+          total: backfillTotal.current,
+          stalled: false,
+        });
+        if (backfillRemaining.current === 0) {
           if (backfillTimer.current) clearTimeout(backfillTimer.current);
           backfillTimer.current = setTimeout(() => setBackfill(null), 3000);
         }
@@ -113,7 +128,7 @@ export function useAppState(): AppState {
   );
 
   const copyItem = useCallback(
-    async (id: string, _plainText?: boolean) => {
+    async (id: string) => {
       const it = itemsRef.current.find((i) => i.id === id);
       if (!it) return;
       if (it.category === "image") {

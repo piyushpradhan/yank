@@ -621,6 +621,13 @@ pub fn search_fts(
     Ok(rows)
 }
 
+/// Kick the embed queue to retry any failed or stalled backfill items.
+/// Callable from the frontend when the user clicks "Retry" on the backfill pill.
+#[tauri::command]
+pub fn retry_embed_backfill(app: AppHandle) {
+    crate::embed_queue::kick(&app);
+}
+
 pub fn spawn_sweeper(app: AppHandle) {
     use tauri::Manager;
     std::thread::spawn(move || loop {

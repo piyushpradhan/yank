@@ -321,7 +321,7 @@ export function Palette({
     const pinned = app.items.filter((i) => i.pinned);
     const rest = app.items.filter((i) => !i.pinned);
     const ordered = [...pinned, ...rest];
-    return searchItems(ordered, query, 'fuzzy');
+    return searchItems(ordered, query);
   }, [app.items, query, mode, semanticResults]);
 
   const MAX_VISIBLE = 8;

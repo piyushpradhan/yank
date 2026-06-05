@@ -54,6 +54,9 @@ function App() {
     void invoke<boolean>('get_autostart')
       .then((enabled) => setTweaks((prev) => ({ ...prev, autostart: enabled })))
       .catch(() => {});
+    void invoke<boolean>('get_plain_text_only')
+      .then((enabled) => setTweaks((prev) => ({ ...prev, plainTextOnly: enabled })))
+      .catch(() => {});
     const onKey = (e: KeyboardEvent) => {
       if (e.key === '?') {
         const target = e.target as HTMLElement | null;
