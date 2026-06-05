@@ -516,9 +516,11 @@ h4 {
   color: var(--accent-500);
 }
 .app__query .typed {
+  display: inline-block;
   font-size: var(--t-md);
   color: var(--text-primary);
   font-weight: 500;
+  line-height: 1.3;
 }
 .app__query .caret {
   display: inline-block;
