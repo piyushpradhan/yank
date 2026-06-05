@@ -69,6 +69,11 @@ interface LibraryProps {
   semanticOffMessage: string | null;
   /** Whether Anthropic labels are configured — controls the "Labeling…" hint. */
   anthropicEnabled: boolean;
+  /** True when any embedding/labeling provider is selected. Drives the sidebar
+   *  "Add AI" discovery card so users without a key actually find the feature. */
+  aiActive: boolean;
+  /** Opens the AI settings panel; used by the discovery card. */
+  onOpenAI: () => void;
   initialQuery?: string;
   initialMode?: SearchMode;
   initialFilter?: Filter;
@@ -283,6 +288,10 @@ function ListRow({
   const isImage = item.category === 'image';
   const imageUrl = useImageUrl(isImage ? item.id : '', getImage ?? NO_IMAGE);
   const labelPending = !item.labelGenerated && aiLabelsEnabled;
+  // When no AI label exists and none is being awaited, the heading row would
+  // just duplicate the preview — we hide it and promote the preview to carry
+  // the row visually.
+  const showLabelRow = showLabels && (item.labelGenerated || aiLabelsEnabled);
 
   return (
     <Box
@@ -313,7 +322,7 @@ function ListRow({
           {relTime(item.minutesAgo)}
         </Text>
       </Inline>
-      {showLabels && (
+      {showLabelRow && (
         <Inline
           title={labelPending ? 'Awaiting AI label' : undefined}
           style={{ gap: 6, marginBottom: 4, overflow: 'hidden' }}
@@ -343,9 +352,11 @@ function ListRow({
       <Text
         as="div"
         family={isMono ? 'mono' : 'sans'}
-        size={11.5}
-        leading={1.4}
-        tone="secondary"
+        size={showLabelRow ? 11.5 : t.dense ? 12.5 : 13.5}
+        leading={showLabelRow ? 1.4 : 1.3}
+        tracking={showLabelRow ? undefined : 'tight'}
+        weight={showLabelRow ? 'regular' : 'medium'}
+        tone={showLabelRow ? 'secondary' : 'primary'}
         truncate
       >
         {isImage ? (
@@ -361,8 +372,10 @@ function ListRow({
           ) : (
             <Box aria-hidden radius="sm" bg="subtle" style={{ height: 40, width: 64 }} />
           )
-        ) : (
+        ) : showLabelRow ? (
           item.preview
+        ) : (
+          highlightMatch(t, item.preview, query)
         )}
       </Text>
     </Box>
@@ -378,6 +391,8 @@ export function Library({
   semanticAvailable,
   semanticOffMessage,
   anthropicEnabled,
+  aiActive,
+  onOpenAI,
   initialQuery = '',
   initialMode = 'fuzzy',
   initialFilter = 'all',
@@ -714,6 +729,45 @@ export function Library({
             })}
           </Stack>
 
+          {!aiActive && (
+            <Box
+              shrink={0}
+              px={3}
+              py={3}
+              radius="md"
+              style={{
+                margin: '8px 6px 0 6px',
+                border: '1px solid color-mix(in oklab, var(--accent-ember-500) 22%, transparent)',
+                background:
+                  'linear-gradient(140deg, color-mix(in oklab, var(--accent-ember-500) 10%, transparent), transparent 75%)',
+              }}
+            >
+              <Inline gap={2} align="center" style={{ marginBottom: 4 }}>
+                <LuSparkles size={12} color="var(--accent-ember-500)" />
+                <Text size={11.5} weight="semibold" tracking="tight">
+                  Search by intent
+                </Text>
+              </Inline>
+              <Text
+                size={10.5}
+                tone="secondary"
+                leading={1.45}
+                style={{ display: 'block', marginBottom: 8 }}
+              >
+                Add a key for smarter labels and natural-language search. Bring your own.
+              </Text>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={onOpenAI}
+                leadingIcon={<LuSparkles size={11} color="var(--accent-ember-500)" />}
+                style={{ width: '100%', justifyContent: 'center' }}
+              >
+                Set up
+              </Button>
+            </Box>
+          )}
+
           <Grid
             shrink={0}
             columns="auto 1fr auto 1fr"
@@ -725,6 +779,7 @@ export function Library({
               columnGap: 6,
               rowGap: 8,
               borderTop: '1px solid var(--border-subtle)',
+              marginTop: 8,
             }}
           >
             <Kbd size="sm">/</Kbd>
@@ -857,22 +912,13 @@ export function Library({
             <TimeChip window={detectedTime} onDismiss={dismissTimeChip} />
           )}
 
-          {query && mode === 'semantic' ? (
+          {query && mode === 'semantic' && (
             <SemanticBanner
               count={searched.length}
               available={semanticAvailable}
               offMessage={semanticOffMessage}
               error={semanticError}
               loading={semanticResults === null && !semanticError}
-            />
-          ) : (
-            <Box
-              aria-hidden
-              style={{
-                minHeight: 34,
-                borderBottom: '1px solid transparent',
-                boxSizing: 'border-box',
-              }}
             />
           )}
 

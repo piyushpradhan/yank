@@ -6,8 +6,10 @@ import { KeyboardMap } from './components/KeyboardMap';
 import { TitleBar } from './components/TitleBar';
 import { Toast } from './components/Toast';
 import { TweaksPanel } from './components/TweaksPanel';
+import { WelcomeModal } from './components/WelcomeModal';
 import { useAppState } from './hooks/useAppState';
 import { isSemanticAvailable, useSettings } from './hooks/useSettings';
+import { DEFAULT_SHORTCUT, type ShortcutConfig } from './lib/shortcut';
 import { buildTheme } from './lib/theme';
 import type { Tweaks } from './lib/types';
 import { Library } from './windows/Library';
@@ -25,6 +27,9 @@ function App() {
   const [tweaksOpen, setTweaksOpen] = useState(false);
   const [aiOpen, setAiOpen] = useState(false);
   const [keymapOpen, setKeymapOpen] = useState(false);
+  const [shortcut, setShortcut] = useState<ShortcutConfig | null>(null);
+  // null = still loading; true = already dismissed; false = show welcome.
+  const [hintDismissed, setHintDismissed] = useState<boolean | null>(null);
   const app = useAppState();
   const { settings, save: saveSettings } = useSettings();
   const { setTheme } = useTheme();
@@ -57,6 +62,12 @@ function App() {
     void invoke<boolean>('get_plain_text_only')
       .then((enabled) => setTweaks((prev) => ({ ...prev, plainTextOnly: enabled })))
       .catch(() => {});
+    void invoke<ShortcutConfig>('get_shortcut')
+      .then((sc) => setShortcut(sc))
+      .catch(() => setShortcut(DEFAULT_SHORTCUT));
+    void invoke<boolean>('get_hint_dismissed')
+      .then((v) => setHintDismissed(v))
+      .catch(() => setHintDismissed(true));
     const onKey = (e: KeyboardEvent) => {
       if (e.key === '?') {
         const target = e.target as HTMLElement | null;
@@ -98,6 +109,8 @@ function App() {
             semanticAvailable={semanticAvailable}
             semanticOffMessage={semanticOffMessage}
             anthropicEnabled={anthropicEnabled}
+            aiActive={settings.provider !== 'disabled'}
+            onOpenAI={() => setAiOpen(true)}
           />
         </Box>
       </Stack>
@@ -117,6 +130,8 @@ function App() {
         <TweaksPanel
           tweaks={tweaks}
           onChange={setTweaks}
+          shortcut={shortcut}
+          onShortcutChange={setShortcut}
           onClose={() => setTweaksOpen(false)}
           onAfterClear={() => {
             void app.refresh();
@@ -151,9 +166,13 @@ function App() {
               maxHeight: '100%',
             }}
           >
-            <KeyboardMap />
+            <KeyboardMap shortcut={shortcut} />
           </Box>
         </Box>
+      )}
+
+      {hintDismissed === false && (
+        <WelcomeModal shortcut={shortcut} onDismiss={() => setHintDismissed(true)} />
       )}
 
       {app.toast && <Toast t={t} toast={app.toast} />}

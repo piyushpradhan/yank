@@ -1,5 +1,6 @@
 import { Box, Grid, Inline, Kbd, Overline, Stack, Text } from 'ember-design-system';
 import { getKeyIcon } from '../lib/keyIcons';
+import { DEFAULT_SHORTCUT, tokensOf, type ShortcutConfig } from '../lib/shortcut';
 
 interface KeyRow {
   keys: string[];
@@ -8,11 +9,12 @@ interface KeyRow {
   scope?: string;
 }
 
-const GROUPS: [string, KeyRow[]][] = [
+function buildGroups(shortcut: ShortcutConfig): [string, KeyRow[]][] {
+  return [
   [
     'Global',
     [
-      { keys: ['Ctrl', 'Shift', 'Space'], label: 'Open palette from anywhere' },
+      { keys: tokensOf(shortcut), label: 'Open palette from anywhere' },
       { keys: ['Esc'], label: 'Close palette / clear search' },
     ],
   ],
@@ -37,9 +39,15 @@ const GROUPS: [string, KeyRow[]][] = [
       { keys: ['Ctrl', 'I'], label: 'Toggle preview pane', scope: 'library' },
     ],
   ],
-];
+  ];
+}
 
-export function KeyboardMap() {
+interface KeyboardMapProps {
+  shortcut?: ShortcutConfig | null;
+}
+
+export function KeyboardMap({ shortcut }: KeyboardMapProps = {}) {
+  const groups = buildGroups(shortcut ?? DEFAULT_SHORTCUT);
   return (
     <Grid
       gap={6}
@@ -52,7 +60,7 @@ export function KeyboardMap() {
         gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
       }}
     >
-      {GROUPS.map(([heading, rows]) => (
+      {groups.map(([heading, rows]) => (
         <Stack key={heading}>
           <Box
             pb={3}

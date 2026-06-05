@@ -1,12 +1,23 @@
 import { useEffect, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
-import { Box, Button, Card, IconButton, Inline, Overline, Stack, Text } from 'ember-design-system';
+import { Box, Button, Card, IconButton, Inline, Kbd, Overline, Stack, Text } from 'ember-design-system';
 import { LuMoon, LuSun, LuX } from 'react-icons/lu';
+import { getKeyIcon } from '../lib/keyIcons';
+import {
+  DEFAULT_SHORTCUT,
+  hasAnyModifier,
+  isModifierCode,
+  modifiersFromEvent,
+  tokensOf,
+  type ShortcutConfig,
+} from '../lib/shortcut';
 import type { CategoryDisplay, Density, PreviewMode, Tweaks } from '../lib/types';
 
 interface TweaksPanelProps {
   tweaks: Tweaks;
   onChange: (next: Tweaks) => void;
+  shortcut: ShortcutConfig | null;
+  onShortcutChange: (next: ShortcutConfig) => void;
   onClose: () => void;
   onAfterClear?: () => void;
 }
@@ -55,7 +66,92 @@ function Chip({
   );
 }
 
-export function TweaksPanel({ tweaks, onChange, onClose, onAfterClear }: TweaksPanelProps) {
+function ShortcutRecorder({
+  value,
+  onChange,
+}: {
+  value: ShortcutConfig | null;
+  onChange: (next: ShortcutConfig) => void;
+}) {
+  const [recording, setRecording] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!recording) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (e.key === 'Escape') {
+        setRecording(false);
+        setError(null);
+        return;
+      }
+      if (isModifierCode(e.code)) return;
+      const modifiers = modifiersFromEvent(e);
+      if (!hasAnyModifier(modifiers)) {
+        setError('Needs at least one modifier (Ctrl, Shift, Alt, Cmd)');
+        return;
+      }
+      const next: ShortcutConfig = { modifiers, key: e.code };
+      invoke('set_shortcut', { sc: next })
+        .then(() => {
+          onChange(next);
+          setRecording(false);
+          setError(null);
+        })
+        .catch((err: unknown) => {
+          const msg =
+            err instanceof Error ? err.message : typeof err === 'string' ? err : 'Failed to register';
+          setError(msg);
+        });
+    };
+    window.addEventListener('keydown', onKeyDown, true);
+    return () => window.removeEventListener('keydown', onKeyDown, true);
+  }, [recording, onChange]);
+
+  const tokens = tokensOf(value ?? DEFAULT_SHORTCUT);
+
+  return (
+    <Stack gap={1} align="end" style={{ minWidth: 0 }}>
+      <Button
+        size="sm"
+        variant={recording ? 'primary' : 'ghost'}
+        onClick={() => {
+          setError(null);
+          setRecording((r) => !r);
+        }}
+      >
+        {recording ? (
+          <Text family="mono" size={11}>
+            Press a combo… Esc to cancel
+          </Text>
+        ) : (
+          <Inline gap={1} align="center">
+            {tokens.map((tok, i) => (
+              <Kbd key={i} size="sm">
+                {getKeyIcon(tok)}
+              </Kbd>
+            ))}
+          </Inline>
+        )}
+      </Button>
+      {error && (
+        <Text size={10.5} tone="danger" style={{ textAlign: 'right', maxWidth: 220 }}>
+          {error}
+        </Text>
+      )}
+    </Stack>
+  );
+}
+
+export function TweaksPanel({
+  tweaks,
+  onChange,
+  shortcut,
+  onShortcutChange,
+  onClose,
+  onAfterClear,
+}: TweaksPanelProps) {
   const set = <K extends keyof Tweaks>(k: K, v: Tweaks[K]) => onChange({ ...tweaks, [k]: v });
 
   const [clearArmed, setClearArmed] = useState(false);
@@ -207,6 +303,12 @@ export function TweaksPanel({ tweaks, onChange, onClose, onAfterClear }: TweaksP
           >
             {(tweaks.plainTextOnly ?? false) ? 'always' : 'auto'}
           </Chip>
+        </Row>
+      </Section>
+
+      <Section title="Global shortcut">
+        <Row label="Open palette">
+          <ShortcutRecorder value={shortcut} onChange={onShortcutChange} />
         </Row>
       </Section>
 
