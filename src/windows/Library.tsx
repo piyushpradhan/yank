@@ -462,11 +462,11 @@ export function Library({
 
   const searchRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
-  // When the user pins/unpins via keyboard, the item moves to a different
-  // position in the sorted list. We want the highlight to stay at the same
-  // row index rather than chase the item, so we capture the index before the
-  // refresh and reapply it once `app.items` updates.
-  const pinIndexLock = useRef<number | null>(null);
+  // When the user pins/unpins or deletes via keyboard, the item moves or
+  // disappears in the sorted list. We want the highlight to stay at the same
+  // row index rather than chase the item or jump to the top, so we capture
+  // the index before the operation and reapply it once `app.items` updates.
+  const rowIndexLock = useRef<number | null>(null);
 
   const filterStage = useMemo(() => {
     let items = app.items;
@@ -554,12 +554,13 @@ export function Library({
   const showGroups = !query && filter === 'all';
   const groups = useMemo(() => groupByTime(searched), [searched]);
 
-  // useLayoutEffect runs before paint so a pin/unpin doesn't briefly highlight
-  // the moved row at its new position before snapping back to the locked index.
+  // useLayoutEffect runs before paint so a pin/unpin/delete doesn't briefly
+  // highlight the moved row at its new position before snapping back to the
+  // locked index.
   useLayoutEffect(() => {
-    const lockedIdx = pinIndexLock.current;
+    const lockedIdx = rowIndexLock.current;
     if (lockedIdx != null && searched.length > 0) {
-      pinIndexLock.current = null;
+      rowIndexLock.current = null;
       const idx = Math.max(0, Math.min(searched.length - 1, lockedIdx));
       const item = searched[idx];
       if (item) {
@@ -575,8 +576,18 @@ export function Library({
   const selectedIdx = searched.findIndex((i) => i.id === selectedId);
   const current = searched.find((i) => i.id === selectedId) ?? null;
 
+  const handlePreviewPin = useCallback((id: string) => {
+    rowIndexLock.current = selectedIdx;
+    app.pinItem(id);
+  }, [selectedIdx, app]);
+
+  const handlePreviewDelete = useCallback((id: string) => {
+    rowIndexLock.current = selectedIdx;
+    app.deleteItem(id);
+  }, [selectedIdx, app]);
+
   const moveSel = (delta: number) => {
-    pinIndexLock.current = null;
+    rowIndexLock.current = null;
     const i = Math.max(0, Math.min(searched.length - 1, selectedIdx + delta));
     const item = searched[i];
     if (item) setSelectedId(item.id);
@@ -629,14 +640,17 @@ export function Library({
     } else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'p') {
       e.preventDefault();
       if (current) {
-        pinIndexLock.current = selectedIdx;
+        rowIndexLock.current = selectedIdx;
         app.pinItem(current.id);
       }
     } else if ((e.metaKey || e.ctrlKey) && (e.key === 'Backspace' || e.key === 'Delete')) {
       // Cmd/Ctrl modifier matches the Palette shortcut — bare Backspace is too
       // easy to hit while typing in the search input.
       e.preventDefault();
-      if (current) app.deleteItem(current.id);
+      if (current) {
+        rowIndexLock.current = selectedIdx;
+        app.deleteItem(current.id);
+      }
     } else if (e.key.toLowerCase() === 'e' && !inSearch) {
       e.preventDefault();
       if (current) setEditingId(current.id);
@@ -1092,6 +1106,8 @@ export function Library({
               setEditing={(v) => setEditingId(v ? current.id : null)}
               app={app}
               anthropicEnabled={anthropicEnabled}
+              onPinItem={handlePreviewPin}
+              onDeleteItem={handlePreviewDelete}
             />
           </Box>
         )}
@@ -1137,6 +1153,8 @@ export function Library({
                 setEditing={(v) => setEditingId(v ? current.id : null)}
                 app={app}
                 anthropicEnabled={anthropicEnabled}
+                onPinItem={handlePreviewPin}
+                onDeleteItem={handlePreviewDelete}
               />
             </Box>
           </>

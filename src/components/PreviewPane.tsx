@@ -23,6 +23,10 @@ interface PreviewPaneProps {
   setEditing: (v: boolean) => void;
   app: AppState;
   anthropicEnabled: boolean;
+  /** If provided, called instead of app.pinItem so the parent can lock the row index. */
+  onPinItem?: (id: string) => void;
+  /** If provided, called instead of app.deleteItem so the parent can lock the row index. */
+  onDeleteItem?: (id: string) => void;
 }
 
 export function PreviewPane({
@@ -33,6 +37,8 @@ export function PreviewPane({
   setEditing,
   app,
   anthropicEnabled,
+  onPinItem,
+  onDeleteItem,
 }: PreviewPaneProps) {
   const [draft, setDraft] = useState(item.label);
 
@@ -133,14 +139,14 @@ export function PreviewPane({
 
         <ActionSeparator />
 
-        <PinButton pinned={!!item.pinned} onClick={() => app.pinItem(item.id)} />
+        <PinButton pinned={!!item.pinned} onClick={() => onPinItem ? onPinItem(item.id) : app.pinItem(item.id)} />
 
         <ActionSeparator />
 
         <RenameButton onClick={() => setEditing(true)} />
 
         <DeleteButton
-          onClick={() => app.deleteItem(item.id)}
+          onClick={() => onDeleteItem ? onDeleteItem(item.id) : app.deleteItem(item.id)}
           variant="secondary"
           kbd={
             <Kbd size="sm">

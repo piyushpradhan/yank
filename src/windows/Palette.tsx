@@ -227,6 +227,9 @@ export function Palette({
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const offToastShownRef = useRef(false);
+  // Lock the row index before pin/unpin so the highlight stays at the same
+  // position when the list reorders, rather than chasing the moved item.
+  const pinLockRef = useRef<number | null>(null);
 
   useEffect(() => {
     let paletteShownUnlisten: (() => void) | undefined;
@@ -334,6 +337,14 @@ export function Palette({
   }, [query, mode]);
 
   useEffect(() => {
+    const lock = pinLockRef.current;
+    if (lock != null && displayResults.length > 0) {
+      pinLockRef.current = null;
+      setSelected(Math.max(0, Math.min(displayResults.length - 1, lock)));
+    }
+  }, [displayResults]);
+
+  useEffect(() => {
     setSelected((s) => Math.min(s, lastIdx));
   }, [lastIdx]);
 
@@ -366,13 +377,16 @@ export function Palette({
     } else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'p') {
       e.preventDefault();
       const it = displayResults[selected];
-      if (it) app.pinItem(it.id);
+      if (it) {
+        pinLockRef.current = selected;
+        app.pinItem(it.id);
+      }
     } else if ((e.metaKey || e.ctrlKey) && (e.key === 'Backspace' || e.key === 'Delete')) {
       e.preventDefault();
       const it = displayResults[selected];
       if (it) {
+        pinLockRef.current = selected;
         app.deleteItem(it.id);
-        setSelected((s) => Math.min(s, lastIdx - 1));
       }
     } else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
       e.preventDefault();
@@ -683,15 +697,18 @@ export function Palette({
 
                 <PinButton
                   pinned={!!selectedItem.pinned}
-                  onClick={() => app.pinItem(selectedItem.id)}
+                  onClick={() => {
+                    pinLockRef.current = selected;
+                    app.pinItem(selectedItem.id);
+                  }}
                 />
 
                 <ActionSeparator />
 
                 <DeleteButton
                   onClick={() => {
+                    pinLockRef.current = selected;
                     app.deleteItem(selectedItem.id);
-                    setSelected((s) => Math.max(0, s - 1));
                   }}
                   variant="ghost"
                 />
