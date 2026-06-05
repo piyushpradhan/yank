@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useImageUrl } from '../hooks/useImageUrl';
 import { useWindowSize } from '../hooks/useWindowSize';
 import { listen } from '@tauri-apps/api/event';
@@ -462,6 +462,11 @@ export function Library({
 
   const searchRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
+  // When the user pins/unpins via keyboard, the item moves to a different
+  // position in the sorted list. We want the highlight to stay at the same
+  // row index rather than chase the item, so we capture the index before the
+  // refresh and reapply it once `app.items` updates.
+  const pinIndexLock = useRef<number | null>(null);
 
   const filterStage = useMemo(() => {
     let items = app.items;
@@ -549,7 +554,19 @@ export function Library({
   const showGroups = !query && filter === 'all';
   const groups = useMemo(() => groupByTime(searched), [searched]);
 
-  useEffect(() => {
+  // useLayoutEffect runs before paint so a pin/unpin doesn't briefly highlight
+  // the moved row at its new position before snapping back to the locked index.
+  useLayoutEffect(() => {
+    const lockedIdx = pinIndexLock.current;
+    if (lockedIdx != null && searched.length > 0) {
+      pinIndexLock.current = null;
+      const idx = Math.max(0, Math.min(searched.length - 1, lockedIdx));
+      const item = searched[idx];
+      if (item) {
+        setSelectedId(item.id);
+        return;
+      }
+    }
     if (!searched.find((i) => i.id === selectedId)) {
       setSelectedId(searched[0]?.id ?? null);
     }
@@ -559,6 +576,7 @@ export function Library({
   const current = searched.find((i) => i.id === selectedId) ?? null;
 
   const moveSel = (delta: number) => {
+    pinIndexLock.current = null;
     const i = Math.max(0, Math.min(searched.length - 1, selectedIdx + delta));
     const item = searched[i];
     if (item) setSelectedId(item.id);
@@ -610,7 +628,10 @@ export function Library({
       if (current) app.copyItem(current.id);
     } else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'p') {
       e.preventDefault();
-      if (current) app.pinItem(current.id);
+      if (current) {
+        pinIndexLock.current = selectedIdx;
+        app.pinItem(current.id);
+      }
     } else if ((e.metaKey || e.ctrlKey) && (e.key === 'Backspace' || e.key === 'Delete')) {
       // Cmd/Ctrl modifier matches the Palette shortcut — bare Backspace is too
       // easy to hit while typing in the search input.
