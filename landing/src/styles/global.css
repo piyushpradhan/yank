@@ -231,6 +231,13 @@ h4 {
   display: inline-block;
   align-self: center;
 }
+.brand .mark {
+  width: 26px;
+  height: 26px;
+  display: inline-block;
+  flex-shrink: 0;
+  border-radius: 6px;
+}
 .brand .tag {
   font-family: var(--font-mono);
   font-size: var(--t-2xs);

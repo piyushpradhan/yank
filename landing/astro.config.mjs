@@ -4,7 +4,7 @@ import icon from 'astro-icon';
 
 // https://astro.build/config
 export default defineConfig({
-  site: 'https://recall.vercel.app',
+  site: 'https://tryyank.com',
   build: {
     inlineStylesheets: 'always',
   },

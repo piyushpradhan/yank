@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="public/mark.png" alt="Yank" width="128" height="128">
+
 # Yank
 
 **Your clipboard, with natural-language search.**

@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://recall.vercel.app/sitemap.xml
+Sitemap: https://tryyank.com/sitemap.xml

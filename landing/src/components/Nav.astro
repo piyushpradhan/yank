@@ -13,7 +13,21 @@ const fallbackDownload = downloads.macos?.url ?? release?.html_url ?? "https://g
 <header class="topbar" data-screen-label="topbar">
   <div class="wrap row">
     <a class="brand" href="#top" aria-label="Yank — home">
-      <span class="dot" aria-hidden="true"></span>
+      <svg class="mark" viewBox="0 0 1024 1024" aria-hidden="true" focusable="false">
+        <defs>
+          <linearGradient id="brand-ember" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#f58247"/>
+            <stop offset="55%" stop-color="#d9541a"/>
+            <stop offset="100%" stop-color="#a8390a"/>
+          </linearGradient>
+        </defs>
+        <rect width="1024" height="1024" rx="224" ry="224" fill="url(#brand-ember)"/>
+        <g fill="none" stroke="#fff4ec" stroke-width="160" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M 280 260 L 512 552"/>
+          <path d="M 744 260 L 512 552"/>
+          <path d="M 512 552 L 512 780"/>
+        </g>
+      </svg>
       <span>yank</span>
       <span class="tag">{releaseTag} · open beta</span>
     </a>
