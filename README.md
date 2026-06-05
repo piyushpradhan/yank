@@ -16,30 +16,6 @@
 
 ---
 
-## Image Copy & Paste
-
-Copy any image — screenshots, photos, diagrams — and Yank captures it automatically. Open the palette, find it by description, and paste it back in one keystroke.
-
-<video src="public/recordings/image-copy-paste.webm" autoplay loop muted playsinline width="100%"></video>
-
-### Quick-access palette with image preview
-
-Press `Ctrl+Shift+Space`, type a description, and your image appears instantly in the preview pane — full resolution, ready to paste.
-
-<p align="center">
-  <img src="public/screenshots/palette-image-preview.png" alt="Yank palette showing an aurora borealis image selected with full preview" width="760">
-</p>
-
-### Library view with image category filter
-
-Browse and manage all your captured images in one place. Filter by the **Image** category, see thumbnails at a glance, and open any image full-size in the preview pane.
-
-<p align="center">
-  <img src="public/screenshots/library-image-filter.png" alt="Yank library filtered to the Image category, showing thumbnail list and full preview" width="920">
-</p>
-
----
-
 ## What's Yank?
 
 Yank is a local-first clipboard history manager for **Windows, Linux, and macOS**. It captures everything you copy, categorizes it automatically, and lets you find it again with either fuzzy search or AI-powered semantic search.

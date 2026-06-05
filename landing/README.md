@@ -50,5 +50,4 @@ npm run preview  # serve the built site locally
 - `src/layouts/Layout.astro` — base HTML, theme variables, fonts
 - `src/components/` — Nav, Hero, Features, Showcase, Download, Footer
 - `src/pages/index.astro` — composes the page
-- `public/media/` — screenshots and the hero demo recording
 - `vercel.json` — Vercel build + caching config
