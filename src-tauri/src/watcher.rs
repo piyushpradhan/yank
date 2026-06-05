@@ -7,7 +7,6 @@ use crate::categorize::{categorize, make_preview};
 use crate::db::Db;
 
 /// Hard cap: skip images larger than this to avoid unbounded memory / storage.
-#[cfg(target_os = "windows")]
 const MAX_PIXELS: usize = 50_000_000;
 
 pub fn spawn(app: AppHandle) {
@@ -20,25 +19,23 @@ pub fn spawn(app: AppHandle) {
             }
         };
         let mut last_text: Option<String> = None;
-        #[cfg(target_os = "windows")]
         let mut last_image_hash: Option<u64> = None;
         loop {
             std::thread::sleep(Duration::from_millis(500));
 
-            // Check for image first (only on supported platforms).
-            // When plain-text-only mode is on, skip image capture entirely.
-            #[cfg(target_os = "windows")]
-            {
-                if !crate::settings::PLAIN_TEXT_ONLY.load(std::sync::atomic::Ordering::Relaxed) {
-                    if let Ok(img) = cb.get_image() {
-                        let hash = image_hash(&img);
-                        if last_image_hash != Some(hash) {
-                            last_image_hash = Some(hash);
-                            let source = active_window_title();
-                            insert_image_and_emit(&app, &img, source);
-                        }
-                        continue;
+            // Check for image first. When plain-text-only mode is on, skip image
+            // capture entirely. arboard's get_image works on Windows, macOS, and
+            // Linux — gating this to Windows used to silence cross-platform
+            // warnings, but it disabled image capture on the other platforms too.
+            if !crate::settings::PLAIN_TEXT_ONLY.load(std::sync::atomic::Ordering::Relaxed) {
+                if let Ok(img) = cb.get_image() {
+                    let hash = image_hash(&img);
+                    if last_image_hash != Some(hash) {
+                        last_image_hash = Some(hash);
+                        let source = active_window_title();
+                        insert_image_and_emit(&app, &img, source);
                     }
+                    continue;
                 }
             }
 
@@ -64,7 +61,6 @@ pub fn spawn(app: AppHandle) {
 /// The old approach (first + last byte + dimensions) had obvious failure modes;
 /// this samples up to 64 evenly-spaced bytes which is fast and much harder to
 /// accidentally collide.
-#[cfg(target_os = "windows")]
 fn image_hash(img: &ImageData) -> u64 {
     let b = &img.bytes;
     let n = b.len();
@@ -84,7 +80,6 @@ fn image_hash(img: &ImageData) -> u64 {
 
 /// Encodes raw RGBA pixels from arboard into a PNG byte vector.
 /// Returns an error rather than panicking on malformed input.
-#[cfg(target_os = "windows")]
 pub fn encode_as_png(img: &ImageData) -> Result<Vec<u8>, String> {
     use image::{ImageBuffer, Rgba};
 
@@ -165,7 +160,6 @@ fn insert_text_and_emit(app: &AppHandle, text: &str, source: Option<String>) {
     crate::embed_queue::kick(app);
 }
 
-#[cfg(target_os = "windows")]
 fn insert_image_and_emit(app: &AppHandle, img: &ImageData, source: Option<String>) {
     let png = match encode_as_png(img) {
         Ok(p) => p,
