@@ -91,7 +91,6 @@ interface ListRowProps {
 }
 
 interface SemanticBannerProps {
-  t: Theme;
   count: number;
   available: boolean;
   offMessage: string | null;
@@ -101,8 +100,7 @@ interface SemanticBannerProps {
 
 const BANNER_BORDER = { borderBottom: '1px solid var(--border-subtle)' } as const;
 
-function SemanticBanner({ t, count, available, offMessage, error, loading }: SemanticBannerProps) {
-  void t;
+function SemanticBanner({ count, available, offMessage, error, loading }: SemanticBannerProps) {
   if (!available) {
     return (
       <Inline gap={2} px={3} py={2} bg="subtle" style={BANNER_BORDER}>
@@ -153,7 +151,6 @@ function SemanticBanner({ t, count, available, offMessage, error, loading }: Sem
 }
 
 interface TimeChipProps {
-  t: Theme;
   window: TimeWindowDto;
   onDismiss: () => void;
 }
@@ -162,8 +159,7 @@ interface TimeChipProps {
 /// backend parsed out ("4 days ago", "last week"). The tooltip exposes
 /// the absolute range; clicking × strips the phrase from the query via
 /// the `strip_time` Tauri command.
-function TimeChip({ t, window: w, onDismiss }: TimeChipProps) {
-  void t;
+function TimeChip({ window: w, onDismiss }: TimeChipProps) {
   const range = useMemo(() => {
     const opts: Intl.DateTimeFormatOptions = {
       year: 'numeric',
@@ -218,7 +214,7 @@ function TimeChip({ t, window: w, onDismiss }: TimeChipProps) {
 
 const NO_IMAGE = (): Promise<Blob | null> => Promise.resolve(null);
 
-function SidebarIcon({ active, children }: { t: Theme; active: boolean; children: ReactNode }) {
+function SidebarIcon({ active, children }: { active: boolean; children: ReactNode }) {
   return (
     <Box
       display="inline-flex"
@@ -236,7 +232,7 @@ function SidebarIcon({ active, children }: { t: Theme; active: boolean; children
   );
 }
 
-function SidebarCount({ children }: { t: Theme; children: ReactNode }) {
+function SidebarCount({ children }: { children: ReactNode }) {
   return (
     <Text family="mono" size={11} tone="tertiary" tabularNums shrink>
       {children}
@@ -244,7 +240,7 @@ function SidebarCount({ children }: { t: Theme; children: ReactNode }) {
   );
 }
 
-function SidebarHeading({ children }: { t: Theme; children: ReactNode }) {
+function SidebarHeading({ children }: { children: ReactNode }) {
   return (
     <Overline
       as="div"
@@ -514,7 +510,7 @@ export function Library({
       const allowed = new Set(filterStage.map((i) => i.id));
       return semanticResults.filter((i) => allowed.has(i.id));
     }
-    return searchItems(filterStage, query, mode);
+    return searchItems(filterStage, query);
   }, [filterStage, query, mode, semanticResults]);
 
   const counts = useMemo(() => {
@@ -665,16 +661,16 @@ export function Library({
         >
           <Stack grow={1} overflow="auto" style={{ minHeight: 0 }}>
             <SidebarRow t={t} active={filter === 'all'} onClick={() => setFilter('all')}>
-              <SidebarIcon t={t} active={filter === 'all'}>
+              <SidebarIcon active={filter === 'all'}>
                 <LuList size={12} />
               </SidebarIcon>
               <Box grow={1} style={{ minWidth: 0 }}>
                 All items
               </Box>
-              <SidebarCount t={t}>{counts.all}</SidebarCount>
+              <SidebarCount>{counts.all}</SidebarCount>
             </SidebarRow>
             <SidebarRow t={t} active={filter === 'pinned'} onClick={() => setFilter('pinned')}>
-              <SidebarIcon t={t} active={filter === 'pinned'}>
+              <SidebarIcon active={filter === 'pinned'}>
                 <LuPin
                   size={12}
                   style={filter === 'pinned' ? { fill: 'currentColor' } : undefined}
@@ -683,10 +679,10 @@ export function Library({
               <Box grow={1} style={{ minWidth: 0 }}>
                 Pinned
               </Box>
-              <SidebarCount t={t}>{counts.pinned}</SidebarCount>
+              <SidebarCount>{counts.pinned}</SidebarCount>
             </SidebarRow>
 
-            <SidebarHeading t={t}>Categories</SidebarHeading>
+            <SidebarHeading>Categories</SidebarHeading>
             {CATEGORIES.map((cat: Category) => {
               const meta = CATEGORY_META[cat];
               return (
@@ -703,7 +699,7 @@ export function Library({
                   <Box grow={1} style={{ minWidth: 0 }}>
                     {meta.label}
                   </Box>
-                  <SidebarCount t={t}>{counts[cat] || 0}</SidebarCount>
+                  <SidebarCount>{counts[cat] || 0}</SidebarCount>
                 </SidebarRow>
               );
             })}
@@ -849,12 +845,11 @@ export function Library({
           </Box>
 
           {detectedTime && mode === 'semantic' && query && (
-            <TimeChip t={t} window={detectedTime} onDismiss={dismissTimeChip} />
+            <TimeChip window={detectedTime} onDismiss={dismissTimeChip} />
           )}
 
           {query && mode === 'semantic' ? (
             <SemanticBanner
-              t={t}
               count={searched.length}
               available={semanticAvailable}
               offMessage={semanticOffMessage}

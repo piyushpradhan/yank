@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { getCurrentWindow } from '@tauri-apps/api/window';
+import { invoke } from '@tauri-apps/api/core';
 import { Box, Dot, IconButton, Inline, Text } from 'ember-design-system';
-import { LuChevronsDownUp, LuMinus, LuSlidersHorizontal, LuSparkles, LuSquare, LuX } from 'react-icons/lu';
+import { LuChevronsDownUp, LuMinus, LuRefreshCw, LuSlidersHorizontal, LuSparkles, LuSquare, LuX } from 'react-icons/lu';
 import { IS_MAC } from '../lib/platform';
 import type { BackfillState } from '../hooks/useAppState';
 
@@ -50,7 +51,7 @@ export function TitleBar({ aiActive, onOpenAI, onToggleTweaks, backfill }: Title
         </Text>
       </Inline>
 
-      {backfill && backfill.remaining > 0 && <BackfillPill remaining={backfill.remaining} />}
+      {backfill && backfill.remaining > 0 && <BackfillPill backfill={backfill} />}
 
       <Inline gap={2} align="center">
         <Box style={{ paddingRight: IS_MAC ? 0 : 8 }}>
@@ -79,7 +80,9 @@ export function TitleBar({ aiActive, onOpenAI, onToggleTweaks, backfill }: Title
   );
 }
 
-function BackfillPill({ remaining }: { remaining: number }) {
+function BackfillPill({ backfill }: { backfill: BackfillState }) {
+  const { remaining, total, stalled } = backfill;
+
   return (
     <Box
       display="inline-flex"
@@ -87,7 +90,7 @@ function BackfillPill({ remaining }: { remaining: number }) {
       gap={2}
       px={3}
       radius="pill"
-      bg="accent-soft"
+      bg={stalled ? 'subtle' : 'accent-soft'}
       shadow="sm"
       position="absolute"
       style={{
@@ -95,15 +98,45 @@ function BackfillPill({ remaining }: { remaining: number }) {
         top: '50%',
         left: '50%',
         transform: 'translate(-50%, -50%)',
-        border: '1px solid color-mix(in oklab, var(--accent-ember-500) 24%, transparent)',
-        pointerEvents: 'none',
+        border: stalled
+          ? '1px solid color-mix(in oklab, var(--status-warning) 30%, transparent)'
+          : '1px solid color-mix(in oklab, var(--accent-ember-500) 24%, transparent)',
+        pointerEvents: 'auto',
+        background: stalled
+          ? 'color-mix(in oklab, var(--status-warning) 12%, transparent)'
+          : undefined,
       }}
       aria-live="polite"
     >
-      <Dot tone="accent" size="sm" pulse />
-      <Text family="mono" size={10.5} tabularNums tone="accent-ink">
-        Embedding {remaining} item{remaining === 1 ? '' : 's'}…
+      <Dot tone={stalled ? 'warning' : 'accent'} size="sm" pulse={!stalled} />
+      <Text
+        family="mono"
+        size={10.5}
+        tabularNums
+        tone={stalled ? 'secondary' : 'accent-ink'}
+      >
+        {stalled
+          ? `Embedding stalled (${remaining} left)`
+          : `Embedding ${remaining}/${total}…`}
       </Text>
+      {stalled && (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            void invoke('retry_embed_backfill');
+          }}
+          style={{
+            all: 'unset',
+            cursor: 'pointer',
+            display: 'inline-flex',
+            alignItems: 'center',
+            marginLeft: 2,
+          }}
+        >
+          <LuRefreshCw size={11} color="var(--status-warning)" />
+        </button>
+      )}
     </Box>
   );
 }

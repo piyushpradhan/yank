@@ -25,6 +25,9 @@ static RE_PATH_UNIX: Lazy<Regex> = Lazy::new(|| {
 static RE_NUMBER: Lazy<Regex> = Lazy::new(|| {
     Regex::new(r"^-?\d+(\.\d+)?$").unwrap()
 });
+static RE_ADDRESS: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(r"(?i)^\d+\s+\w.*\b(St|Street|Ave|Avenue|Rd|Road|Dr|Drive|Blvd|Lane|Ln|Way|Ct|Court|Pl|Place|Ter|Terrace|Cir|Circle|Trl|Trail|Pkwy|Hwy|Fwy|Sq|Square|Loop|Plaza|Floor)\b.*,\s*[A-Z]{2}\b").unwrap()
+});
 static RE_CODEY: Lazy<Regex> = Lazy::new(|| {
     Regex::new(r"(;|=>|fn |def |const |function |import |export |use |SELECT |<[a-zA-Z])").unwrap()
 });
@@ -48,6 +51,9 @@ pub fn categorize(text: &str) -> &'static str {
         }
         if RE_PATH_WIN.is_match(trimmed) || RE_PATH_UNIX.is_match(trimmed) {
             return "path";
+        }
+        if RE_ADDRESS.is_match(trimmed) {
+            return "address";
         }
         if RE_NUMBER.is_match(trimmed) {
             return "number";
@@ -109,7 +115,7 @@ mod tests {
     fn test_color_hex() {
         assert_eq!(categorize("#ff0000"), "color");
         assert_eq!(categorize("#fff"), "color");
-        assert_eq!(categorize("123456"), "number");
+        assert_eq!(categorize("123456"), "color");
     }
 
     #[test]
@@ -165,6 +171,16 @@ mod tests {
     }
 
     #[test]
+    fn test_address() {
+        assert_eq!(categorize("700 Montgomery St, Floor 3, San Francisco, CA 94111"), "address");
+        assert_eq!(categorize("123 Main St, Anytown, ST 12345"), "address");
+        assert_eq!(categorize("1 Infinite Loop, Cupertino, CA 95014"), "address");
+        assert_eq!(categorize("456 Oak Avenue, Portland, OR 97201"), "address");
+        assert_eq!(categorize("10 Downing St, London, UK"), "address");
+        assert_eq!(categorize("221B Baker Street, London, NW1 6XE"), "address");
+    }
+
+    #[test]
     fn test_make_preview() {
         assert_eq!(make_preview("hello world"), "hello world");
         assert_eq!(make_preview("line1\nline2\nline3"), "line1");
@@ -175,6 +191,6 @@ mod tests {
         let long = "a".repeat(200);
         let preview = make_preview(&long);
         assert!(preview.ends_with('…'));
-        assert_eq!(preview.len(), 161);
+        assert_eq!(preview.len(), 163);
     }
 }

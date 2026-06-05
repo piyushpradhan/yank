@@ -55,6 +55,53 @@ fn focus_library(app: &tauri::AppHandle) {
     }
 }
 
+/// Remove Windows window-chrome artifacts from the chromeless palette.
+/// Even with `decorations: false`, Windows may still draw sizing borders
+/// (WS_THICKFRAME) and sunken/raised edges (WS_EX_CLIENTEDGE,
+/// WS_EX_WINDOWEDGE) that produce visible 1px hairlines around the palette.
+/// This strips those styles and forces a frame redraw via SetWindowPos.
+#[cfg(target_os = "windows")]
+fn strip_palette_chrome(w: &tauri::WebviewWindow) {
+    use windows::Win32::UI::WindowsAndMessaging::{
+        GetWindowLongPtrW, SetWindowLongPtrW,
+        GWL_STYLE, GWL_EXSTYLE,
+        WS_THICKFRAME, WS_EX_CLIENTEDGE, WS_EX_WINDOWEDGE,
+        SWP_FRAMECHANGED, SWP_NOMOVE, SWP_NOSIZE, SWP_NOZORDER,
+        SetWindowPos,
+    };
+
+    let Ok(hwnd_tauri) = w.hwnd() else { return };
+    let raw: *mut std::ffi::c_void = hwnd_tauri.0;
+    let hwnd = windows::Win32::Foundation::HWND(raw);
+    unsafe {
+        let style = GetWindowLongPtrW(hwnd, GWL_STYLE);
+        let _ = SetWindowLongPtrW(
+            hwnd,
+            GWL_STYLE,
+            style & !(WS_THICKFRAME.0 as isize),
+        );
+
+        let ex_style = GetWindowLongPtrW(hwnd, GWL_EXSTYLE);
+        let _ = SetWindowLongPtrW(
+            hwnd,
+            GWL_EXSTYLE,
+            ex_style
+                & !(WS_EX_CLIENTEDGE.0 as isize
+                    | WS_EX_WINDOWEDGE.0 as isize),
+        );
+
+        let _ = SetWindowPos(
+            hwnd,
+            None,
+            0, 0, 0, 0,
+            SWP_FRAMECHANGED
+                | SWP_NOMOVE
+                | SWP_NOSIZE
+                | SWP_NOZORDER,
+        );
+    }
+}
+
 /// Dispatch CLI args. `is_second_instance` is true when invoked via the
 /// single-instance plugin (a second `yank ...` call routed to
 /// the running app). Honoured flags:
@@ -141,6 +188,7 @@ pub fn run() {
             commands::restore_item,
             commands::update_label,
             commands::clear_history,
+            commands::retry_embed_backfill,
             commands::search_fts,
             commands::search_semantic,
             commands::strip_time,
@@ -155,6 +203,8 @@ pub fn run() {
             settings::set_shortcut,
             settings::get_autostart,
             settings::set_autostart,
+            settings::get_plain_text_only,
+            settings::set_plain_text_only,
             settings::get_theme,
             settings::set_theme,
         ])
@@ -331,47 +381,7 @@ pub fn run() {
                 let _ = w.set_shadow(false);
 
                 #[cfg(target_os = "windows")]
-                {
-                    use windows::Win32::UI::WindowsAndMessaging::{
-                        GetWindowLongPtrW, SetWindowLongPtrW,
-                        GWL_STYLE, GWL_EXSTYLE,
-                        WS_THICKFRAME, WS_EX_CLIENTEDGE, WS_EX_WINDOWEDGE,
-                        SWP_FRAMECHANGED, SWP_NOMOVE, SWP_NOSIZE, SWP_NOZORDER,
-                        SetWindowPos,
-                    };
-
-                    if let Ok(hwnd_tauri) = w.hwnd() {
-                        let raw: *mut std::ffi::c_void = hwnd_tauri.0;
-                        let hwnd = windows::Win32::Foundation::HWND(raw);
-                        unsafe {
-                            let style = GetWindowLongPtrW(hwnd, GWL_STYLE);
-                            let _ = SetWindowLongPtrW(
-                                hwnd,
-                                GWL_STYLE,
-                                style & !(WS_THICKFRAME.0 as isize),
-                            );
-
-                            let ex_style = GetWindowLongPtrW(hwnd, GWL_EXSTYLE);
-                            let _ = SetWindowLongPtrW(
-                                hwnd,
-                                GWL_EXSTYLE,
-                                ex_style
-                                    & !(WS_EX_CLIENTEDGE.0 as isize
-                                        | WS_EX_WINDOWEDGE.0 as isize),
-                            );
-
-                            let _ = SetWindowPos(
-                                hwnd,
-                                None,
-                                0, 0, 0, 0,
-                                SWP_FRAMECHANGED
-                                    | SWP_NOMOVE
-                                    | SWP_NOSIZE
-                                    | SWP_NOZORDER,
-                            );
-                        }
-                    }
-                }
+                strip_palette_chrome(&w);
 
                 let wc = w.clone();
                 w.on_window_event(move |event| match event {
@@ -389,7 +399,7 @@ pub fn run() {
             // Apply OS-standard corner rounding to both windows.
             #[cfg(target_os = "macos")]
             {
-                use objc::{msg_send, sel, sel_impl, runtime::{Object, BOOL, YES}};
+                use objc::{msg_send, sel, sel_impl, runtime::{Object, YES}};
                 let radius: f64 = 10.0;
                 for label in &["library", "palette"] {
                     if let Some(w) = app.get_webview_window(label) {
