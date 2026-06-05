@@ -11,12 +11,12 @@
     </linearGradient>
   </defs>
 
-  <rect x="0" y="0" width="1024" height="1024" rx="224" ry="224" fill="url(#ember)"/>
-  <rect x="0" y="0" width="1024" height="1024" rx="224" ry="224" fill="url(#sheen)"/>
+  <circle cx="512" cy="512" r="512" fill="url(#ember)"/>
+  <circle cx="512" cy="512" r="512" fill="url(#sheen)"/>
 
-  <g fill="none" stroke="#fff4ec" stroke-width="160" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M 280 260 L 512 552" />
-    <path d="M 744 260 L 512 552" />
-    <path d="M 512 552 L 512 780" />
+  <g fill="none" stroke="#fff4ec" stroke-width="72" stroke-linecap="round">
+    <path d="M 280 580 L 720 330"/>
+    <path d="M 320 620 L 760 370"/>
+    <path d="M 360 660 L 800 410"/>
   </g>
 </svg>
