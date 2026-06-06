@@ -1008,19 +1008,31 @@ export function Library({
               ? Object.entries(groups).map(([g, items]) =>
                   items.length === 0 ? null : (
                     <Box key={g} style={{ marginBottom: 8 }}>
-                      <Overline
-                        as="div"
-                        size="2xs"
-                        tracking="wider"
+                      {/* Sentence-case + hairline instead of an uppercase Overline
+                          so the day buckets read as quiet section dividers rather
+                          than competing visually with the per-row category chips
+                          (which already use uppercase mono tracking). */}
+                      <Inline
+                        align="center"
+                        gap={2}
                         style={{
                           paddingLeft: 10,
                           paddingRight: 10,
-                          paddingTop: 8,
+                          paddingTop: 12,
                           paddingBottom: 4,
                         }}
                       >
-                        {g} · {items.length}
-                      </Overline>
+                        <Text size={10.5} tone="tertiary" style={{ opacity: 0.7 }}>
+                          {g}
+                        </Text>
+                        <Text size={10.5} tone="tertiary" tabularNums style={{ opacity: 0.5 }}>
+                          {items.length}
+                        </Text>
+                        <Box
+                          grow={1}
+                          style={{ height: 1, background: 'var(--border-subtle)', opacity: 0.6 }}
+                        />
+                      </Inline>
                       {items.map((item) => (
                         <ListRow
                           key={item.id}
