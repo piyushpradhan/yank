@@ -6,7 +6,7 @@ mod embed_queue;
 mod label;
 mod label_queue;
 pub mod local_embed;
-mod query_intent;
+pub mod query_intent;
 pub mod query_time;
 mod settings;
 mod watcher;

@@ -26,6 +26,7 @@ use serde::Serialize;
 use yank_lib::db;
 use yank_lib::embed::{self, EmbedTask};
 use yank_lib::local_embed::{self, LocalState};
+use yank_lib::query_intent;
 use yank_lib::query_time;
 
 const MODEL: &str = "bge-small-en-v1.5";
@@ -96,6 +97,7 @@ fn samples() -> Vec<Sample> {
 struct Q {
     q: &'static str,
     relevant: &'static [usize], // sample indices
+    #[allow(dead_code)] // kept for documentation of test intent
     expected_time: Option<&'static str>,
 }
 
@@ -334,6 +336,92 @@ fn items_in_window(
     Ok(rows)
 }
 
+fn items_in_window_with_cat(
+    conn: &Connection,
+    from: i64,
+    to: i64,
+    category: Option<&str>,
+    limit: usize,
+) -> rusqlite::Result<Vec<i64>> {
+    let mut stmt = conn.prepare(
+        "SELECT id FROM items
+         WHERE deleted = 0 AND created_at BETWEEN ?1 AND ?2
+           AND (?3 IS NULL OR category = ?3)
+         ORDER BY pinned DESC, created_at DESC LIMIT ?4",
+    )?;
+    let rows: Vec<i64> = stmt
+        .query_map(params![from, to, category, limit as i64], |r| {
+            r.get::<_, i64>(0)
+        })?
+        .filter_map(|r| r.ok())
+        .collect();
+    Ok(rows)
+}
+
+/// Hybrid v4 (post-fix): mirrors `search_semantic` in `commands.rs`.
+/// Same pools as v3 (no category SQL filter), plus a soft additive RRF
+/// boost when the user's intent category matches the candidate item's
+/// stored category. Sized at ≈ one rank-1 RRF contribution so a category
+/// hit can break ties / climb a rank or two but cannot override a
+/// clearly-better off-category match.
+fn hybrid_v4_search(
+    conn: &Connection,
+    model_id: &str,
+    q_vec: &[f32],
+    residue: &str,
+    limit: usize,
+    time: Option<(i64, i64)>,
+    category: Option<&str>,
+    cat_map: &std::collections::HashMap<i64, String>,
+) -> rusqlite::Result<Vec<i64>> {
+    const VEC_POOL: usize = 50;
+    const FTS_POOL: usize = 50;
+    const RRF_K: f32 = 60.0;
+    const VEC_THRESHOLD: f32 = 0.15;
+    const CAT_BOOST: f32 = 0.010;
+
+    let mut scored = vector_search_scored(conn, model_id, q_vec, VEC_POOL, time)?;
+    scored.retain(|(s, _)| *s >= VEC_THRESHOLD);
+    let vec_pool: Vec<i64> = scored.into_iter().map(|(_, id)| id).collect();
+    let fts_pool = bm25_search(conn, residue, FTS_POOL, time).unwrap_or_default();
+
+    use std::collections::HashMap;
+    let mut fused: HashMap<i64, f32> = HashMap::new();
+    for (rank, id) in vec_pool.iter().enumerate() {
+        *fused.entry(*id).or_insert(0.0) += 1.0 / (RRF_K + rank as f32 + 1.0);
+    }
+    for (rank, id) in fts_pool.iter().enumerate() {
+        *fused.entry(*id).or_insert(0.0) += 1.0 / (RRF_K + rank as f32 + 1.0);
+    }
+
+    if let Some(want) = category {
+        let ids: Vec<i64> = fused.keys().copied().collect();
+        for id in ids {
+            if cat_map.get(&id).map(|s| s.as_str()) == Some(want) {
+                *fused.get_mut(&id).unwrap() += CAT_BOOST;
+            }
+        }
+    }
+
+    if time.is_none() {
+        let now_ms = chrono::Utc::now().timestamp_millis();
+        let ids: Vec<i64> = fused.keys().copied().collect();
+        for id in ids {
+            let last: i64 = conn
+                .query_row("SELECT last_used_at FROM items WHERE id = ?1", params![id], |r| {
+                    r.get(0)
+                })
+                .unwrap_or(now_ms);
+            let age_days = ((now_ms - last).max(0) as f32) / (1000.0 * 60.0 * 60.0 * 24.0);
+            *fused.get_mut(&id).unwrap() += 0.005 * (-age_days / 14.0).exp();
+        }
+    }
+
+    let mut ranked: Vec<(i64, f32)> = fused.into_iter().collect();
+    ranked.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
+    Ok(ranked.into_iter().take(limit).map(|(id, _)| id).collect())
+}
+
 // ---------------------------------------------------------------------------
 // Report types
 // ---------------------------------------------------------------------------
@@ -349,12 +437,19 @@ struct StrategyMetrics {
 #[derive(Serialize)]
 struct QueryRow {
     q: String,
-    expected_time: Option<String>,
-    parsed_time: Option<String>,
-    time_correct: bool,
+    intent_category: Option<String>,
+    v4_residue: String,
     bm25_rank: Option<usize>,
     vec_rank: Option<usize>,
-    hyb_rank: Option<usize>,
+    v3_rank: Option<usize>,
+    v4_rank: Option<usize>,
+}
+
+#[derive(Serialize)]
+struct EffectCounts {
+    same: usize,
+    improved: usize,
+    regressed: usize,
 }
 
 #[derive(Serialize)]
@@ -372,9 +467,9 @@ struct Report {
     n_queries: usize,
     bm25: StrategyMetrics,
     vector: StrategyMetrics,
-    hybrid: StrategyMetrics,
-    time_correct: usize,
-    time_wrong: usize,
+    v3: StrategyMetrics,
+    v4: StrategyMetrics,
+    effect: EffectCounts,
     queries: Vec<QueryRow>,
     items: Vec<ItemRow>,
 }
@@ -410,6 +505,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     eprintln!("  (first run downloads ~133 MB)");
 
     let mut item_ids: Vec<i64> = Vec::with_capacity(samples_v.len());
+    let mut cat_map: std::collections::HashMap<i64, String> =
+        std::collections::HashMap::with_capacity(samples_v.len());
     for (i, sample) in samples_v.iter().enumerate() {
         let created = now_ms - sample.days_ago * 86_400_000;
         let preview: String = sample.content.chars().take(60).collect();
@@ -420,6 +517,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         )?;
         let id = conn.last_insert_rowid();
         item_ids.push(id);
+        cat_map.insert(id, sample.category.to_string());
 
         let doc = build_doc(sample);
         let v = local_embed::embed_local(&state, cache_dir.clone(), MODEL, &doc, EmbedTask::Document).await?;
@@ -444,53 +542,97 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut vec_p5 = 0.0;
     let mut vec_p10 = 0.0;
     let mut vec_mrr = 0.0;
-    let mut hyb_p1 = 0.0;
-    let mut hyb_p5 = 0.0;
-    let mut hyb_p10 = 0.0;
-    let mut hyb_mrr = 0.0;
-    let mut time_correct = 0usize;
+    let mut v3_p1 = 0.0;
+    let mut v3_p5 = 0.0;
+    let mut v3_p10 = 0.0;
+    let mut v3_mrr = 0.0;
+    let mut v4_p1 = 0.0;
+    let mut v4_p5 = 0.0;
+    let mut v4_p10 = 0.0;
+    let mut v4_mrr = 0.0;
+    let mut effect_same = 0usize;
+    let mut effect_improved = 0usize;
+    let mut effect_regressed = 0usize;
 
     let mut query_rows: Vec<QueryRow> = Vec::with_capacity(queries_v.len());
 
     for q in &queries_v {
         let relevant: HashSet<i64> = q.relevant.iter().map(|&i| item_ids[i]).collect();
 
+        // Stage 1: pull out the date phrase. Residue is what flows on to v3
+        // (and to intent parsing for v4).
         let parsed = query_time::parse(Local::now(), q.q);
         let time_bounds = parsed.time.as_ref().map(|t| (t.from_ms, t.to_ms));
-        let semantic_q = parsed.semantic.trim().to_string();
-        let parsed_label = parsed.time.as_ref().map(|t| t.label.clone());
+        let v3_residue = parsed.semantic.trim().to_string();
 
-        let time_ok = match (q.expected_time, parsed_label.as_deref()) {
-            (None, None) => true,
-            (Some(exp), Some(got)) => got.to_lowercase().contains(&exp.to_lowercase()),
-            _ => false,
-        };
-        if time_ok {
-            time_correct += 1;
-        }
+        // Stage 2: intent parse on the time residue — v4 only. Strips filler
+        // verbs and pulls out a category, leaving a cleaner residue to embed.
+        let intent = query_intent::parse(&parsed.semantic);
+        let v4_residue = intent.semantic.trim().to_string();
+        let category = intent.category;
 
-        // BM25 baseline — raw query, no time parsing.
+        // BM25 baseline — raw query, no parsing.
         let bm25_results = bm25_search(&conn, q.q, TOP_K, None).unwrap_or_default();
 
         // Vector baseline — raw query embedded as-is.
-        let q_vec_raw = local_embed::embed_local(&state, cache_dir.clone(), MODEL, q.q, EmbedTask::Query).await?;
+        let q_vec_raw =
+            local_embed::embed_local(&state, cache_dir.clone(), MODEL, q.q, EmbedTask::Query)
+                .await?;
         let vec_results = vector_search(&conn, &model_id, &q_vec_raw, TOP_K, None)?;
 
-        // Hybrid v3 — time parsing + RRF + recency.
-        let hyb_results: Vec<i64> = if semantic_q.is_empty() {
+        // Hybrid v3 — time parsing + RRF + recency. No intent parsing.
+        let v3_results: Vec<i64> = if v3_residue.is_empty() {
             if let Some((from, to)) = time_bounds {
                 items_in_window(&conn, from, to, TOP_K)?
             } else {
                 Vec::new()
             }
         } else {
-            let q_vec_resid = local_embed::embed_local(&state, cache_dir.clone(), MODEL, &semantic_q, EmbedTask::Query).await?;
-            hybrid_search(&conn, &model_id, &q_vec_resid, &semantic_q, TOP_K, time_bounds)?
+            let qv = local_embed::embed_local(
+                &state,
+                cache_dir.clone(),
+                MODEL,
+                &v3_residue,
+                EmbedTask::Query,
+            )
+            .await?;
+            hybrid_search(&conn, &model_id, &qv, &v3_residue, TOP_K, time_bounds)?
+        };
+
+        // Hybrid v4 — time parsing + intent parsing + RRF + soft category
+        // boost + recency. Mirrors `search_semantic` in commands.rs.
+        let v4_results: Vec<i64> = if v4_residue.is_empty() {
+            if time_bounds.is_some() || category.is_some() {
+                let (from, to) = time_bounds.unwrap_or((i64::MIN, i64::MAX));
+                items_in_window_with_cat(&conn, from, to, category, TOP_K)?
+            } else {
+                Vec::new()
+            }
+        } else {
+            let qv = local_embed::embed_local(
+                &state,
+                cache_dir.clone(),
+                MODEL,
+                &v4_residue,
+                EmbedTask::Query,
+            )
+            .await?;
+            hybrid_v4_search(
+                &conn,
+                &model_id,
+                &qv,
+                &v4_residue,
+                TOP_K,
+                time_bounds,
+                category,
+                &cat_map,
+            )?
         };
 
         let bm25_r = rank_of_first_relevant(&bm25_results, &relevant);
         let vec_r = rank_of_first_relevant(&vec_results, &relevant);
-        let hyb_r = rank_of_first_relevant(&hyb_results, &relevant);
+        let v3_r = rank_of_first_relevant(&v3_results, &relevant);
+        let v4_r = rank_of_first_relevant(&v4_results, &relevant);
 
         bm25_p1 += precision_at_k(&bm25_results, &relevant, 1);
         bm25_p5 += precision_at_k(&bm25_results, &relevant, 5);
@@ -502,19 +644,33 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         vec_p10 += precision_at_k(&vec_results, &relevant, 10);
         vec_mrr += vec_r.map_or(0.0, |r| 1.0 / r as f64);
 
-        hyb_p1 += precision_at_k(&hyb_results, &relevant, 1);
-        hyb_p5 += precision_at_k(&hyb_results, &relevant, 5);
-        hyb_p10 += precision_at_k(&hyb_results, &relevant, 10);
-        hyb_mrr += hyb_r.map_or(0.0, |r| 1.0 / r as f64);
+        v3_p1 += precision_at_k(&v3_results, &relevant, 1);
+        v3_p5 += precision_at_k(&v3_results, &relevant, 5);
+        v3_p10 += precision_at_k(&v3_results, &relevant, 10);
+        v3_mrr += v3_r.map_or(0.0, |r| 1.0 / r as f64);
+
+        v4_p1 += precision_at_k(&v4_results, &relevant, 1);
+        v4_p5 += precision_at_k(&v4_results, &relevant, 5);
+        v4_p10 += precision_at_k(&v4_results, &relevant, 10);
+        v4_mrr += v4_r.map_or(0.0, |r| 1.0 / r as f64);
+
+        // Effect classification: how did v4 move this query's rank-of-
+        // first-relevant relative to v3?
+        match (v3_r, v4_r) {
+            (a, b) if a == b => effect_same += 1,
+            (Some(a), Some(b)) if b < a => effect_improved += 1,
+            (None, Some(_)) => effect_improved += 1,
+            _ => effect_regressed += 1,
+        }
 
         query_rows.push(QueryRow {
             q: q.q.to_string(),
-            expected_time: q.expected_time.map(String::from),
-            parsed_time: parsed_label,
-            time_correct: time_ok,
+            intent_category: category.map(String::from),
+            v4_residue,
             bm25_rank: bm25_r,
             vec_rank: vec_r,
-            hyb_rank: hyb_r,
+            v3_rank: v3_r,
+            v4_rank: v4_r,
         });
     }
 
@@ -531,11 +687,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         p_at_10: vec_p10 / n,
         mrr: vec_mrr / n,
     };
-    let hyb_m = StrategyMetrics {
-        p_at_1: hyb_p1 / n,
-        p_at_5: hyb_p5 / n,
-        p_at_10: hyb_p10 / n,
-        mrr: hyb_mrr / n,
+    let v3_m = StrategyMetrics {
+        p_at_1: v3_p1 / n,
+        p_at_5: v3_p5 / n,
+        p_at_10: v3_p10 / n,
+        mrr: v3_mrr / n,
+    };
+    let v4_m = StrategyMetrics {
+        p_at_1: v4_p1 / n,
+        p_at_5: v4_p5 / n,
+        p_at_10: v4_p10 / n,
+        mrr: v4_mrr / n,
     };
 
     eprintln!();
@@ -544,19 +706,27 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     eprintln!("├──────────────┼───────┼───────┼────────┼───────┤");
     eprintln!("│ BM25-only    │ {:.3} │ {:.3} │  {:.3} │ {:.3} │", bm25_m.p_at_1, bm25_m.p_at_5, bm25_m.p_at_10, bm25_m.mrr);
     eprintln!("│ Vector-only  │ {:.3} │ {:.3} │  {:.3} │ {:.3} │", vec_m.p_at_1, vec_m.p_at_5, vec_m.p_at_10, vec_m.mrr);
-    eprintln!("│ Hybrid v3    │ {:.3} │ {:.3} │  {:.3} │ {:.3} │", hyb_m.p_at_1, hyb_m.p_at_5, hyb_m.p_at_10, hyb_m.mrr);
+    eprintln!("│ Hybrid v3    │ {:.3} │ {:.3} │  {:.3} │ {:.3} │", v3_m.p_at_1, v3_m.p_at_5, v3_m.p_at_10, v3_m.mrr);
+    eprintln!("│ Hybrid v4    │ {:.3} │ {:.3} │  {:.3} │ {:.3} │", v4_m.p_at_1, v4_m.p_at_5, v4_m.p_at_10, v4_m.mrr);
     eprintln!("└──────────────┴───────┴───────┴────────┴───────┘");
     eprintln!();
-    eprintln!("Time parsing: {}/{} correct ({:.0}%)", time_correct, queries_v.len(), 100.0 * time_correct as f64 / n);
+    eprintln!(
+        "v4 vs v3 (rank of first relevant): {} same · {} improved · {} regressed",
+        effect_same, effect_improved, effect_regressed
+    );
 
     let report = Report {
         n_items: samples_v.len(),
         n_queries: queries_v.len(),
         bm25: bm25_m,
         vector: vec_m,
-        hybrid: hyb_m,
-        time_correct,
-        time_wrong: queries_v.len() - time_correct,
+        v3: v3_m,
+        v4: v4_m,
+        effect: EffectCounts {
+            same: effect_same,
+            improved: effect_improved,
+            regressed: effect_regressed,
+        },
         queries: query_rows,
         items: samples_v
             .iter()
@@ -572,7 +742,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     };
 
     let html = render_html(&report)?;
-    let report_path = work_dir.join("eval_report.html");
+    let report_path = work_dir.join("v3_v4_comparison.html");
     std::fs::write(&report_path, html)?;
     eprintln!("\n📊 HTML report: {}", report_path.display());
 
@@ -581,24 +751,49 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 fn render_html(report: &Report) -> Result<String, Box<dyn std::error::Error>> {
     let data_json = serde_json::to_string(report)?;
+    let today = Local::now().format("%Y-%m-%d").to_string();
+    let rank_cell = |r: Option<usize>| -> String {
+        match r {
+            None => r#"<td class="rank-miss">—</td>"#.to_string(),
+            Some(v) if v <= 3 => format!(r#"<td class="rank-good">{}</td>"#, v),
+            Some(v) => format!(r#"<td class="rank-bad">{}</td>"#, v),
+        }
+    };
+    let delta_cell = |v3: Option<usize>, v4: Option<usize>| -> String {
+        match (v3, v4) {
+            (a, b) if a == b => r#"<td class="delta-zero">·</td>"#.to_string(),
+            (None, Some(_)) => r#"<td class="delta-pos">↑ found</td>"#.to_string(),
+            (Some(_), None) => r#"<td class="delta-neg">↓ miss</td>"#.to_string(),
+            (Some(a), Some(b)) if b < a => {
+                format!(r#"<td class="delta-pos">↑ {}→{}</td>"#, a, b)
+            }
+            (Some(a), Some(b)) => format!(r#"<td class="delta-neg">↓ {}→{}</td>"#, a, b),
+            _ => r#"<td class="delta-zero">·</td>"#.to_string(),
+        }
+    };
+
     let mut rows = String::new();
     for q in &report.queries {
-        let rank_cell = |r: Option<usize>| -> String {
-            match r {
-                None => r#"<td class="rank-miss">—</td>"#.to_string(),
-                Some(v) if v <= 3 => format!(r#"<td class="rank-good">{}</td>"#, v),
-                Some(v) => format!(r#"<td class="rank-bad">{}</td>"#, v),
-            }
+        let is_regression = match (q.v3_rank, q.v4_rank) {
+            (Some(a), Some(b)) => b > a,
+            (Some(_), None) => true,
+            _ => false,
         };
+        let row_class = if is_regression { " class=\"row-regression\"" } else { "" };
         rows.push_str(&format!(
-            "<tr><td><code>{}</code></td><td>{}</td><td>{}</td><td>{}</td>{}{}{}</tr>",
+            "<tr{row_class}><td><code>{}</code></td><td>{}</td><td><code>{}</code></td>{}{}{}{}{}</tr>",
             html_escape(&q.q),
-            q.expected_time.as_deref().unwrap_or("—"),
-            q.parsed_time.as_deref().unwrap_or("—"),
-            if q.time_correct { "<span class=\"good\">✓</span>" } else { "<span class=\"bad\">✗</span>" },
+            q.intent_category
+                .as_deref()
+                .map(|c| format!("<code>{}</code>", c))
+                .unwrap_or_else(|| "—".to_string()),
+            html_escape(&q.v4_residue),
             rank_cell(q.bm25_rank),
             rank_cell(q.vec_rank),
-            rank_cell(q.hyb_rank),
+            rank_cell(q.v3_rank),
+            rank_cell(q.v4_rank),
+            delta_cell(q.v3_rank, q.v4_rank),
+            row_class = row_class,
         ));
     }
     let mut item_rows = String::new();
@@ -617,7 +812,7 @@ fn render_html(report: &Report) -> Result<String, Box<dyn std::error::Error>> {
         r##"<!DOCTYPE html>
 <html lang="en"><head>
 <meta charset="utf-8" />
-<title>Yank · Semantic Search Evaluation</title>
+<title>Yank · Semantic Search Evaluation (v3 → v4)</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <style>
   :root {{ --fg:#1a1a1a; --muted:#666; --border:#e6e6e6; --accent:#FF6B35; }}
@@ -633,26 +828,40 @@ fn render_html(report: &Report) -> Result<String, Box<dyn std::error::Error>> {
   td.rank-good {{ color: #0a7e3f; font-weight: 700; text-align: center; }}
   td.rank-bad {{ color: #c33; text-align: center; }}
   td.rank-miss {{ color: #aaa; text-align: center; }}
+  td.delta-pos {{ color: #0a7e3f; font-weight: 700; text-align: center; }}
+  td.delta-neg {{ color: #c33; font-weight: 700; text-align: center; }}
+  td.delta-zero {{ color: #aaa; text-align: center; }}
   .good {{ color: #0a7e3f; font-weight: 700; }}
   .bad {{ color: #c33; font-weight: 700; }}
   code {{ background: #f0f0f0; padding: 2px 5px; border-radius: 3px; font-size: 12px; font-family: "SF Mono", "JetBrains Mono", ui-monospace, monospace; }}
   .legend {{ font-size: 12px; color: var(--muted); margin: 8px 0 16px; }}
+  .callout {{ background: #fff7f0; border: 1px solid #ffd4b8; border-left: 3px solid var(--accent); padding: 12px 14px; border-radius: 6px; margin: 14px 0; font-size: 13px; }}
+  tr.row-regression {{ background: #fff5f5; }}
 </style></head>
 <body>
-<h1>Yank · Semantic Search Evaluation</h1>
-<p class="sub">{n_items} items seeded · {n_queries} queries · BGE-small-en-v1.5 (local, offline)</p>
+<h1>Yank · Semantic Search Evaluation (v3 → v4)</h1>
+<p class="sub">{n_items} items seeded · {n_queries} queries · BGE-small-en-v1.5 (local, offline) · run {today}</p>
+
+<div class="callout">
+  <strong>v4 (post-fix):</strong> <code>query_intent</code> still runs after time parsing —
+  it strips clipboard-action filler verbs (<code>"I copied / yanked / saved"</code>) and
+  detects content-type keywords (<code>"numbers"</code>, <code>"links"</code>, <code>"code snippets"</code>).
+  But the category is now applied as a soft RRF score boost (≈ one rank-1 contribution),
+  not a hard SQL filter — items whose <code>categorize.rs</code> label disagrees with
+  the user's intent word stay in the candidate pool.
+</div>
 
 <h2>Retrieval accuracy</h2>
 <div class="grid">
   <div class="card"><canvas id="precChart" height="260"></canvas></div>
-  <div class="card"><canvas id="timeChart" height="260"></canvas></div>
+  <div class="card"><canvas id="effectChart" height="260"></canvas></div>
 </div>
 <p class="legend">P@k = fraction of top-k that's relevant · MRR = mean reciprocal rank of first relevant hit (higher is better).</p>
 
 <h2>Per-query rank of first relevant result</h2>
-<p class="legend"><span class="good">green</span> = top 3 · <span class="bad">red</span> = ranked 4–10 · — = not found in top 10</p>
+<p class="legend"><span class="good">green</span> = top 3 · <span class="bad">red</span> = ranked 4–10 · — = not found in top 10 · regression rows tinted pink</p>
 <table>
-<thead><tr><th>query</th><th>expected time</th><th>parsed time</th><th>✓</th><th>BM25</th><th>Vector</th><th>Hybrid&nbsp;v3</th></tr></thead>
+<thead><tr><th>query</th><th>intent cat</th><th>v4 residue → embedder</th><th>BM25</th><th>Vector</th><th>Hybrid&nbsp;v3</th><th>Hybrid&nbsp;v4</th><th>Δ</th></tr></thead>
 <tbody>
 {rows}
 </tbody>
@@ -675,7 +884,8 @@ new Chart(document.getElementById('precChart'), {{
     datasets: [
       {{ label: 'BM25-only',   data: [D.bm25.p_at_1,   D.bm25.p_at_5,   D.bm25.p_at_10,   D.bm25.mrr],   backgroundColor: '#bcbcbc' }},
       {{ label: 'Vector-only', data: [D.vector.p_at_1, D.vector.p_at_5, D.vector.p_at_10, D.vector.mrr], backgroundColor: '#7f9eb7' }},
-      {{ label: 'Hybrid v3',   data: [D.hybrid.p_at_1, D.hybrid.p_at_5, D.hybrid.p_at_10, D.hybrid.mrr], backgroundColor: '#FF6B35' }},
+      {{ label: 'Hybrid v3',   data: [D.v3.p_at_1,     D.v3.p_at_5,     D.v3.p_at_10,     D.v3.mrr],     backgroundColor: '#f3b58a' }},
+      {{ label: 'Hybrid v4',   data: [D.v4.p_at_1,     D.v4.p_at_5,     D.v4.p_at_10,     D.v4.mrr],     backgroundColor: '#FF6B35' }},
     ]
   }},
   options: {{
@@ -684,15 +894,15 @@ new Chart(document.getElementById('precChart'), {{
     plugins: {{ title: {{ display: true, text: 'P@k and MRR across strategies' }}, legend: {{ position: 'bottom' }} }}
   }}
 }});
-new Chart(document.getElementById('timeChart'), {{
+new Chart(document.getElementById('effectChart'), {{
   type: 'doughnut',
   data: {{
-    labels: ['Parsed correctly', 'Mismatch'],
-    datasets: [{{ data: [D.time_correct, D.time_wrong], backgroundColor: ['#0a7e3f', '#c33'] }}]
+    labels: ['Same as v3', 'Improved by v4', 'Regressed in v4'],
+    datasets: [{{ data: [D.effect.same, D.effect.improved, D.effect.regressed], backgroundColor: ['#0a7e3f', '#FF6B35', '#c33'] }}]
   }},
   options: {{
     plugins: {{
-      title: {{ display: true, text: 'Date-phrase parsing (' + D.time_correct + '/' + (D.time_correct + D.time_wrong) + ')' }},
+      title: {{ display: true, text: 'v4 effect on rank-of-first-relevant (' + D.n_queries + ' queries)' }},
       legend: {{ position: 'bottom' }}
     }}
   }}
@@ -702,6 +912,7 @@ new Chart(document.getElementById('timeChart'), {{
 "##,
         n_items = report.n_items,
         n_queries = report.n_queries,
+        today = today,
         rows = rows,
         item_rows = item_rows,
         data_json = data_json,
