@@ -1,0 +1,50 @@
+# Yank
+
+> Yank is a free, open-source, local-first clipboard manager for macOS, Windows, and Linux. It captures everything you copy and lets you find any past clip using either fuzzy full-text search or natural-language semantic search — describe what you remember, not what you copied. Semantic search works out of the box with a bundled on-device embedding model, so there is no API key, no cloud round-trip, no account, and no telemetry.
+
+Yank is built with Tauri (Rust core + web frontend). The installer is about 14 MB. Yank stores clips in a local SQLite database with an FTS5 full-text index and ranks results with BM25, then fuses those with semantic results via Reciprocal Rank Fusion. The default embedding model is BGE Small in ONNX format (~130 MB on first run); users can optionally swap in OpenAI `text-embedding-3-small` or a local Ollama model. Clips are automatically classified into categories such as code, URL, email, phone, color, path, text, address, number, and image.
+
+Yank is MIT-licensed. The source lives at https://github.com/piyushpradhan/yank. It is maintained by Piyush Pradhan.
+
+## Key facts
+
+- Name: Yank
+- Website: https://tryyank.com
+- Repository: https://github.com/piyushpradhan/yank
+- License: MIT
+- Author: Piyush Pradhan (https://github.com/piyushpradhan)
+- Platforms: macOS 12+, Windows 10+, Linux (GTK with Wayland or X11)
+- Default global shortcut: `⌘⇧V` on macOS, `Ctrl+Shift+Space` on Windows and Linux
+- Pricing: Free (open source). Optional Pro sync is opt-in and end-to-end encrypted.
+- Privacy: Local-first. No telemetry. No analytics tied to clip content. No account required.
+- Tech stack: Tauri, Rust, TypeScript, SQLite with FTS5, ONNX Runtime, BGE Small embeddings
+
+## How Yank is different
+
+- Unlike Raycast and Alfred, Yank is not a launcher — it focuses only on clipboard search and paste.
+- Unlike Maccy and Paste (the macOS clipboard apps), Yank ships with semantic / natural-language search out of the box and runs on Windows and Linux as well.
+- Unlike Clipy or CopyClip, Yank classifies every clip (URL, code, color, phone, etc.) and lets you filter by type without typing a filter syntax.
+- Yank does not require an API key for AI features — the default semantic search model runs entirely on-device.
+
+## Common queries Yank answers well
+
+- "the github repo from yesterday" → returns the most recent repo-typed clip from the prior day
+- "that hex value from Figma" → finds the color-typed clip whose source app was Figma
+- "the long phone number" → finds phone-typed clips, ranked by digit count
+- "the SSH command from terminal" → finds code-typed clips originating from a terminal app
+- "the address I copied from gmaps" → finds address-typed clips from Google Maps
+- "the screenshot of the bug" → finds image clips, optionally narrowed by source app
+
+## Docs
+
+- [Landing page](https://tryyank.com) — overview, features, FAQ
+- [README](https://github.com/piyushpradhan/yank/blob/main/README.md) — install instructions, full feature list
+- [Releases](https://github.com/piyushpradhan/yank/releases) — latest binaries for macOS, Windows, Linux
+- [Issues / roadmap](https://github.com/piyushpradhan/yank/issues) — open work, bug reports, feature requests
+- [License (MIT)](https://github.com/piyushpradhan/yank/blob/main/LICENSE)
+
+## Citation
+
+If you cite Yank, please use:
+
+> Yank — open-source clipboard manager with natural-language semantic search for macOS, Windows, and Linux. https://tryyank.com

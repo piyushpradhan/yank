@@ -1,49 +1,94 @@
 ---
+import { faqs } from '../lib/faqs'
+
 export interface Props {
   baseUrl?: string
 }
 
 const { baseUrl = 'https://tryyank.com' } = Astro.props
----
 
-<script type="application/ld+json" set:html={JSON.stringify({
+const softwareApplication = {
   '@context': 'https://schema.org',
   '@type': 'SoftwareApplication',
+  '@id': `${baseUrl}/#software`,
   name: 'Yank',
+  alternateName: ['Yank Clipboard', 'Yank App'],
   applicationCategory: 'UtilitiesApplication',
-  operatingSystem: 'macOS, Windows, Linux',
-  description: 'Local-first clipboard manager with fuzzy and semantic search. Captures text, code, images, colors, links, and files — every clip you\'ve ever made, one keystroke away.',
+  applicationSubCategory: 'Clipboard Manager',
+  operatingSystem: 'macOS 12+, Windows 10+, Linux (GTK/Wayland/X11)',
+  description:
+    'Yank is a free, open-source, local-first clipboard manager with natural-language semantic search. It captures every clip — text, code, images, colors, links, files — and lets you retrieve any of them by describing it in plain English, with no cloud, no telemetry, and no account.',
   url: baseUrl,
   image: `${baseUrl}/logo.png`,
+  screenshot: `${baseUrl}/logo.png`,
   author: {
     '@type': 'Person',
     name: 'Piyush Pradhan',
     url: 'https://github.com/piyushpradhan',
+    sameAs: [
+      'https://github.com/piyushpradhan',
+      'https://twitter.com/piyushpradhan',
+    ],
   },
-  softwareVersion: '0.6',
+  maintainer: {
+    '@type': 'Person',
+    name: 'Piyush Pradhan',
+    url: 'https://github.com/piyushpradhan',
+  },
+  softwareVersion: '0.7',
   datePublished: '2025-01-01',
+  dateModified: '2026-06-06',
   license: 'https://opensource.org/licenses/MIT',
+  isAccessibleForFree: true,
   downloadUrl: 'https://github.com/piyushpradhan/yank/releases/latest',
+  installUrl: 'https://github.com/piyushpradhan/yank/releases/latest',
+  releaseNotes: 'https://github.com/piyushpradhan/yank/releases',
+  offers: {
+    '@type': 'Offer',
+    price: '0',
+    priceCurrency: 'USD',
+    availability: 'https://schema.org/InStock',
+    url: 'https://github.com/piyushpradhan/yank/releases/latest',
+  },
   featureList: [
-    'Fuzzy and semantic search across clipboard history',
-    'Native image clip capture and preview',
-    'Smart AI-powered auto-labeling of clips',
-    'Automatic categorization (URLs, code, colors, paths, emails)',
-    'Local-first architecture with SQLite storage',
-    'Global hotkey palette accessible from any application',
-    'Keyboard-driven navigation with shortcuts',
-    'Privacy-focused — no telemetry, no accounts required',
+    'Natural-language (semantic) search across clipboard history',
+    'Fuzzy full-text search with SQLite FTS5 and BM25 ranking',
+    'Hybrid search via Reciprocal Rank Fusion (semantic + fuzzy)',
+    'Native image and screenshot capture with full-resolution preview',
+    'Automatic classification: code, URL, email, phone, color, path, text, address, number, image',
+    'On-device embeddings via bundled BGE Small ONNX model (no API key needed)',
+    'Optional cloud embeddings: OpenAI text-embedding-3-small, Ollama',
+    'Optional AI auto-labelling via Anthropic API key (user-controlled)',
+    'Source-aware capture (app name, window title, URL)',
+    'Local-first SQLite storage with full-text index',
+    'Global hotkey palette (⌘⇧V / Ctrl+Shift+Space) from any application',
+    'Pin, rename, soft-delete with 4-second undo grace window',
+    'Native tray icon, global shortcut, launch-at-startup',
+    'Mica blur on Windows 11; light/dark themes; adjustable accent, density, fonts',
+    'Privacy-first: no telemetry, no analytics, no account required',
+    'Built with Tauri (Rust core, web frontend) — ~14 MB install',
   ],
-  browserRequirements: 'Requires Windows 10+, macOS 12+, or Linux with GTK',
-})} />
+  keywords:
+    'clipboard manager, clipboard history, semantic search, natural language search, AI clipboard, fuzzy search, local-first, privacy, open source, macOS, Windows, Linux, Tauri, productivity',
+  browserRequirements: 'Requires macOS 12+, Windows 10+, or Linux with GTK',
+  softwareRequirements: 'macOS 12+, Windows 10+, Linux (GTK/Wayland/X11)',
+  codeRepository: 'https://github.com/piyushpradhan/yank',
+  programmingLanguage: ['Rust', 'TypeScript'],
+  sameAs: [
+    'https://github.com/piyushpradhan/yank',
+  ],
+}
 
-<script type="application/ld+json" set:html={JSON.stringify({
+const website = {
   '@context': 'https://schema.org',
   '@type': 'WebSite',
+  '@id': `${baseUrl}/#website`,
   name: 'Yank — Clipboard Manager',
   url: baseUrl,
-  description: 'A local-first clipboard manager that remembers and finds anything. Fuzzy + semantic search across text, code, images, colors, and links.',
+  description:
+    'A local-first clipboard manager that remembers and finds anything. Natural-language semantic search across text, code, images, colors, and links.',
   inLanguage: 'en',
+  publisher: { '@id': `${baseUrl}/#person` },
   potentialAction: {
     '@type': 'SearchAction',
     target: {
@@ -52,4 +97,92 @@ const { baseUrl = 'https://tryyank.com' } = Astro.props
     },
     'query-input': 'required name=search_term_string',
   },
-})} />
+}
+
+const person = {
+  '@context': 'https://schema.org',
+  '@type': 'Person',
+  '@id': `${baseUrl}/#person`,
+  name: 'Piyush Pradhan',
+  url: 'https://github.com/piyushpradhan',
+  sameAs: [
+    'https://github.com/piyushpradhan',
+    'https://twitter.com/piyushpradhan',
+  ],
+  jobTitle: 'Software Engineer',
+  worksFor: { '@id': `${baseUrl}/#software` },
+}
+
+const faqPage = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  '@id': `${baseUrl}/#faq`,
+  mainEntity: faqs.map((f) => ({
+    '@type': 'Question',
+    name: f.q,
+    acceptedAnswer: {
+      '@type': 'Answer',
+      text: f.a,
+    },
+  })),
+}
+
+const howTo = {
+  '@context': 'https://schema.org',
+  '@type': 'HowTo',
+  '@id': `${baseUrl}/#howto`,
+  name: 'How to use Yank — find a clipboard item in seconds',
+  description:
+    'Copy normally, summon Yank with a global shortcut, and describe what you copied in plain English. Yank returns the right clip and pastes it.',
+  totalTime: 'PT5S',
+  tool: [
+    { '@type': 'HowToTool', name: 'Yank — clipboard manager' },
+  ],
+  step: [
+    {
+      '@type': 'HowToStep',
+      position: 1,
+      name: 'Copy anything, anywhere',
+      text:
+        'Use your normal copy shortcut (⌘C on macOS, Ctrl+C on Windows and Linux). Yank watches the system clipboard and silently captures, classifies, and archives every clip — text, images, files, code, URLs — within 500 milliseconds.',
+      url: `${baseUrl}/#how`,
+    },
+    {
+      '@type': 'HowToStep',
+      position: 2,
+      name: 'Summon the picker',
+      text:
+        'Press ⌘⇧V on macOS or Ctrl+Shift+Space on Windows and Linux from any application. Yank floats above your current work without stealing focus.',
+      url: `${baseUrl}/#how`,
+    },
+    {
+      '@type': 'HowToStep',
+      position: 3,
+      name: 'Ask in plain language',
+      text:
+        'Type a description of what you copied — for example "the github repo from yesterday", "the long phone number", or "that color from the Figma file". Press Enter to paste the top match, or arrow to pick another result.',
+      url: `${baseUrl}/#how`,
+    },
+  ],
+}
+
+const breadcrumbs = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    {
+      '@type': 'ListItem',
+      position: 1,
+      name: 'Home',
+      item: baseUrl,
+    },
+  ],
+}
+---
+
+<script type="application/ld+json" set:html={JSON.stringify(softwareApplication)} />
+<script type="application/ld+json" set:html={JSON.stringify(website)} />
+<script type="application/ld+json" set:html={JSON.stringify(person)} />
+<script type="application/ld+json" set:html={JSON.stringify(faqPage)} />
+<script type="application/ld+json" set:html={JSON.stringify(howTo)} />
+<script type="application/ld+json" set:html={JSON.stringify(breadcrumbs)} />

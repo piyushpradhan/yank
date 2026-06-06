@@ -26,14 +26,16 @@ const sizeLabel =
   class="hero"
   id="top"
   data-screen-label="hero"
+  aria-labelledby="hero-heading"
   data-downloads={JSON.stringify(downloadMap)}
 >
   <div class="wrap grid">
     <div>
       <span class="eyebrow">Clipboard · with language</span>
-      <h1>Your clipboard,<br /><em>in your words.</em></h1>
+      <h1 id="hero-heading">Your clipboard,<br /><em>in your words.</em></h1>
       <p class="lede">
-        Yank is a clipboard history that you can talk to. Ask for
+        <strong style="font-weight:500;color:var(--text-primary)">Yank is a clipboard manager with natural-language search</strong>
+        for macOS, Windows, and Linux. Ask for
         <em
           style="font-style:normal;color:var(--text-primary);font-weight:500"
           >the phone number from earlier,</em

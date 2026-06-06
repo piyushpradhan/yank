@@ -23,12 +23,13 @@ interface Props {
 }
 
 const {
-  title = "Yank — Open-Source Clipboard Manager for macOS, Windows & Linux | Yank App",
-  description = "Yank is a local-first, privacy-focused clipboard manager with fuzzy search, semantic search, image capture, and smart auto-labeling. Free, open source, and keyboard-driven. Download for macOS, Windows, or Linux.",
+  title = "Yank — Clipboard Manager with Natural-Language Search · Mac, Windows, Linux",
+  description = "Yank is a free, open-source, local-first clipboard manager with semantic + fuzzy search. Find any clip — text, code, images, colors, links — by describing it in plain English. Available for macOS, Windows, and Linux.",
   ogImage = "/favicon.png",
 } = Astro.props;
 
 const canonical = "https://tryyank.com";
+const ogImageUrl = `${canonical}${ogImage}`;
 ---
 
 <!doctype html>
@@ -51,12 +52,18 @@ const canonical = "https://tryyank.com";
     <title>{title}</title>
     <meta name="title" content={title} />
     <meta name="description" content={description} />
-    <meta name="keywords" content="clipboard manager, clipboard history, copy paste tool, fuzzy search, semantic search, productivity, macOS, Windows, Linux, open source, Tauri, local-first, privacy, utility, clipboard tool, Yank, yank app" />
+    <meta name="keywords" content="clipboard manager, clipboard history, semantic search, natural language search, AI clipboard, fuzzy search, copy paste manager, local-first, open source, privacy-focused, productivity tool, macOS clipboard, Windows clipboard, Linux clipboard, Raycast alternative, Maccy alternative, Paste alternative, Tauri app, Yank" />
     <meta name="author" content="Piyush Pradhan" />
-    <meta name="robots" content="index, follow" />
+    <meta name="publisher" content="Piyush Pradhan" />
+    <meta name="application-name" content="Yank" />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    <meta name="googlebot" content="index, follow, max-image-preview:large, max-snippet:-1" />
     <meta name="language" content="English" />
     <meta name="theme-color" content="#0f0f0e" />
+    <meta name="format-detection" content="telephone=no" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
     <link rel="canonical" href={canonical} />
+    <link rel="alternate" type="application/rss+xml" title="Yank releases" href="https://github.com/piyushpradhan/yank/releases.atom" />
 
     <!-- Open Graph -->
     <meta property="og:site_name" content="Yank" />
@@ -64,10 +71,11 @@ const canonical = "https://tryyank.com";
     <meta property="og:description" content={description} />
     <meta property="og:type" content="website" />
     <meta property="og:url" content={canonical} />
-    <meta property="og:image" content={`${canonical}${ogImage}`} />
+    <meta property="og:image" content={ogImageUrl} />
+    <meta property="og:image:secure_url" content={ogImageUrl} />
     <meta property="og:image:width" content="512" />
     <meta property="og:image:height" content="512" />
-    <meta property="og:image:alt" content="Yank — ember mark logo" />
+    <meta property="og:image:alt" content="Yank — clipboard manager with natural-language search" />
     <meta property="og:image:type" content="image/png" />
     <meta property="og:locale" content="en_US" />
 
@@ -77,13 +85,17 @@ const canonical = "https://tryyank.com";
     <meta name="twitter:creator" content="@piyushpradhan" />
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
-    <meta name="twitter:image" content={`${canonical}${ogImage}`} />
-    <meta name="twitter:image:alt" content="Yank — ember mark logo" />
+    <meta name="twitter:image" content={ogImageUrl} />
+    <meta name="twitter:image:alt" content="Yank — clipboard manager with natural-language search" />
 
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+
+    <!-- Preconnect for download CTAs -->
+    <link rel="dns-prefetch" href="https://github.com" />
+    <link rel="preconnect" href="https://github.com" crossorigin />
 
     <!-- Fonts are bundled via @fontsource (see frontmatter). -->
   </head>
