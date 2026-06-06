@@ -21,14 +21,18 @@ export function searchItems(items: ClipItem[], query: string): ClipItem[] {
 }
 
 export function groupByTime(items: ClipItem[]): Record<string, ClipItem[]> {
+  // Pinned items live in their own bucket at the top instead of being scattered
+  // across day buckets — the whole point of pinning is "always at the top."
   const buckets: Record<string, ClipItem[]> = {
+    Pinned: [],
     Today: [],
     Yesterday: [],
     'This week': [],
     Earlier: [],
   };
   for (const i of items) {
-    if (i.minutesAgo < 1440) buckets['Today'].push(i);
+    if (i.pinned) buckets['Pinned'].push(i);
+    else if (i.minutesAgo < 1440) buckets['Today'].push(i);
     else if (i.minutesAgo < 2880) buckets['Yesterday'].push(i);
     else if (i.minutesAgo < 10080) buckets['This week'].push(i);
     else buckets['Earlier'].push(i);
