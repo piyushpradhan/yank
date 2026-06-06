@@ -44,7 +44,14 @@
         "skipTaskbar": true,
         "center": true,
         "visible": false,
-        "focus": false
+        "focus": false,
+        "windowEffects": {
+          "effects": [
+            "hudWindow",
+            "acrylic"
+          ],
+          "state": "active"
+        }
       }
     ],
     "security": {

@@ -409,11 +409,12 @@ export function Palette({
         fullWidth
         fullHeight
         overflow="hidden"
-        bg="surface"
+        bg="transparent"
         style={{
           maxHeight: '100%',
           border: '1px solid var(--border-default)',
           borderRadius: 'var(--window-radius)',
+          background: 'color-mix(in oklab, var(--bg-surface) 35%, transparent)',
           backdropFilter: 'blur(40px) saturate(160%)',
           WebkitBackdropFilter: 'blur(40px) saturate(160%)',
           boxShadow: `0 80px 160px -30px rgba(0,0,0,${t.dark ? 0.75 : 0.3}),
