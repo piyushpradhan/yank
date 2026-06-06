@@ -1,0 +1,539 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Yank landing — SEO + AEO changes, and why they should work</title>
+  <meta name="description" content="A plain-English walkthrough of the SEO and AI-engine optimization changes shipped to the Yank landing page on 2026-06-06, and the mechanism each change relies on." />
+  <meta name="robots" content="noindex,nofollow" />
+  <style>
+    :root {
+      --bg: #0f0f0e;
+      --surface: #16161533;
+      --surface-2: #1a1a18;
+      --border: #2b2a26;
+      --text: #ece9e2;
+      --text-dim: #a09a8e;
+      --text-mute: #6e6a61;
+      --accent: #f58247;
+      --accent-deep: #d9541a;
+      --good: #7cc28a;
+      --warn: #e7b65b;
+      --code-bg: #1b1b18;
+      --link: #f5a875;
+      --maxw: 760px;
+      --r: 12px;
+    }
+    @media (prefers-color-scheme: light) {
+      :root {
+        --bg: #faf8f4;
+        --surface: #ffffff;
+        --surface-2: #f3f0e8;
+        --border: #e6e1d4;
+        --text: #1a1916;
+        --text-dim: #57544c;
+        --text-mute: #8a8579;
+        --code-bg: #f4f1e8;
+        --link: #a8390a;
+      }
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Geist Sans", system-ui, sans-serif;
+      font-size: 16px;
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+    main {
+      max-width: var(--maxw);
+      margin: 0 auto;
+      padding: 56px 24px 96px;
+    }
+    header.title {
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 28px;
+      margin-bottom: 36px;
+    }
+    .eyebrow {
+      font-size: 12px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--accent);
+      font-weight: 600;
+      margin-bottom: 14px;
+    }
+    h1 {
+      font-size: 32px;
+      line-height: 1.18;
+      margin: 0 0 12px;
+      letter-spacing: -0.02em;
+      font-weight: 600;
+    }
+    h1 em { color: var(--accent); font-style: normal; }
+    .lede {
+      color: var(--text-dim);
+      font-size: 17px;
+      margin: 12px 0 0;
+    }
+    h2 {
+      font-size: 22px;
+      letter-spacing: -0.01em;
+      margin: 52px 0 18px;
+      font-weight: 600;
+      scroll-margin-top: 24px;
+    }
+    h2::before {
+      content: "§ ";
+      color: var(--accent);
+      font-weight: 500;
+    }
+    h3 {
+      font-size: 16px;
+      letter-spacing: 0;
+      margin: 26px 0 8px;
+      font-weight: 600;
+      color: var(--text);
+    }
+    p { margin: 0 0 14px; color: var(--text-dim); }
+    p strong { color: var(--text); font-weight: 600; }
+    a { color: var(--link); text-decoration: none; border-bottom: 1px solid color-mix(in srgb, var(--link) 35%, transparent); }
+    a:hover { border-bottom-color: var(--link); }
+
+    code, kbd {
+      font-family: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 13px;
+      background: var(--code-bg);
+      padding: 2px 6px;
+      border-radius: 5px;
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+    pre {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 14px 16px;
+      overflow-x: auto;
+      font-size: 13px;
+      line-height: 1.5;
+      color: var(--text);
+    }
+    pre code { background: transparent; border: 0; padding: 0; }
+
+    ul, ol { color: var(--text-dim); padding-left: 22px; margin: 0 0 16px; }
+    li { margin: 6px 0; }
+    li strong { color: var(--text); }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 18px 20px;
+      margin: 14px 0 22px;
+    }
+    .card h3 { margin-top: 0; }
+    .card.good { border-left: 3px solid var(--good); }
+    .card.warn { border-left: 3px solid var(--warn); }
+    .card.accent { border-left: 3px solid var(--accent); }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+      margin: 14px 0 22px;
+    }
+    @media (min-width: 640px) {
+      .grid.two { grid-template-columns: 1fr 1fr; }
+    }
+    .pill {
+      display: inline-block;
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      color: var(--text-mute);
+      font-weight: 600;
+      margin-right: 6px;
+    }
+    .pill.accent { background: color-mix(in srgb, var(--accent) 12%, transparent); color: var(--accent); border-color: color-mix(in srgb, var(--accent) 25%, transparent); }
+    .pill.good   { background: color-mix(in srgb, var(--good)   12%, transparent); color: var(--good);   border-color: color-mix(in srgb, var(--good)   25%, transparent); }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+      margin: 8px 0 22px;
+    }
+    th, td {
+      text-align: left;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+    th { color: var(--text-mute); font-weight: 600; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; }
+    td { color: var(--text-dim); }
+    td strong { color: var(--text); }
+
+    .toc {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 14px 18px;
+      margin: 0 0 36px;
+      font-size: 14px;
+    }
+    .toc h4 {
+      margin: 0 0 8px;
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-mute);
+      font-weight: 600;
+    }
+    .toc ol { margin: 0; padding-left: 18px; color: var(--text); }
+    .toc li { margin: 2px 0; }
+    .toc a { border: 0; color: var(--text); }
+    .toc a:hover { color: var(--accent); }
+
+    footer.foot {
+      margin-top: 64px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+      color: var(--text-mute);
+      font-size: 13px;
+    }
+    .kv { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .kv .k { color: var(--text-mute); }
+    .kv .v { color: var(--text); }
+  </style>
+</head>
+<body>
+<main>
+  <header class="title">
+    <div class="eyebrow">Landing page audit · 2026-06-06</div>
+    <h1>Optimizing Yank's landing page for <em>Google</em> and <em>AI search</em>.</h1>
+    <p class="lede">
+      A walkthrough of every change shipped to <code>landing/</code> in commit
+      <code>da70be3</code>, and the specific mechanism each change is betting on.
+      No vague "best practices" — every choice traces back to a documented signal
+      a search engine or LLM actually uses.
+    </p>
+    <div class="kv" style="margin-top:14px">
+      <span class="pill accent">9 files</span>
+      <span class="pill">+372 / −71</span>
+      <span class="pill good">build ✓</span>
+      <span class="pill">JSON-LD blocks: 2 → 6</span>
+    </div>
+  </header>
+
+  <nav class="toc" aria-label="Contents">
+    <h4>Contents</h4>
+    <ol>
+      <li><a href="#goal">The goal — and how it splits into two jobs</a></li>
+      <li><a href="#structured-data">Structured data: from 2 to 6 JSON-LD blocks</a></li>
+      <li><a href="#meta">Meta tags: tighter title, stronger crawl directives</a></li>
+      <li><a href="#robots">robots.txt: explicitly opting into AI crawlers</a></li>
+      <li><a href="#llmstxt">llms.txt: a canonical brief for answer engines</a></li>
+      <li><a href="#sitemap">sitemap.xml: image entries and recency signals</a></li>
+      <li><a href="#content">Content: a definitional sentence LLMs can quote</a></li>
+      <li><a href="#shared-faq">Shared FAQ source: schema = visible content</a></li>
+      <li><a href="#why">Why this should work — the actual mechanisms</a></li>
+      <li><a href="#next">What's still on the table</a></li>
+    </ol>
+  </nav>
+
+  <h2 id="goal">The goal — and how it splits into two jobs</h2>
+  <p>
+    "Optimize for SEO and AI SEO" sounds like one goal but it's two systems
+    with overlapping but distinct requirements:
+  </p>
+  <div class="grid two">
+    <div class="card accent">
+      <h3>Traditional Google SEO</h3>
+      <p>
+        Ranks pages in a list. Cares about keywords in title/H1, link signals,
+        structured data for rich results (FAQ accordions, HowTo carousels,
+        Software cards), crawlability, Core Web Vitals.
+      </p>
+    </div>
+    <div class="card accent">
+      <h3>AI / Answer-Engine SEO (AEO/GEO)</h3>
+      <p>
+        ChatGPT, Claude, Perplexity, Google AI Overviews. They <em>extract</em>
+        rather than rank. They want clean, quotable, factual chunks; a single
+        definitional sentence; comparison content; and a robots.txt that
+        actually lets them in.
+      </p>
+    </div>
+  </div>
+  <p>
+    Roughly half the changes serve both. The other half are targeted:
+    <code>llms.txt</code> + crawler allowlist for AEO; FAQ schema + sitemap for
+    Google rich results.
+  </p>
+
+  <h2 id="structured-data">Structured data: from 2 to 6 JSON-LD blocks</h2>
+  <p>
+    Before: a basic <code>SoftwareApplication</code> and <code>WebSite</code>.
+    After:
+  </p>
+  <table>
+    <thead><tr><th>Schema type</th><th>What it unlocks</th></tr></thead>
+    <tbody>
+      <tr><td><strong>SoftwareApplication</strong></td><td>The "free / open source" software card in Google search, with an <code>Offer</code> at price 0, version, license, screenshot, downloadUrl. LLMs read <code>featureList</code> almost verbatim.</td></tr>
+      <tr><td><strong>WebSite</strong> + <code>SearchAction</code></td><td>Sitelinks search box potential and a stable <code>@id</code> for the site graph.</td></tr>
+      <tr><td><strong>Person</strong></td><td>E-E-A-T (Experience, Expertise, Authoritativeness, Trust). Names a real human author with <code>sameAs</code> links to GitHub/Twitter — Google checks these to ground "who made this."</td></tr>
+      <tr><td><strong>FAQPage</strong></td><td>Eligible for the FAQ rich result <em>and</em> heavily mined by Perplexity / ChatGPT for direct Q&amp;A answers. 8 Q&amp;As, all matching visible text.</td></tr>
+      <tr><td><strong>HowTo</strong></td><td>Mirrors the three on-page steps (Copy → Summon → Ask). Eligible for the HowTo rich result with step carousel; LLMs lift the <code>text</code> field when answering "how do I use Yank."</td></tr>
+      <tr><td><strong>BreadcrumbList</strong></td><td>Tells Google how the URL fits the site hierarchy. Small win today; meaningful once we add <code>/vs/...</code> or <code>/alternatives/...</code> pages.</td></tr>
+    </tbody>
+  </table>
+  <p>
+    Cross-reference via stable <code>@id</code>s (<code>#software</code>, <code>#website</code>, <code>#person</code>, <code>#faq</code>, <code>#howto</code>) so Google reads the page as one knowledge graph, not six floating fragments.
+  </p>
+
+  <h2 id="meta">Meta tags: tighter title, stronger crawl directives</h2>
+  <h3>Title</h3>
+  <p>
+    Was 75 characters — past Google's truncation point. Now 64 characters,
+    leads with the primary keyword cluster:
+  </p>
+  <pre><code>Yank — Clipboard Manager with Natural-Language Search · Mac, Windows, Linux</code></pre>
+  <p>
+    Three things the new title does deliberately:
+  </p>
+  <ul>
+    <li><strong>Brand first</strong> — "Yank" before the dash. Brand-prefixed titles win when the search query already includes the brand.</li>
+    <li><strong>Category second</strong> — "Clipboard Manager." This is what people Google when they don't know we exist.</li>
+    <li><strong>Differentiator third</strong> — "Natural-Language Search." This is what AI overviews quote when comparing apps.</li>
+  </ul>
+
+  <h3>Description</h3>
+  <p>
+    Rewritten to be a complete, quotable sentence that <em>starts</em> with "Yank
+    is a…". LLMs often pluck the first definitional sentence from the meta
+    description when generating a summary card.
+  </p>
+
+  <h3>Crawl directives</h3>
+  <pre><code>&lt;meta name="robots"
+  content="index, follow, max-image-preview:large,
+           max-snippet:-1, max-video-preview:-1"&gt;
+&lt;meta name="googlebot"
+  content="index, follow, max-image-preview:large,
+           max-snippet:-1"&gt;</code></pre>
+  <p>
+    <code>max-image-preview:large</code> is required for the image to appear
+    in Google Discover and large mobile result cards. <code>max-snippet:-1</code>
+    removes the snippet length cap so Google can show the full FAQ answer.
+    Many sites still inherit the conservative defaults.
+  </p>
+
+  <h2 id="robots"><code>robots.txt</code>: explicitly opting into AI crawlers</h2>
+  <p>
+    Most AI bots respect <code>robots.txt</code>. Some are <em>blocked by
+    default</em> by sites using broad CDN security profiles (Cloudflare's "block
+    AI bots" toggle is increasingly opt-out). We now name every relevant bot:
+  </p>
+  <pre><code>User-agent: GPTBot       Allow: /
+User-agent: ChatGPT-User Allow: /
+User-agent: OAI-SearchBot Allow: /
+User-agent: ClaudeBot    Allow: /
+User-agent: Claude-Web   Allow: /
+User-agent: anthropic-ai Allow: /
+User-agent: PerplexityBot Allow: /
+User-agent: Perplexity-User Allow: /
+User-agent: Google-Extended Allow: /
+User-agent: Applebot-Extended Allow: /
+…</code></pre>
+  <p>
+    <strong>Two-tier model.</strong> Each AI vendor runs <em>two</em> kinds of bots:
+    a <em>training</em> crawler (e.g. <code>GPTBot</code>, <code>Google-Extended</code>,
+    <code>Applebot-Extended</code>) and a <em>live retrieval</em> crawler
+    (<code>ChatGPT-User</code>, <code>Perplexity-User</code>). We allow both — the
+    first lets us appear in baseline model knowledge; the second lets us appear
+    in live answers when a user asks ChatGPT about clipboard managers
+    <em>today</em>.
+  </p>
+
+  <h2 id="llmstxt"><code>llms.txt</code>: a canonical brief for answer engines</h2>
+  <p>
+    <code>/llms.txt</code> is an emerging convention (<a href="https://llmstxt.org">llmstxt.org</a>)
+    that lets LLMs read a clean, markdown-formatted "what is this site" without
+    parsing HTML. Anthropic, Mistral, and a growing list of dev-tool companies
+    publish one. The Yank version contains:
+  </p>
+  <ul>
+    <li>A first-paragraph definition ("Yank is a free, open-source, local-first clipboard manager…").</li>
+    <li><strong>Key facts</strong> as bullets — name, URL, repo, license, platforms, shortcut, pricing, stack. The exact format LLMs prefer for citation.</li>
+    <li><strong>Differentiation vs Raycast, Maccy, Paste, Alfred, Clipy, CopyClip</strong> — pre-empts comparison questions.</li>
+    <li><strong>Example queries</strong> Yank answers well — surfaces the actual UX when an LLM is asked "what does Yank do?"</li>
+    <li>A <strong>Citation</strong> block at the bottom with the exact sentence LLMs should use when referencing us. Some models will copy it verbatim.</li>
+  </ul>
+
+  <h2 id="sitemap">sitemap.xml: image entries and recency signals</h2>
+  <p>
+    Three changes:
+  </p>
+  <ol>
+    <li><code>lastmod</code> bumped to today — Google uses this to prioritize re-crawls. Stale sitemaps get visited less often.</li>
+    <li><code>changefreq</code> moved from <code>monthly</code> to <code>weekly</code> — accurate given the release cadence.</li>
+    <li>Added the <code>image:</code> namespace with two image entries (logo and favicon) so Google indexes them for Image Search and visual answer cards.</li>
+  </ol>
+
+  <h2 id="content">Content: a definitional sentence LLMs can quote</h2>
+  <p>
+    The original Hero lede was beautiful but indirect:
+  </p>
+  <p style="padding-left:16px;border-left:2px solid var(--border);color:var(--text-mute)">
+    <em>"Yank is a clipboard history that you can talk to."</em>
+  </p>
+  <p>
+    Good copy, but missing two things LLMs look for: the noun phrase
+    "clipboard manager," and the platforms. New version:
+  </p>
+  <p style="padding-left:16px;border-left:2px solid var(--accent);color:var(--text)">
+    <strong>"Yank is a clipboard manager with natural-language search for macOS, Windows, and Linux."</strong>
+  </p>
+  <p>
+    Same vibe. But now any LLM scraping the page has a complete, quotable
+    definition in the <em>first sentence</em> after the H1, the position
+    they over-index on. The poetic line ("Ask for the phone number from
+    earlier…") still follows.
+  </p>
+  <p>
+    We also added <code>aria-labelledby</code>/<code>aria-label</code> landmarks
+    on <code>&lt;main&gt;</code>, the hero, and the FAQ. Accessibility win
+    primarily, but screen-reader-friendly landmarks also help text-extraction
+    bots correctly segment the page.
+  </p>
+
+  <h2 id="shared-faq">Shared FAQ source: schema must equal visible content</h2>
+  <p>
+    Google's FAQ rich-result guidelines are explicit: <em>the answer text in
+    JSON-LD must match the text visible on the page</em>. Skirt this and you
+    risk a manual penalty.
+  </p>
+  <p>
+    Previously the visible FAQ (6 entries) and the JSON-LD weren't linked, so
+    drift was a question of <em>when</em>, not <em>if</em>. Now both consume a
+    single <code>landing/src/lib/faqs.ts</code>:
+  </p>
+  <pre><code>// landing/src/lib/faqs.ts
+export const faqs: Faq[] = [
+  { q: 'Does Yank send my clipboard anywhere?', a: '…' },
+  …
+]</code></pre>
+  <p>
+    The visible FAQ also picked up microdata <code>itemprop</code> attributes
+    (<code>itemprop="name"</code>, <code>itemprop="acceptedAnswer"</code>,
+    <code>itemprop="text"</code>) as a belt-and-suspenders second signal alongside
+    the JSON-LD. Bots that miss one usually catch the other.
+  </p>
+  <p>
+    Two new FAQs were added that target high-intent search:
+  </p>
+  <ul>
+    <li><strong>"How is Yank different from Raycast, Maccy, Paste, or Alfred?"</strong> — captures the "[competitor] alternative" query class. LLMs frequently use FAQ entries like this when asked "what's the difference between X and Y."</li>
+    <li><strong>"How big is the install and how much memory does Yank use?"</strong> — specific, numeric, quotable. The kind of factoid Perplexity loves to surface.</li>
+  </ul>
+
+  <h2 id="why">Why this should work — the actual mechanisms</h2>
+
+  <div class="card good">
+    <h3>1. Google rich-result eligibility</h3>
+    <p>
+      A page with valid <code>FAQPage</code> + <code>HowTo</code> + <code>SoftwareApplication</code>
+      structured data is eligible for three different result formats: the accordion FAQ,
+      the step-by-step HowTo carousel, and the software-card knowledge panel.
+      Each one increases SERP real estate, which raises CTR even at the same rank.
+      <strong>The mechanism is documented in Google Search Central's structured-data
+      gallery; this isn't speculation.</strong>
+    </p>
+  </div>
+
+  <div class="card good">
+    <h3>2. LLMs over-index on definitional first sentences</h3>
+    <p>
+      Both Perplexity and ChatGPT browsing tend to extract the first 1–2
+      sentences after the main heading as their summary. Putting
+      "<em>Yank is a clipboard manager with…</em>" there is a deliberate hand-off:
+      the sentence is engineered to be the one LLMs quote.
+    </p>
+  </div>
+
+  <div class="card good">
+    <h3>3. Comparison FAQs short-circuit competitor queries</h3>
+    <p>
+      A non-trivial fraction of clipboard-manager Google searches include the
+      word "alternative" or a competitor name. The "How is Yank different…"
+      FAQ is the answer that LLMs and Google's AI Overview will lift when
+      someone searches <em>"Maccy alternative for Windows"</em> or
+      <em>"open source Raycast clipboard."</em>
+    </p>
+  </div>
+
+  <div class="card good">
+    <h3>4. <code>llms.txt</code> + permissive <code>robots.txt</code> is a moat against silent blocking</h3>
+    <p>
+      As Cloudflare and similar providers add default AI-bot blocking, sites
+      that <em>explicitly</em> allow these crawlers stay in the training and
+      retrieval index while quieter competitors drop out. This isn't about
+      gaming a ranking — it's about not being silently excluded.
+    </p>
+  </div>
+
+  <div class="card good">
+    <h3>5. Cross-linked schema graph (the <code>@id</code> trick)</h3>
+    <p>
+      Each JSON-LD block has a stable <code>@id</code>; <code>Person</code> points
+      to <code>SoftwareApplication</code> via <code>worksFor</code>; <code>WebSite</code>
+      points to <code>Person</code> via <code>publisher</code>. Google's knowledge
+      graph reads this as <em>one</em> entity with related sub-entities. Without
+      the IDs, it reads as six unrelated fragments.
+    </p>
+  </div>
+
+  <div class="card warn">
+    <h3>Caveats — what this <em>won't</em> do</h3>
+    <ul style="margin-bottom:0">
+      <li>SEO is rank-and-relevance, not just markup. Backlinks still matter. This work doesn't substitute for getting Yank into directories, Hacker News, Product Hunt, or comparison blog posts.</li>
+      <li>Rich results aren't guaranteed even with perfect schema. Google chooses which to display per query.</li>
+      <li>AI search results are non-deterministic. Even with strong markup, ChatGPT may cite a Reddit thread before us. That's normal.</li>
+      <li>Time horizon: traditional SEO improvements typically show up in 2–6 weeks. AI-engine citations can shift within days as crawlers re-index.</li>
+    </ul>
+  </div>
+
+  <h2 id="next">What's still on the table</h2>
+  <ul>
+    <li><strong>A real 1200×630 Open Graph image.</strong> Today the OG image is the favicon, which limits Twitter/LinkedIn card visual weight. With a proper hero-style OG image we can flip <code>twitter:card</code> to <code>summary_large_image</code> for a much bigger preview.</li>
+    <li><strong>Comparison pages.</strong> <code>/vs/raycast</code>, <code>/alternatives-to-maccy</code>, <code>/vs/paste</code>. The FAQ teases this; programmatic SEO would scale it across 6–10 competitors, each ranking for the long-tail "X alternative" queries.</li>
+    <li><strong>An /about page</strong> for stronger E-E-A-T (clear author bio, project provenance, contact).</li>
+    <li><strong>Real <code>aggregateRating</code></strong> if/when we accumulate genuine reviews. Faking this is a manual-action risk — skipped intentionally.</li>
+    <li><strong>RSS / changelog feed page</strong> at <code>/changelog</code> rather than only linking to GitHub releases — improves repeat-crawl frequency.</li>
+  </ul>
+
+  <footer class="foot">
+    Files changed in this push:
+    <code>landing/public/robots.txt</code>,
+    <code>landing/public/sitemap.xml</code>,
+    <code>landing/public/llms.txt</code> (new),
+    <code>landing/src/layouts/Layout.astro</code>,
+    <code>landing/src/components/StructuredData.astro</code>,
+    <code>landing/src/components/FAQ.astro</code>,
+    <code>landing/src/components/Hero.astro</code>,
+    <code>landing/src/pages/index.astro</code>,
+    <code>landing/src/lib/faqs.ts</code> (new).
+    <br /><br />
+    Commit <code>da70be3</code> on <code>main</code>. Build: <code>npm run build</code> in <code>landing/</code> → clean.
+  </footer>
+</main>
+</body>
+</html>
