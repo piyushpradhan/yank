@@ -664,8 +664,8 @@ export function Library({
     } else if (e.key >= '1' && e.key <= '9' && !inSearch) {
       e.preventDefault();
       const idx = parseInt(e.key, 10) - 1;
-      const all: Filter[] = ['all', 'pinned', ...CATEGORIES];
-      if (all[idx]) setFilter(all[idx]);
+      const cats: Filter[] = [...CATEGORIES];
+      if (cats[idx]) setFilter(cats[idx]);
     }
   };
 
