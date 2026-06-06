@@ -134,6 +134,25 @@ kbd,
   box-shadow: var(--shadow-md);
 }
 
+.time-chip-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  margin-left: 2px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--text-tertiary);
+  border-radius: 4px;
+  cursor: pointer;
+}
+.time-chip-close:hover {
+  background: var(--bg-muted);
+  color: var(--text-primary);
+}
+
 /* Entrance animations for app-level popovers and overlays. Component visuals
  * come from ember-design-system; these only describe motion on mount. */
 @keyframes toastIn {

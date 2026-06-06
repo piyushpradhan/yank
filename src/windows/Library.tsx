@@ -195,9 +195,8 @@ function TimeChip({ window: w, onDismiss }: TimeChipProps) {
         <Inline
           gap={1}
           align="center"
-          px={2}
-          py={1}
           style={{
+            padding: '2px 4px 2px 8px',
             border: '1px solid var(--border-subtle)',
             borderRadius: 999,
             background: 'var(--surface)',
@@ -207,14 +206,14 @@ function TimeChip({ window: w, onDismiss }: TimeChipProps) {
           <Text family="mono" size={11} weight="medium" tone="secondary">
             {w.label}
           </Text>
-          <IconButton
+          <button
+            type="button"
             aria-label="Clear date filter"
-            icon={<LuX size={10} />}
-            variant="ghost"
-            size="sm"
             onClick={onDismiss}
-            style={{ marginLeft: 2 }}
-          />
+            className="time-chip-close"
+          >
+            <LuX size={10} />
+          </button>
         </Inline>
       </Tooltip>
       <Text family="mono" size={11} tone="tertiary" style={{ opacity: 0.7 }}>
