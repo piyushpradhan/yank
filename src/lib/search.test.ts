@@ -83,6 +83,25 @@ describe('groupByTime', () => {
     expect(groups['Today']).toHaveLength(0);
     expect(groups['Earlier']).toHaveLength(0);
   });
+
+  it('separates pinned items into a Pinned bucket regardless of age', () => {
+    const items: ClipItem[] = [
+      makeItem({ id: '1', minutesAgo: 60, pinned: true }),
+      makeItem({ id: '2', minutesAgo: 20000, pinned: true }),
+      makeItem({ id: '3', minutesAgo: 60 }),
+      makeItem({ id: '4', minutesAgo: 20000 }),
+    ];
+    const groups = groupByTime(items);
+    expect(groups['Pinned']).toHaveLength(2);
+    expect(groups['Today']).toHaveLength(1);
+    expect(groups['Earlier']).toHaveLength(1);
+    expect(groups['Pinned'].map((i) => i.id)).toEqual(['1', '2']);
+  });
+
+  it('lists Pinned first so it renders at the top', () => {
+    const groups = groupByTime([]);
+    expect(Object.keys(groups)[0]).toBe('Pinned');
+  });
 });
 
 describe('highlightMatch', () => {
