@@ -156,6 +156,7 @@ const sizeLabel =
     } catch (_) {}
 
     var ua = navigator.userAgent + ' ' + (navigator.platform || '');
+    var isMobile = /Android|iPhone|iPad|iPod|webOS|BlackBerry|Opera Mini|IEMobile|Mobile/i.test(ua);
     var os = 'mac';
     var osLabel = 'macOS';
     if (/Win(dows)?/i.test(ua)) {
@@ -164,9 +165,6 @@ const sizeLabel =
     } else if (/Linux|X11/i.test(ua) && !/Android/i.test(ua)) {
       os = 'linux';
       osLabel = 'Linux';
-    } else if (/Mac|iPhone|iPad/i.test(ua)) {
-      os = 'mac';
-      osLabel = 'macOS';
     }
 
     document.body.dataset.os = os;
@@ -174,7 +172,13 @@ const sizeLabel =
     var navLabel = document.getElementById('download-label');
     var ctaLabel = document.getElementById('cta-download-label');
     if (navLabel) navLabel.textContent = 'Download';
-    if (ctaLabel) ctaLabel.textContent = 'Download for ' + osLabel;
+    if (ctaLabel) {
+      if (isMobile) {
+        ctaLabel.textContent = 'Download';
+      } else {
+        ctaLabel.textContent = 'Download for ' + osLabel;
+      }
+    }
 
     var url = downloads[os] || downloads.mac;
     var navCta = document.getElementById('download-cta');
@@ -217,6 +221,18 @@ const sizeLabel =
         });
       }
     });
+
+    // Mobile: show subtle desktop-only note below the CTAs
+    if (isMobile) {
+      var ctasDiv = document.querySelector('.hero .ctas');
+      if (ctasDiv) {
+        var note = document.createElement('p');
+        note.className = 'mobile-note';
+        note.textContent = 'Desktop only  ·  macOS, Windows & Linux';
+        note.style.cssText = 'margin-top:var(--s-4);font-size:var(--t-xs);color:var(--text-tertiary);font-style:italic;';
+        ctasDiv.insertAdjacentElement('afterend', note);
+      }
+    }
 
     // Typing demo for the app preview query line.
     var el = document.getElementById('typed-query');
