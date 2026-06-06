@@ -661,9 +661,9 @@ export function Library({
       } else if (current) {
         setPreviewOverlayOpen((v) => !v);
       }
-    } else if (e.key >= '1' && e.key <= '9' && !inSearch) {
+    } else if (e.key >= '0' && e.key <= '9' && !inSearch) {
       e.preventDefault();
-      const idx = parseInt(e.key, 10) - 1;
+      const idx = parseInt(e.key, 10);
       const cats: Filter[] = [...CATEGORIES];
       if (cats[idx]) setFilter(cats[idx]);
     }
