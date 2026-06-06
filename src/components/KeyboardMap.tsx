@@ -25,7 +25,7 @@ function buildGroups(shortcut: ShortcutConfig): [string, KeyRow[]][] {
       { keys: ['J', 'K'], label: 'Move selection (vim)' },
       { keys: ['/'], label: 'Focus search' },
       { keys: ['Tab'], label: 'Toggle fuzzy ↔ semantic', scope: 'palette' },
-      { keys: ['1', '–', '9'], label: 'Jump to sidebar filter', scope: 'library' },
+      { keys: ['0', '–', '9'], label: 'Jump to sidebar filter', scope: 'library' },
     ],
   ],
   [
