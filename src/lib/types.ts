@@ -40,6 +40,7 @@ export interface TimeWindowDto {
 export interface SemanticSearchResponse {
   items: ClipItem[];
   timeWindow: TimeWindowDto | null;
+  category: Category | null;
 }
 
 export interface Tweaks {

@@ -205,7 +205,7 @@ export function useAppState(): AppState {
 
   const semanticSearch = useCallback(
     async (query: string, limit = 20): Promise<SemanticSearchResponse> => {
-      if (!query.trim()) return { items: [], timeWindow: null };
+      if (!query.trim()) return { items: [], timeWindow: null, category: null };
       try {
         const resp = await invoke<SemanticSearchResponse>("search_semantic", {
           query,

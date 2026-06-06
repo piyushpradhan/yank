@@ -6,6 +6,7 @@ mod embed_queue;
 mod label;
 mod label_queue;
 pub mod local_embed;
+mod query_intent;
 pub mod query_time;
 mod settings;
 mod watcher;
@@ -192,6 +193,7 @@ pub fn run() {
             commands::search_fts,
             commands::search_semantic,
             commands::strip_time,
+            commands::strip_category,
             commands::get_image,
             commands::copy_image,
             settings::get_settings,

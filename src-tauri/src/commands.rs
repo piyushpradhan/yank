@@ -294,6 +294,14 @@ pub fn strip_time(query: String) -> String {
     crate::query_time::parse(now, &query).semantic
 }
 
+/// Sibling of [`strip_time`] for the category chip. Removes only the
+/// recognised category keyword (not filler verbs) so the user's input
+/// after dismissal stays close to what they typed.
+#[tauri::command]
+pub fn strip_category(query: String) -> String {
+    crate::query_intent::strip_category(&query)
+}
+
 #[tauri::command]
 pub fn clear_history(db: State<'_, Arc<Db>>) -> Result<(), String> {
     let conn = db.0.lock().map_err(|e| e.to_string())?;
@@ -315,12 +323,15 @@ pub struct TimeWindowDto {
 
 /// Response shape for `search_semantic`. `time_window` is `Some` when the
 /// query contained a recognised date phrase like "4 days ago" so the UI
-/// can render the dismissible date chip.
+/// can render the dismissible date chip. `category` mirrors that for a
+/// content-type keyword like "numbers" or "links" — when present, results
+/// have already been narrowed to that category in SQL.
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct SearchResponse {
     pub items: Vec<ClipItem>,
     #[serde(rename = "timeWindow")]
     pub time_window: Option<TimeWindowDto>,
+    pub category: Option<String>,
 }
 
 #[tauri::command]
@@ -341,7 +352,7 @@ pub async fn search_semantic(
     }
     let q_trimmed = query.trim().to_string();
     if q_trimmed.is_empty() {
-        return Ok(SearchResponse { items: Vec::new(), time_window: None });
+        return Ok(SearchResponse { items: Vec::new(), time_window: None, category: None });
     }
     let limit = limit.unwrap_or(20);
 
@@ -356,17 +367,27 @@ pub async fn search_semantic(
         label: t.label.clone(),
     });
     let time_bounds = parsed.time.as_ref().map(|t| (t.from_ms, t.to_ms));
-    let semantic_q = parsed.semantic.trim().to_string();
 
-    // Pure time query ("yesterday"): skip embedding entirely and return
-    // newest items in the window, pinned first.
+    // Then pull category intent ("numbers", "links", "code snippets") and
+    // shed filler verbs ("I copied"). Category routes the SQL filter on
+    // both pools; filler removal cleans up the residue that gets embedded
+    // so common phrases like "I copied" stop dominating the query vector.
+    let intent = crate::query_intent::parse(&parsed.semantic);
+    let semantic_q = intent.semantic.trim().to_string();
+    let category_filter: Option<&str> = intent.category;
+    let category_dto = intent.category.map(|c| c.to_string());
+
+    // Pure time / category query ("yesterday", "numbers", "numbers
+    // yesterday"): skip embedding entirely and return newest items
+    // matching the SQL filters, pinned first.
     if semantic_q.is_empty() {
-        if let Some((from, to)) = time_bounds {
+        if time_bounds.is_some() || category_filter.is_some() {
+            let (from, to) = time_bounds.unwrap_or((i64::MIN, i64::MAX));
             let conn = db.0.lock().map_err(|e| e.to_string())?;
-            let items = items_in_window(&conn, from, to, limit)?;
-            return Ok(SearchResponse { items, time_window: time_dto });
+            let items = items_in_window(&conn, from, to, category_filter, limit)?;
+            return Ok(SearchResponse { items, time_window: time_dto, category: category_dto });
         }
-        return Ok(SearchResponse { items: Vec::new(), time_window: None });
+        return Ok(SearchResponse { items: Vec::new(), time_window: None, category: None });
     }
 
     // Embed the residue outside the DB lock.
@@ -411,12 +432,13 @@ pub async fn search_semantic(
                     deleted, deleted_at, last_used_at, embedding
              FROM items
              WHERE deleted = 0 AND embedding IS NOT NULL AND embedding_model = ?1
-               AND created_at BETWEEN ?2 AND ?3",
+               AND created_at BETWEEN ?2 AND ?3
+               AND (?4 IS NULL OR category = ?4)",
         )
         .map_err(map_err)?;
 
     let mut scored: Vec<(f32, ClipItem)> = stmt_vec
-        .query_map(params![model_id, from_ms, to_ms], |row| {
+        .query_map(params![model_id, from_ms, to_ms, category_filter], |row| {
             let item = row_to_item(row)?;
             let bytes: Vec<u8> = row.get("embedding")?;
             let vec = embed::from_bytes(&bytes);
@@ -431,7 +453,8 @@ pub async fn search_semantic(
     scored.truncate(VEC_POOL);
 
     // --- Pool B: BM25 via FTS5 ------------------------------------------
-    let fts_pool = bm25_pool(&conn, &semantic_q, FTS_POOL, time_bounds).unwrap_or_default();
+    let fts_pool = bm25_pool(&conn, &semantic_q, FTS_POOL, time_bounds, category_filter)
+        .unwrap_or_default();
 
     // --- Reciprocal Rank Fusion -----------------------------------------
     // For each item present in either pool, score = Σ 1 / (RRF_K + rank_i).
@@ -480,15 +503,18 @@ pub async fn search_semantic(
     });
 
     let items = ranked.into_iter().take(limit).map(|(_, i)| i).collect();
-    Ok(SearchResponse { items, time_window: time_dto })
+    Ok(SearchResponse { items, time_window: time_dto, category: category_dto })
 }
 
 /// Newest items inside `[from_ms, to_ms]` — used when the query is purely
-/// a time phrase ("yesterday") and there's nothing left to embed.
+/// a time phrase ("yesterday"), purely a category keyword ("numbers"), or
+/// the two combined ("numbers yesterday") and there's nothing left to
+/// embed. `category` is applied as an exact match when `Some`.
 fn items_in_window(
     conn: &rusqlite::Connection,
     from_ms: i64,
     to_ms: i64,
+    category: Option<&str>,
     limit: usize,
 ) -> Result<Vec<ClipItem>, String> {
     let mut stmt = conn
@@ -497,12 +523,13 @@ fn items_in_window(
                     deleted, deleted_at, last_used_at
              FROM items
              WHERE deleted = 0 AND created_at BETWEEN ?1 AND ?2
+               AND (?3 IS NULL OR category = ?3)
              ORDER BY pinned DESC, created_at DESC
-             LIMIT ?3",
+             LIMIT ?4",
         )
         .map_err(map_err)?;
     let rows = stmt
-        .query_map(params![from_ms, to_ms, limit as i64], row_to_item)
+        .query_map(params![from_ms, to_ms, category, limit as i64], row_to_item)
         .map_err(map_err)?
         .filter_map(|r| r.ok())
         .collect();
@@ -519,6 +546,7 @@ fn bm25_pool(
     query: &str,
     limit: usize,
     time: Option<(i64, i64)>,
+    category: Option<&str>,
 ) -> Result<Vec<ClipItem>, String> {
     // Split on whitespace, strip quotes, prefix-match each term. `cors`
     // matches `corsair`. Embedded quotes are escaped per FTS5 syntax.
@@ -541,7 +569,7 @@ fn bm25_pool(
     // residues; a single term degenerates to the same query as OR.
     if terms.len() >= 2 {
         let and_q = terms.join(" ");
-        for item in run_bm25(conn, &and_q, from_ms, to_ms, limit)? {
+        for item in run_bm25(conn, &and_q, from_ms, to_ms, category, limit)? {
             if seen.insert(item.id.clone()) {
                 out.push(item);
             }
@@ -553,7 +581,7 @@ fn bm25_pool(
 
     // OR-prefix to top up: catches paraphrases the AND form missed.
     let or_q = terms.join(" OR ");
-    for item in run_bm25(conn, &or_q, from_ms, to_ms, limit)? {
+    for item in run_bm25(conn, &or_q, from_ms, to_ms, category, limit)? {
         if seen.insert(item.id.clone()) {
             out.push(item);
         }
@@ -569,6 +597,7 @@ fn run_bm25(
     match_q: &str,
     from_ms: i64,
     to_ms: i64,
+    category: Option<&str>,
     limit: usize,
 ) -> Result<Vec<ClipItem>, String> {
     let mut stmt = conn
@@ -579,12 +608,16 @@ fn run_bm25(
              JOIN items i ON i.id = items_fts.rowid
              WHERE items_fts MATCH ?1 AND i.deleted = 0
                AND i.created_at BETWEEN ?2 AND ?3
+               AND (?4 IS NULL OR i.category = ?4)
              ORDER BY bm25(items_fts)
-             LIMIT ?4",
+             LIMIT ?5",
         )
         .map_err(map_err)?;
     let rows = stmt
-        .query_map(params![match_q, from_ms, to_ms, limit as i64], row_to_item)
+        .query_map(
+            params![match_q, from_ms, to_ms, category, limit as i64],
+            row_to_item,
+        )
         .map_err(map_err)?
         .filter_map(|r| r.ok())
         .collect();

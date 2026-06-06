@@ -171,6 +171,49 @@ interface TimeChipProps {
 /// backend parsed out ("4 days ago", "last week"). The tooltip exposes
 /// the absolute range; clicking × strips the phrase from the query via
 /// the `strip_time` Tauri command.
+interface CategoryChipFilterProps {
+  category: Category;
+  onDismiss: () => void;
+}
+
+/// Sibling of [`TimeChip`] — shows the content-type the backend pulled
+/// from the query ("numbers", "links") so the user can tell why their
+/// results are narrowed and dismiss the filter with one click. Stripping
+/// the keyword runs through the `strip_category` Tauri command so the
+/// search bar text stays in sync with what's actually filtering.
+function CategoryChipFilter({ category, onDismiss }: CategoryChipFilterProps) {
+  const meta = CATEGORY_META[category];
+  return (
+    <Inline gap={2} px={3} py={2} bg="subtle" style={BANNER_BORDER} align="center">
+      <Inline
+        gap={1}
+        align="center"
+        style={{
+          padding: '2px 4px 2px 8px',
+          border: '1px solid var(--border-subtle)',
+          borderRadius: 999,
+          background: 'var(--surface)',
+        }}
+      >
+        <Text family="mono" size={11} weight="medium" tone="secondary">
+          {meta.icon} {meta.label}
+        </Text>
+        <button
+          type="button"
+          aria-label="Clear category filter"
+          onClick={onDismiss}
+          className="time-chip-close"
+        >
+          <LuX size={10} />
+        </button>
+      </Inline>
+      <Text family="mono" size={11} tone="tertiary" style={{ opacity: 0.7 }}>
+        filtering by type
+      </Text>
+    </Inline>
+  );
+}
+
 function TimeChip({ window: w, onDismiss }: TimeChipProps) {
   const range = useMemo(() => {
     const opts: Intl.DateTimeFormatOptions = {
@@ -480,18 +523,21 @@ export function Library({
   const [semanticResults, setSemanticResults] = useState<typeof app.items | null>(null);
   const [semanticError, setSemanticError] = useState<string | null>(null);
   const [detectedTime, setDetectedTime] = useState<TimeWindowDto | null>(null);
+  const [detectedCategory, setDetectedCategory] = useState<Category | null>(null);
 
   useEffect(() => {
     if (mode !== 'semantic' || !query.trim()) {
       setSemanticResults(null);
       setSemanticError(null);
       setDetectedTime(null);
+      setDetectedCategory(null);
       return;
     }
     if (!semanticAvailable) {
       setSemanticResults([]);
       setSemanticError(null);
       setDetectedTime(null);
+      setDetectedCategory(null);
       return;
     }
     let cancelled = false;
@@ -502,6 +548,7 @@ export function Library({
           if (cancelled) return;
           setSemanticResults(resp.items);
           setDetectedTime(resp.timeWindow);
+          setDetectedCategory(resp.category);
           setSemanticError(null);
         })
         .catch((err: unknown) => {
@@ -510,6 +557,7 @@ export function Library({
           setSemanticError(msg);
           setSemanticResults([]);
           setDetectedTime(null);
+          setDetectedCategory(null);
         });
     }, 200);
     return () => {
@@ -526,6 +574,15 @@ export function Library({
       // Defensive: if the backend hiccups, just drop the chip and leave the
       // input as-is — the user can clear the phrase manually.
       setDetectedTime(null);
+    }
+  }, [query]);
+
+  const dismissCategoryChip = useCallback(async () => {
+    try {
+      const stripped = await invoke<string>('strip_category', { query });
+      setQuery(stripped);
+    } catch {
+      setDetectedCategory(null);
     }
   }, [query]);
 
@@ -944,6 +1001,10 @@ export function Library({
 
           {detectedTime && mode === 'semantic' && query && (
             <TimeChip window={detectedTime} onDismiss={dismissTimeChip} />
+          )}
+
+          {detectedCategory && mode === 'semantic' && query && (
+            <CategoryChipFilter category={detectedCategory} onDismiss={dismissCategoryChip} />
           )}
 
           {query && mode === 'semantic' && (

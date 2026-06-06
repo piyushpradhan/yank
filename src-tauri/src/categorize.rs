@@ -1,6 +1,14 @@
 use once_cell::sync::Lazy;
 use regex::Regex;
 
+/// Shared category vocabulary. Anything that maps a query keyword back to a
+/// category (see `query_intent`) must agree with this list. Test-only:
+/// used by `query_intent::tests::returned_category_is_in_shared_vocab`.
+#[allow(dead_code)]
+pub const CATEGORIES: &[&str] = &[
+    "text", "url", "email", "phone", "color", "path", "code", "number", "address", "image",
+];
+
 static RE_URL: Lazy<Regex> = Lazy::new(|| {
     Regex::new(r"^https?://[^\s]+$").unwrap()
 });
