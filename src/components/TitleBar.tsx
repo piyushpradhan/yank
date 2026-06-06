@@ -14,7 +14,7 @@ interface TitleBarProps {
 }
 
 const HEIGHT = 40;
-const TRAFFIC_LIGHT_RESERVED = 84;
+const TRAFFIC_LIGHT_RESERVED = 100;
 
 export function TitleBar({ aiActive, onOpenAI, onToggleTweaks, backfill }: TitleBarProps) {
   return (
