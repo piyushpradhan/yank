@@ -523,8 +523,18 @@ export function Palette({
                       <Text as="b" tone="primary" weight="semibold">
                         "{query}"
                       </Text>
-                      .<br />
-                      Press <Kbd size="sm">{getKeyIcon('Tab')}</Kbd> to try semantic search.
+                      .
+                      {mode === 'semantic' ? (
+                        <>
+                          <br />
+                          Press <Kbd size="sm">{getKeyIcon('Tab')}</Kbd> to fall back to fuzzy.
+                        </>
+                      ) : semanticAvailable ? (
+                        <>
+                          <br />
+                          Press <Kbd size="sm">{getKeyIcon('Tab')}</Kbd> to try semantic search.
+                        </>
+                      ) : null}
                     </>
                   ) : (
                     'Clipboard is empty.'
