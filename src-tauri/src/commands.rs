@@ -369,9 +369,11 @@ pub async fn search_semantic(
     let time_bounds = parsed.time.as_ref().map(|t| (t.from_ms, t.to_ms));
 
     // Then pull category intent ("numbers", "links", "code snippets") and
-    // shed filler verbs ("I copied"). Category routes the SQL filter on
-    // both pools; filler removal cleans up the residue that gets embedded
-    // so common phrases like "I copied" stop dominating the query vector.
+    // shed filler verbs ("I copied"). Filler removal cleans up the residue
+    // that gets embedded so common phrases like "I copied" stop dominating
+    // the query vector. Category is a *soft* signal during hybrid search
+    // (RRF boost below) — applied as a hard SQL filter only for pure
+    // category queries with no semantic residue ("numbers").
     let intent = crate::query_intent::parse(&parsed.semantic);
     let semantic_q = intent.semantic.trim().to_string();
     let category_filter: Option<&str> = intent.category;
@@ -432,13 +434,12 @@ pub async fn search_semantic(
                     deleted, deleted_at, last_used_at, embedding
              FROM items
              WHERE deleted = 0 AND embedding IS NOT NULL AND embedding_model = ?1
-               AND created_at BETWEEN ?2 AND ?3
-               AND (?4 IS NULL OR category = ?4)",
+               AND created_at BETWEEN ?2 AND ?3",
         )
         .map_err(map_err)?;
 
     let mut scored: Vec<(f32, ClipItem)> = stmt_vec
-        .query_map(params![model_id, from_ms, to_ms, category_filter], |row| {
+        .query_map(params![model_id, from_ms, to_ms], |row| {
             let item = row_to_item(row)?;
             let bytes: Vec<u8> = row.get("embedding")?;
             let vec = embed::from_bytes(&bytes);
@@ -453,7 +454,7 @@ pub async fn search_semantic(
     scored.truncate(VEC_POOL);
 
     // --- Pool B: BM25 via FTS5 ------------------------------------------
-    let fts_pool = bm25_pool(&conn, &semantic_q, FTS_POOL, time_bounds, category_filter)
+    let fts_pool = bm25_pool(&conn, &semantic_q, FTS_POOL, time_bounds)
         .unwrap_or_default();
 
     // --- Reciprocal Rank Fusion -----------------------------------------
@@ -477,6 +478,23 @@ pub async fn search_semantic(
             .entry(item.id.clone())
             .and_modify(|(s, _)| *s += contribution)
             .or_insert((contribution, item.clone()));
+    }
+
+    // Soft category boost — replaces v4's hard SQL filter that excluded
+    // items whose `categorize.rs` label didn't match the user's intent
+    // word (e.g. "OTP code" wanted `code` but the OTP item is labelled
+    // `number`; "staging API URL" wanted `url` but `const API_URL = …;`
+    // is labelled `code`). Sized to ≈ one rank-1 RRF contribution so a
+    // category-matching item that lands mid-pool can climb over a strong
+    // off-category neighbour, but a clearly-better off-category match
+    // still wins.
+    const CAT_BOOST: f32 = 0.010;
+    if let Some(want) = category_filter {
+        for (_, (score, item)) in fused.iter_mut() {
+            if item.category == want {
+                *score += CAT_BOOST;
+            }
+        }
     }
 
     // Soft recency tiebreak — only when the user didn't already constrain
@@ -546,7 +564,6 @@ fn bm25_pool(
     query: &str,
     limit: usize,
     time: Option<(i64, i64)>,
-    category: Option<&str>,
 ) -> Result<Vec<ClipItem>, String> {
     // Split on whitespace, strip quotes, prefix-match each term. `cors`
     // matches `corsair`. Embedded quotes are escaped per FTS5 syntax.
@@ -569,7 +586,7 @@ fn bm25_pool(
     // residues; a single term degenerates to the same query as OR.
     if terms.len() >= 2 {
         let and_q = terms.join(" ");
-        for item in run_bm25(conn, &and_q, from_ms, to_ms, category, limit)? {
+        for item in run_bm25(conn, &and_q, from_ms, to_ms, limit)? {
             if seen.insert(item.id.clone()) {
                 out.push(item);
             }
@@ -581,7 +598,7 @@ fn bm25_pool(
 
     // OR-prefix to top up: catches paraphrases the AND form missed.
     let or_q = terms.join(" OR ");
-    for item in run_bm25(conn, &or_q, from_ms, to_ms, category, limit)? {
+    for item in run_bm25(conn, &or_q, from_ms, to_ms, limit)? {
         if seen.insert(item.id.clone()) {
             out.push(item);
         }
@@ -597,7 +614,6 @@ fn run_bm25(
     match_q: &str,
     from_ms: i64,
     to_ms: i64,
-    category: Option<&str>,
     limit: usize,
 ) -> Result<Vec<ClipItem>, String> {
     let mut stmt = conn
@@ -608,14 +624,13 @@ fn run_bm25(
              JOIN items i ON i.id = items_fts.rowid
              WHERE items_fts MATCH ?1 AND i.deleted = 0
                AND i.created_at BETWEEN ?2 AND ?3
-               AND (?4 IS NULL OR i.category = ?4)
              ORDER BY bm25(items_fts)
-             LIMIT ?5",
+             LIMIT ?4",
         )
         .map_err(map_err)?;
     let rows = stmt
         .query_map(
-            params![match_q, from_ms, to_ms, category, limit as i64],
+            params![match_q, from_ms, to_ms, limit as i64],
             row_to_item,
         )
         .map_err(map_err)?
