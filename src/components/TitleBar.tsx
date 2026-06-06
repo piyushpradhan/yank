@@ -2,7 +2,15 @@ import { useEffect, useState } from 'react';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { invoke } from '@tauri-apps/api/core';
 import { Box, Dot, IconButton, Inline, Text } from 'ember-design-system';
-import { LuChevronsDownUp, LuMinus, LuRefreshCw, LuSlidersHorizontal, LuSparkles, LuSquare, LuX } from 'react-icons/lu';
+import {
+  LuChevronsDownUp,
+  LuMinus,
+  LuRefreshCw,
+  LuSlidersHorizontal,
+  LuSparkles,
+  LuSquare,
+  LuX,
+} from 'react-icons/lu';
 import { IS_MAC } from '../lib/platform';
 import type { BackfillState } from '../hooks/useAppState';
 
@@ -14,7 +22,7 @@ interface TitleBarProps {
 }
 
 const HEIGHT = 40;
-const TRAFFIC_LIGHT_RESERVED = 100;
+const TRAFFIC_LIGHT_RESERVED = 84;
 
 export function TitleBar({ aiActive, onOpenAI, onToggleTweaks, backfill }: TitleBarProps) {
   return (
@@ -38,7 +46,7 @@ export function TitleBar({ aiActive, onOpenAI, onToggleTweaks, backfill }: Title
 
       <Inline align="center" data-tauri-drag-region>
         <img
-          src="/logo.png"
+          src="/mark.png"
           alt="Yank"
           draggable={false}
           style={{
@@ -109,15 +117,8 @@ function BackfillPill({ backfill }: { backfill: BackfillState }) {
       aria-live="polite"
     >
       <Dot tone={stalled ? 'warning' : 'accent'} size="sm" pulse={!stalled} />
-      <Text
-        family="mono"
-        size={10.5}
-        tabularNums
-        tone={stalled ? 'secondary' : 'accent-ink'}
-      >
-        {stalled
-          ? `Embedding stalled (${remaining} left)`
-          : `Embedding ${remaining}/${total}…`}
+      <Text family="mono" size={10.5} tabularNums tone={stalled ? 'secondary' : 'accent-ink'}>
+        {stalled ? `Embedding stalled (${remaining} left)` : `Embedding ${remaining}/${total}…`}
       </Text>
       {stalled && (
         <button
@@ -213,7 +214,12 @@ function TrafficLight({ color, hover, onClick, 'aria-label': label, children }: 
 function CloseGlyph() {
   return (
     <svg width="6" height="6" viewBox="0 0 6 6" fill="none" aria-hidden="true">
-      <path d="M1 1 L5 5 M5 1 L1 5" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" />
+      <path
+        d="M1 1 L5 5 M5 1 L1 5"
+        stroke="currentColor"
+        strokeWidth="1.25"
+        strokeLinecap="round"
+      />
     </svg>
   );
 }
