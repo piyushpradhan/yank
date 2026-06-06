@@ -36,19 +36,19 @@ export function TitleBar({ aiActive, onOpenAI, onToggleTweaks, backfill }: Title
     >
       {IS_MAC && <MacTrafficLights />}
 
-      <Inline gap={2} align="center" data-tauri-drag-region>
-        <Box
-          shrink={0}
+      <Inline align="center" data-tauri-drag-region>
+        <img
+          src="/logo.png"
+          alt="Yank"
+          draggable={false}
           style={{
-            width: 6,
-            height: 6,
-            borderRadius: 2,
-            background: 'var(--accent-ember-500)',
+            height: 18,
+            width: 'auto',
+            display: 'block',
+            WebkitUserSelect: 'none',
+            userSelect: 'none',
           }}
         />
-        <Text size={12.5} weight="semibold" tracking="tight">
-          Yank
-        </Text>
       </Inline>
 
       {backfill && backfill.remaining > 0 && <BackfillPill backfill={backfill} />}
