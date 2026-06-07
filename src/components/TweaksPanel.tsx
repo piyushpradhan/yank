@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
+import { openUrl } from '@tauri-apps/plugin-opener';
 import { Box, Button, Card, IconButton, Inline, Kbd, Overline, Stack, Text } from 'ember-design-system';
-import { LuMoon, LuSun, LuX } from 'react-icons/lu';
+import { LuArrowUpRight, LuMoon, LuSun, LuX } from 'react-icons/lu';
 import { getKeyIcon } from '../lib/keyIcons';
 import type { Updater } from '../hooks/useUpdater';
 import {
@@ -406,6 +407,41 @@ export function TweaksPanel({
             {clearError}
           </Text>
         )}
+      </Box>
+
+      <Box
+        px={4}
+        py={3}
+        style={{
+          borderTop: '1px solid var(--border-subtle)',
+          background: 'var(--bg-surface)',
+        }}
+      >
+        <button
+          type="button"
+          onClick={() => {
+            void openUrl('https://github.com/piyushpradhan/yank/issues').catch(() => {});
+          }}
+          style={{
+            all: 'unset',
+            cursor: 'pointer',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 4,
+            color: 'var(--text-tertiary)',
+          }}
+          onMouseEnter={(e) => {
+            (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-secondary)';
+          }}
+          onMouseLeave={(e) => {
+            (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-tertiary)';
+          }}
+        >
+          <Text size={11} style={{ color: 'inherit' }}>
+            Feedback, bugs, ideas
+          </Text>
+          <LuArrowUpRight size={11} aria-hidden />
+        </button>
       </Box>
       </Card>
     </>
