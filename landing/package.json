@@ -17,7 +17,6 @@
     "@iconify-json/lucide": "^1.2.108",
     "@iconify-json/simple-icons": "^1.2.83",
     "@tailwindcss/vite": "^4.0.0",
-    "@vercel/analytics": "^1.6.1",
     "astro": "^5.0.0",
     "astro-icon": "^1.1.5",
     "ember-design-system": "github:piyushpradhan/ember-design-system#main",

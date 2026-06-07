@@ -47,28 +47,32 @@ const year = new Date().getFullYear();
             <a
               href="https://github.com/piyushpradhan/yank"
               target="_blank"
-              rel="noopener noreferrer">GitHub</a
+              rel="noopener noreferrer"
+              data-track-github="repo">GitHub</a
             >
           </li>
           <li>
             <a
               href="https://github.com/piyushpradhan/yank/releases"
               target="_blank"
-              rel="noopener noreferrer">Changelog</a
+              rel="noopener noreferrer"
+              data-track-github="releases">Changelog</a
             >
           </li>
           <li>
             <a
               href="https://github.com/piyushpradhan/yank/issues"
               target="_blank"
-              rel="noopener noreferrer">Roadmap</a
+              rel="noopener noreferrer"
+              data-track-github="issues">Roadmap</a
             >
           </li>
           <li>
             <a
               href="https://github.com/piyushpradhan/yank/issues"
               target="_blank"
-              rel="noopener noreferrer">Issues</a
+              rel="noopener noreferrer"
+              data-track-github="issues">Issues</a
             >
           </li>
         </ul>
@@ -83,7 +87,8 @@ const year = new Date().getFullYear();
             <a
               href="https://github.com/piyushpradhan/yank/blob/main/LICENSE"
               target="_blank"
-              rel="noopener noreferrer">License (MIT)</a
+              rel="noopener noreferrer"
+              data-track-github="license">License (MIT)</a
             >
           </li>
           <li><a href="mailto:hi@yankapp.io">hi@yankapp.io</a></li>
@@ -98,3 +103,15 @@ const year = new Date().getFullYear();
     </div>
   </div>
 </footer>
+
+<script>
+  function track(name: string, data?: Record<string, unknown>) {
+    (window as any).umami?.track?.(name, data);
+  }
+  document.querySelectorAll('.foot [data-track-github]').forEach(function (a) {
+    a.addEventListener('click', function () {
+      var target = a instanceof HTMLElement ? a.dataset.trackGithub : undefined;
+      track('github_click', { location: 'footer', target: target || 'repo' });
+    });
+  });
+</script>

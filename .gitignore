@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Marketing — private campaign tracking
+marketing/tracking/utm-registry.csv

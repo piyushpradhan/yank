@@ -68,7 +68,9 @@ const fallbackDownload = downloads.macos?.url ?? release?.html_url ?? "https://g
 </header>
 
 <script>
-  import { track } from '@vercel/analytics';
+  function track(name: string, data?: Record<string, unknown>) {
+    (window as any).umami?.track?.(name, data);
+  }
   (function () {
     var root = document.documentElement;
 
@@ -97,7 +99,14 @@ const fallbackDownload = downloads.macos?.url ?? release?.html_url ?? "https://g
       navCta.addEventListener('click', function () {
         var bodyOs = document.body.dataset.os || 'mac';
         var platform = bodyOs === 'win' ? 'Windows' : bodyOs === 'linux' ? 'Linux' : 'macOS';
-        track('download', { platform: platform });
+        track('download_click', { platform: platform, location: 'nav' });
+      });
+    }
+
+    var navGithub = document.querySelector('.nav-cluster a[href*="github.com"]');
+    if (navGithub) {
+      navGithub.addEventListener('click', function () {
+        track('github_click', { location: 'nav', target: 'repo' });
       });
     }
   })();

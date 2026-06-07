@@ -13,8 +13,10 @@ import '@fontsource/source-serif-4/400-italic.css';
 import '@fontsource/source-serif-4/500-italic.css';
 import '@fontsource/caveat/500.css';
 import "ember-design-system/tokens.css";
-import Analytics from '@vercel/analytics/astro';
 import "../styles/global.css";
+
+const umamiWebsiteId = import.meta.env.PUBLIC_UMAMI_WEBSITE_ID;
+const umamiSrc = import.meta.env.PUBLIC_UMAMI_SRC ?? "https://cloud.umami.is/script.js";
 
 interface Props {
   title?: string;
@@ -98,9 +100,12 @@ const ogImageUrl = `${canonical}${ogImage}`;
     <link rel="preconnect" href="https://github.com" crossorigin />
 
     <!-- Fonts are bundled via @fontsource (see frontmatter). -->
+
+    {umamiWebsiteId && (
+      <script defer src={umamiSrc} data-website-id={umamiWebsiteId}></script>
+    )}
   </head>
   <body>
     <slot />
-    <Analytics />
   </body>
 </html>

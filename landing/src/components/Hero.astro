@@ -148,7 +148,9 @@ const sizeLabel =
 </section>
 
 <script>
-  import { track } from '@vercel/analytics';
+  function track(name: string, data?: Record<string, unknown>) {
+    (window as any).umami?.track?.(name, data);
+  }
   (function () {
     var hero = document.querySelector('.hero');
     var raw = hero ? hero.getAttribute('data-downloads') : null;
@@ -208,10 +210,11 @@ const sizeLabel =
 
     if (heroCta) {
       heroCta.addEventListener('click', function () {
-        track('download', { platform: osLabel });
+        track('download_click', { platform: osLabel, location: 'hero_cta' });
       });
     }
 
+    var PLATFORM_LABEL = { mac: 'macOS', win: 'Windows', linux: 'Linux' };
     var platformLinks = document.querySelectorAll('.hero-platforms a');
     platformLinks.forEach(function (a) {
       if (a instanceof HTMLElement) {
@@ -219,7 +222,8 @@ const sizeLabel =
           a.setAttribute('aria-current', 'true');
         }
         a.addEventListener('click', function () {
-          track('download', { platform: a.dataset.os });
+          var p = PLATFORM_LABEL[a.dataset.os] || a.dataset.os;
+          track('download_click', { platform: p, location: 'hero_platforms' });
         });
       }
     });
