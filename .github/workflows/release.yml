@@ -59,6 +59,18 @@ jobs:
         with:
           ref: ${{ needs.prepare.outputs.tag }}
 
+      - name: Verify updater signing key is configured
+        # bundle.createUpdaterArtifacts is on in tauri.conf.json, so the
+        # bundler will refuse to build without TAURI_SIGNING_PRIVATE_KEY.
+        # Fail with a clear, actionable message instead of an obscure bundler error.
+        env:
+          KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+        run: |
+          if [ -z "$KEY" ]; then
+            echo "::error::TAURI_SIGNING_PRIVATE_KEY repository secret is missing — generate a key with 'npx @tauri-apps/cli signer generate -w ./yank.key', then add the private key content as TAURI_SIGNING_PRIVATE_KEY and the passphrase as TAURI_SIGNING_PRIVATE_KEY_PASSWORD in repo Settings → Secrets. Public key goes in tauri.conf.json under plugins.updater.pubkey."
+            exit 1
+          fi
+
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
@@ -188,6 +200,11 @@ jobs:
 
       - name: Build Tauri release bundles
         shell: bash
+        env:
+          # Required by bundle.createUpdaterArtifacts to produce .sig files.
+          # The check job already gated on these being non-empty.
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: |
           if [ -n "${{ matrix.bundles }}" ]; then
             npm run tauri -- build --target ${{ matrix.target }} --bundles ${{ matrix.bundles }}
@@ -202,7 +219,11 @@ jobs:
           shopt -s nullglob
           dir="src-tauri/target/${{ matrix.target }}/release/bundle"
           assets=""
-          for sub in msi nsis dmg appimage deb; do
+          # `.sig` files are emitted alongside the installers the updater can
+          # consume (`.app.tar.gz`, `.nsis.zip`, `.msi.zip`, `.AppImage`,
+          # `.AppImage.tar.gz`). Glob both the binaries and the `.sig`s so the
+          # release ends up with everything the updater needs.
+          for sub in msi nsis dmg appimage deb macos; do
             for f in "$dir/$sub"/*; do
               [ -f "$f" ] && assets+="$f"$'\n'
             done
@@ -213,6 +234,72 @@ jobs:
           echo "" >> "$GITHUB_OUTPUT"
           echo "EOF" >> "$GITHUB_OUTPUT"
 
+      - name: Build updater manifest fragment
+        id: fragment
+        shell: bash
+        run: |
+          shopt -s nullglob
+          dir="src-tauri/target/${{ matrix.target }}/release/bundle"
+          target="${{ matrix.target }}"
+
+          # Map Rust target triple → Tauri updater platform key.
+          case "$target" in
+            aarch64-apple-darwin)        platform="darwin-aarch64" ;;
+            x86_64-apple-darwin)         platform="darwin-x86_64" ;;
+            x86_64-pc-windows-msvc)      platform="windows-x86_64" ;;
+            aarch64-pc-windows-msvc)     platform="windows-aarch64" ;;
+            x86_64-unknown-linux-gnu)    platform="linux-x86_64" ;;
+            aarch64-unknown-linux-gnu)   platform="linux-aarch64" ;;
+            *) echo "::warning::Unrecognised target $target — skipping manifest fragment"; exit 0 ;;
+          esac
+
+          # First `.sig` wins per platform. The bundler emits exactly one per
+          # updater-eligible installer; if both .app.tar.gz.sig and .dmg.sig
+          # appear (future tauri versions), the .app.tar.gz one is preferred.
+          sig_path=""
+          for candidate in \
+            "$dir"/macos/*.app.tar.gz.sig \
+            "$dir"/nsis/*.nsis.zip.sig \
+            "$dir"/msi/*.msi.zip.sig \
+            "$dir"/appimage/*.AppImage.tar.gz.sig \
+            "$dir"/appimage/*.AppImage.sig; do
+            if [ -f "$candidate" ]; then
+              sig_path="$candidate"
+              break
+            fi
+          done
+
+          if [ -z "$sig_path" ]; then
+            echo "No .sig file found for $target — skipping fragment (signing key likely not set)."
+            exit 0
+          fi
+
+          binary_path="${sig_path%.sig}"
+          binary_name="$(basename "$binary_path")"
+          sig_content="$(cat "$sig_path")"
+          tag="${{ needs.prepare.outputs.tag }}"
+          url="https://github.com/${{ github.repository }}/releases/download/${tag}/${binary_name}"
+
+          mkdir -p manifest-fragments
+          out="manifest-fragments/${platform}.json"
+          jq -n \
+            --arg platform "$platform" \
+            --arg signature "$sig_content" \
+            --arg url "$url" \
+            '{($platform): {signature: $signature, url: $url}}' > "$out"
+
+          echo "Wrote fragment for $platform → $out"
+          cat "$out"
+
+      - name: Upload manifest fragment
+        if: hashFiles('manifest-fragments/*.json') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: updater-fragment-${{ matrix.label }}
+          path: manifest-fragments/*.json
+          if-no-files-found: ignore
+          retention-days: 1
+
       - name: Attach to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
@@ -221,3 +308,49 @@ jobs:
           generate_release_notes: true
           fail_on_unmatched_files: false
           files: ${{ steps.assets.outputs.files }}
+
+  publish-manifest:
+    needs: [prepare, build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: fragments
+          pattern: updater-fragment-*
+          merge-multiple: true
+
+      - name: Stitch fragments into latest.json
+        id: stitch
+        shell: bash
+        run: |
+          shopt -s nullglob
+          frags=(fragments/*.json)
+          if [ ${#frags[@]} -eq 0 ]; then
+            echo "No fragments produced — signing keys are probably not configured."
+            echo "Skipping latest.json publish; existing one (if any) remains the source of truth."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          tag="${{ needs.prepare.outputs.tag }}"
+          version="${tag#v}"
+
+          platforms=$(jq -s 'add' "${frags[@]}")
+          jq -n \
+            --arg version "$version" \
+            --arg pub_date "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            --argjson platforms "$platforms" \
+            '{version: $version, notes: "See release notes on GitHub.", pub_date: $pub_date, platforms: $platforms}' \
+            > latest.json
+
+          echo "skip=false" >> "$GITHUB_OUTPUT"
+          echo "Generated latest.json:"
+          cat latest.json
+
+      - name: Attach latest.json to release
+        if: steps.stitch.outputs.skip != 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.prepare.outputs.tag }}
+          fail_on_unmatched_files: true
+          files: latest.json

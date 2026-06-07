@@ -6,9 +6,11 @@ import { KeyboardMap } from './components/KeyboardMap';
 import { TitleBar } from './components/TitleBar';
 import { Toast } from './components/Toast';
 import { TweaksPanel } from './components/TweaksPanel';
+import { UpdateBanner } from './components/UpdateBanner';
 import { WelcomeModal } from './components/WelcomeModal';
 import { useAppState } from './hooks/useAppState';
 import { isSemanticAvailable, useSettings } from './hooks/useSettings';
+import { useUpdater } from './hooks/useUpdater';
 import { DEFAULT_SHORTCUT, type ShortcutConfig } from './lib/shortcut';
 import { buildTheme } from './lib/theme';
 import type { Tweaks } from './lib/types';
@@ -32,6 +34,7 @@ function App() {
   const [hintDismissed, setHintDismissed] = useState<boolean | null>(null);
   const app = useAppState();
   const { settings, save: saveSettings } = useSettings();
+  const updater = useUpdater();
   const { setTheme } = useTheme();
 
   // Mirror Tweaks → ember CSS-var theme. data-theme drives all token colors.
@@ -132,6 +135,7 @@ function App() {
           onChange={setTweaks}
           shortcut={shortcut}
           onShortcutChange={setShortcut}
+          updater={updater}
           onClose={() => setTweaksOpen(false)}
           onAfterClear={() => {
             void app.refresh();
@@ -176,6 +180,12 @@ function App() {
       )}
 
       {app.toast && <Toast t={t} toast={app.toast} />}
+
+      <UpdateBanner
+        status={updater.status}
+        onRestart={() => void updater.restart()}
+        onDismiss={updater.dismiss}
+      />
     </Box>
   );
 }
