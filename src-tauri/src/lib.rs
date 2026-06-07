@@ -161,6 +161,7 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_store::Builder::default().build())
+        .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_autostart::init(
             tauri_plugin_autostart::MacosLauncher::LaunchAgent,
             Some(vec!["--minimized"]),
@@ -211,6 +212,12 @@ pub fn run() {
             settings::set_theme,
         ])
         .setup(move |app| {
+            // Updater plugin is desktop-only; init here so the app handle is
+            // available for downloadAndInstall + relaunch wiring on the JS side.
+            #[cfg(desktop)]
+            app.handle()
+                .plugin(tauri_plugin_updater::Builder::new().build())?;
+
             let data_dir = app
                 .path()
                 .app_data_dir()

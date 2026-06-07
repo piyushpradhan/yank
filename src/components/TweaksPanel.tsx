@@ -3,6 +3,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { Box, Button, Card, IconButton, Inline, Kbd, Overline, Stack, Text } from 'ember-design-system';
 import { LuMoon, LuSun, LuX } from 'react-icons/lu';
 import { getKeyIcon } from '../lib/keyIcons';
+import type { Updater } from '../hooks/useUpdater';
 import {
   DEFAULT_SHORTCUT,
   hasAnyModifier,
@@ -18,6 +19,7 @@ interface TweaksPanelProps {
   onChange: (next: Tweaks) => void;
   shortcut: ShortcutConfig | null;
   onShortcutChange: (next: ShortcutConfig) => void;
+  updater: Updater;
   onClose: () => void;
   onAfterClear?: () => void;
 }
@@ -144,11 +146,29 @@ function ShortcutRecorder({
   );
 }
 
+function updaterLabel(status: Updater['status']): string {
+  switch (status.kind) {
+    case 'idle':
+      return 'Check for updates';
+    case 'checking':
+      return 'Checking…';
+    case 'downloading':
+      return `Downloading ${status.version}…`;
+    case 'ready':
+      return `Restart to install ${status.version}`;
+    case 'uptodate':
+      return "You're up to date";
+    case 'error':
+      return 'Check failed — try again';
+  }
+}
+
 export function TweaksPanel({
   tweaks,
   onChange,
   shortcut,
   onShortcutChange,
+  updater,
   onClose,
   onAfterClear,
 }: TweaksPanelProps) {
@@ -325,6 +345,30 @@ export function TweaksPanel({
             {tweaks.autostart ? 'on' : 'off'}
           </Chip>
         </Row>
+      </Section>
+
+      <Section title="Updates">
+        <Row label={`Version ${updater.currentVersion ?? '—'}`}>
+          {updater.status.kind === 'ready' ? (
+            <Button size="sm" variant="primary" onClick={() => void updater.restart()}>
+              Restart to install
+            </Button>
+          ) : (
+            <Button
+              size="sm"
+              variant="ghost"
+              disabled={updater.status.kind === 'checking' || updater.status.kind === 'downloading'}
+              onClick={() => void updater.check()}
+            >
+              {updaterLabel(updater.status)}
+            </Button>
+          )}
+        </Row>
+        {updater.status.kind === 'error' && (
+          <Text size={11} tone="danger">
+            {updater.status.message}
+          </Text>
+        )}
       </Section>
 
       <Box px={4} py={3} style={{ background: 'color-mix(in oklab, var(--status-danger) 5%, transparent)' }}>
