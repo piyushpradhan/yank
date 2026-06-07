@@ -15,7 +15,6 @@ import {
   Kbd,
   Stack,
   Text,
-  Tooltip,
 } from 'ember-design-system';
 import {
   LuArrowUpDown,
@@ -333,20 +332,17 @@ export function Palette({
   const selectedItem = displayResults[selected] ?? null;
 
   useEffect(() => {
-    setSelected(0);
-  }, [query, mode]);
-
-  useEffect(() => {
     const lock = pinLockRef.current;
     if (lock != null && displayResults.length > 0) {
       pinLockRef.current = null;
       setSelected(Math.max(0, Math.min(displayResults.length - 1, lock)));
+      return;
     }
-  }, [displayResults]);
-
-  useEffect(() => {
-    setSelected((s) => Math.min(s, lastIdx));
-  }, [lastIdx]);
+    // Keep the row index stable while the user types so the highlight
+    // doesn't chase the result list. If the index slides past the end,
+    // fall back to the first row rather than clamping to the last.
+    setSelected((s) => (s > lastIdx ? 0 : s));
+  }, [displayResults, lastIdx]);
 
   useEffect(() => {
     const el = listRef.current?.querySelector(`[data-i="${selected}"]`);
@@ -453,30 +449,28 @@ export function Palette({
               className="!border-none !bg-transparent !text-lg"
               disableFocus
             />
-            <Tooltip content={<Kbd size="sm">{getKeyIcon('Tab')}</Kbd>}>
-              <Button
-                size="sm"
-                variant={mode === 'semantic' ? 'primary' : 'secondary'}
-                onClick={() => {
-                  if (mode === 'fuzzy' && !semanticAvailable) return;
-                  setMode((m) => (m === 'fuzzy' ? 'semantic' : 'fuzzy'));
-                }}
-                leadingIcon={
-                  mode === 'semantic' ? (
-                    <LuSparkles size={13} color="var(--text-inverse)" />
-                  ) : (
-                    <LuTextSearch size={13} color="var(--text-tertiary)" />
-                  )
-                }
-                style={{
-                  minWidth: 0,
-                  justifyContent: 'flex-start',
-                  flexShrink: 0,
-                }}
-              >
-                {mode}
-              </Button>
-            </Tooltip>
+            <Button
+              size="sm"
+              variant={mode === 'semantic' ? 'primary' : 'secondary'}
+              onClick={() => {
+                if (mode === 'fuzzy' && !semanticAvailable) return;
+                setMode((m) => (m === 'fuzzy' ? 'semantic' : 'fuzzy'));
+              }}
+              leadingIcon={
+                mode === 'semantic' ? (
+                  <LuSparkles size={13} color="var(--text-inverse)" />
+                ) : (
+                  <LuTextSearch size={13} color="var(--text-tertiary)" />
+                )
+              }
+              style={{
+                minWidth: 0,
+                justifyContent: 'flex-start',
+                flexShrink: 0,
+              }}
+            >
+              {mode}
+            </Button>
           </Inline>
 
           <Box ref={listRef} grow={1} overflow="auto" style={{ minHeight: 120, padding: 6 }}>

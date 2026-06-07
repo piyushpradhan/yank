@@ -444,9 +444,11 @@ export function Library({
   const [query, setQuery] = useState(initialQuery);
   const [mode, setMode] = useState<SearchMode>(initialMode);
   const [filter, setFilter] = useState<Filter>(initialFilter);
-  const [selectedId, setSelectedId] = useState<string | null>(
-    initialSelectedId ?? app.items[0]?.id ?? null
-  );
+  const [selectedIdx, setSelectedIdx] = useState<number>(() => {
+    if (!initialSelectedId) return 0;
+    const idx = app.items.findIndex((i) => i.id === initialSelectedId);
+    return idx >= 0 ? idx : 0;
+  });
   const [editingId, setEditingId] = useState<string | null>(
     initialEditing ? (initialSelectedId ?? app.items[0]?.id ?? null) : null
   );
@@ -472,9 +474,6 @@ export function Library({
     if (!previewOverlayAvailable) setPreviewOverlayOpen(false);
   }, [previewOverlayAvailable]);
 
-  useEffect(() => {
-    if (!selectedId) setPreviewOverlayOpen(false);
-  }, [selectedId]);
 
   useEffect(() => {
     const unlisten = listen<string>('library-filter', (ev) => {
@@ -612,25 +611,27 @@ export function Library({
 
   // useLayoutEffect runs before paint so a pin/unpin/delete doesn't briefly
   // highlight the moved row at its new position before snapping back to the
-  // locked index.
+  // locked index. We track row index (not item id) so the highlight stays
+  // anchored to the same position while typing — the item under it can
+  // change, but the row doesn't jump. If the index slides past the end of
+  // the new result set, drop to the first row.
   useLayoutEffect(() => {
     const lockedIdx = rowIndexLock.current;
     if (lockedIdx != null && searched.length > 0) {
       rowIndexLock.current = null;
-      const idx = Math.max(0, Math.min(searched.length - 1, lockedIdx));
-      const item = searched[idx];
-      if (item) {
-        setSelectedId(item.id);
-        return;
-      }
+      setSelectedIdx(Math.max(0, Math.min(searched.length - 1, lockedIdx)));
+      return;
     }
-    if (!searched.find((i) => i.id === selectedId)) {
-      setSelectedId(searched[0]?.id ?? null);
+    if (selectedIdx >= searched.length) {
+      setSelectedIdx(0);
     }
-  }, [searched, selectedId]);
+  }, [searched, selectedIdx]);
 
-  const selectedIdx = searched.findIndex((i) => i.id === selectedId);
-  const current = searched.find((i) => i.id === selectedId) ?? null;
+  const current = searched[selectedIdx] ?? null;
+
+  useEffect(() => {
+    if (!current) setPreviewOverlayOpen(false);
+  }, [current]);
 
   const handlePreviewPin = useCallback((id: string) => {
     rowIndexLock.current = selectedIdx;
@@ -645,8 +646,8 @@ export function Library({
   const moveSel = (delta: number) => {
     rowIndexLock.current = null;
     const i = Math.max(0, Math.min(searched.length - 1, selectedIdx + delta));
+    setSelectedIdx(i);
     const item = searched[i];
-    if (item) setSelectedId(item.id);
     setTimeout(() => {
       const el = listRef.current?.querySelector(`[data-id="${item?.id}"]`);
       (el as HTMLElement | undefined)?.scrollIntoView?.({ block: 'nearest' });
@@ -1093,25 +1094,28 @@ export function Library({
                           style={{ height: 1, background: 'var(--border-subtle)', opacity: 0.6 }}
                         />
                       </Inline>
-                      {items.map((item) => (
-                        <ListRow
-                          key={item.id}
-                          t={t}
-                          item={item}
-                          showLabels={showLabels}
-                          categoryMode={categoryMode}
-                          aiLabelsEnabled={anthropicEnabled}
-                          selected={item.id === selectedId}
-                          onClick={() => setSelectedId(item.id)}
-                          onDouble={() => app.copyItem(item.id)}
-                          query={query}
-                          getImage={app.getImage}
-                        />
-                      ))}
+                      {items.map((item) => {
+                        const idx = searched.indexOf(item);
+                        return (
+                          <ListRow
+                            key={item.id}
+                            t={t}
+                            item={item}
+                            showLabels={showLabels}
+                            categoryMode={categoryMode}
+                            aiLabelsEnabled={anthropicEnabled}
+                            selected={idx === selectedIdx}
+                            onClick={() => setSelectedIdx(idx)}
+                            onDouble={() => app.copyItem(item.id)}
+                            query={query}
+                            getImage={app.getImage}
+                          />
+                        );
+                      })}
                     </Box>
                   )
                 )
-              : searched.map((item) => (
+              : searched.map((item, i) => (
                   <ListRow
                     key={item.id}
                     t={t}
@@ -1119,8 +1123,8 @@ export function Library({
                     showLabels={showLabels}
                     categoryMode={categoryMode}
                     aiLabelsEnabled={anthropicEnabled}
-                    selected={item.id === selectedId}
-                    onClick={() => setSelectedId(item.id)}
+                    selected={i === selectedIdx}
+                    onClick={() => setSelectedIdx(i)}
                     onDouble={() => app.copyItem(item.id)}
                     query={query}
                     getImage={app.getImage}

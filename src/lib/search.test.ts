@@ -24,8 +24,25 @@ describe('fuzzyMatch', () => {
     expect(fuzzyMatch('HELLO', makeItem())).toBe(true);
   });
 
-  it('fuzzy matches subsequence', () => {
+  it('fuzzy matches a dense subsequence', () => {
     expect(fuzzyMatch('hlo', makeItem({ label: 'hello', preview: '' }))).toBe(true);
+  });
+
+  it('fuzzy matches an acronym across word starts', () => {
+    expect(
+      fuzzyMatch('vsc', makeItem({ label: 'Visual Studio Code', preview: '' }))
+    ).toBe(true);
+  });
+
+  it('rejects scattered subsequence matches that span unrelated words', () => {
+    // Tight density / word-boundary / consecutive-run criteria should drop this.
+    expect(
+      fuzzyMatch('hello', makeItem({ label: 'happy elephant loved oranges', preview: '' }))
+    ).toBe(false);
+  });
+
+  it('rejects single-character queries that are not substrings', () => {
+    expect(fuzzyMatch('z', makeItem({ label: 'apple', preview: '' }))).toBe(false);
   });
 
   it('returns false for non-matching query', () => {
@@ -60,6 +77,15 @@ describe('searchItems', () => {
 
   it('returns empty for no match', () => {
     expect(searchItems(items, 'xyz')).toHaveLength(0);
+  });
+
+  it('ranks substring matches above scattered subsequence matches', () => {
+    const ranked: ClipItem[] = [
+      makeItem({ id: 'scatter', label: 'Reddish ember accent cool tone', preview: '' }),
+      makeItem({ id: 'substr', label: 'React snippet', preview: '' }),
+    ];
+    const out = searchItems(ranked, 'react');
+    expect(out[0].id).toBe('substr');
   });
 });
 
