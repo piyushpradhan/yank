@@ -2,12 +2,14 @@
 import { getLatestRelease } from "../lib/releases";
 import rootPkg from "../../../package.json";
 
-const { release, downloads } = await getLatestRelease();
+const { release } = await getLatestRelease();
 const version = release?.version ?? `v${rootPkg.version}`;
 const releaseTag = version.startsWith("v") ? version : `v${version}`;
 
-// Pre-bake fallback URLs in case JS-side OS detection runs late.
-const fallbackDownload = downloads.macos?.url ?? release?.html_url ?? "https://github.com/piyushpradhan/yank/releases/latest";
+// macOS is the dominant case and must route through the Install section
+// (Homebrew) so the first launch doesn't trip Gatekeeper "damaged" errors.
+// Hero.astro rewrites this href to a direct binary URL for Windows / Linux.
+const fallbackDownload = "#install";
 ---
 
 <header class="topbar" data-screen-label="topbar">
@@ -35,6 +37,7 @@ const fallbackDownload = downloads.macos?.url ?? release?.html_url ?? "https://g
     <nav class="nav" aria-label="Primary">
       <a href="#features">Features</a>
       <a href="#how">How it works</a>
+      <a href="#install">Install</a>
       <a href="#faq">FAQ</a>
     </nav>
 

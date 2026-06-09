@@ -359,3 +359,92 @@ jobs:
           tag_name: ${{ needs.prepare.outputs.tag }}
           fail_on_unmatched_files: true
           files: latest.json
+
+  update-homebrew-cask:
+    # Publishes a refreshed Casks/yank.rb to piyushpradhan/homebrew-yank so
+    # `brew upgrade --cask yank` picks up new releases. Skipped when the
+    # cross-repo PAT is missing so the rest of the pipeline still ships.
+    needs: [prepare, build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check tap token
+        id: gate
+        env:
+          TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+        run: |
+          if [ -z "$TAP_TOKEN" ]; then
+            echo "::warning::HOMEBREW_TAP_TOKEN secret not set — skipping cask update. Add a fine-grained PAT with Contents:write on piyushpradhan/homebrew-yank to enable."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Checkout tap repo
+        if: steps.gate.outputs.skip != 'true'
+        uses: actions/checkout@v4
+        with:
+          repository: piyushpradhan/homebrew-yank
+          token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          path: tap
+
+      - name: Rewrite Casks/yank.rb
+        if: steps.gate.outputs.skip != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag="${{ needs.prepare.outputs.tag }}"
+          version="${tag#v}"
+          dmg_url="https://github.com/${{ github.repository }}/releases/download/${tag}/Yank_${version}_aarch64.dmg"
+
+          echo "Downloading $dmg_url"
+          curl -fL "$dmg_url" -o yank.dmg
+          sha="$(shasum -a 256 yank.dmg | awk '{print $1}')"
+          echo "SHA256: $sha"
+
+          mkdir -p tap/Casks
+          cat > tap/Casks/yank.rb <<EOF
+          cask "yank" do
+            version "${version}"
+            sha256 "${sha}"
+
+            url "https://github.com/piyushpradhan/yank/releases/download/v#{version}/Yank_#{version}_aarch64.dmg",
+                verified: "github.com/piyushpradhan/yank/"
+            name "Yank"
+            desc "Clipboard manager with natural-language search"
+            homepage "https://yankapp.io"
+
+            livecheck do
+              url "https://github.com/piyushpradhan/yank/releases/latest"
+              strategy :github_latest
+            end
+
+            auto_updates true
+            depends_on macos: ">= :big_sur"
+            depends_on arch: :arm64
+
+            app "Yank.app"
+
+            zap trash: [
+              "~/Library/Application Support/com.getyank.app",
+              "~/Library/Caches/com.getyank.app",
+              "~/Library/Logs/Yank",
+              "~/Library/Preferences/com.getyank.app.plist",
+              "~/Library/Saved Application State/com.getyank.app.savedState",
+            ]
+          end
+          EOF
+
+      - name: Commit + push to tap
+        if: steps.gate.outputs.skip != 'true'
+        working-directory: tap
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Casks/yank.rb
+          if git diff --cached --quiet; then
+            echo "Cask already up to date — nothing to commit."
+            exit 0
+          fi
+          git commit -m "yank ${{ needs.prepare.outputs.tag }}"
+          git push origin HEAD

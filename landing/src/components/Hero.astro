@@ -51,9 +51,9 @@ const sizeLabel =
       </p>
 
       <div class="ctas">
-        <a class="btn btn--primary btn--lg" id="cta-download" href={downloadMap.mac}>
+        <a class="btn btn--primary btn--lg" id="cta-download" href="#install">
           <span class="os-icon" id="cta-download-os-icon" aria-hidden="true"></span>
-          <span id="cta-download-label">Download for macOS</span>
+          <span id="cta-download-label">Install Yank</span>
           <svg
             width="14"
             height="14"
@@ -175,20 +175,26 @@ const sizeLabel =
 
     var navLabel = document.getElementById('download-label');
     var ctaLabel = document.getElementById('cta-download-label');
-    if (navLabel) navLabel.textContent = 'Download';
+    if (navLabel) navLabel.textContent = os === 'mac' ? 'Install' : 'Download';
     if (ctaLabel) {
       if (isMobile) {
-        ctaLabel.textContent = 'Download';
+        ctaLabel.textContent = os === 'mac' ? 'Install' : 'Download';
+      } else if (os === 'mac') {
+        ctaLabel.textContent = 'Install for macOS';
       } else {
         ctaLabel.textContent = 'Download for ' + osLabel;
       }
     }
 
+    // macOS users go through the Install section (Homebrew + quarantine note);
+    // Windows/Linux still get the direct binary URL.
     var url = downloads[os] || downloads.mac;
     var navCta = document.getElementById('download-cta');
     var heroCta = document.getElementById('cta-download');
-    if (navCta) navCta.setAttribute('href', url);
-    if (heroCta) heroCta.setAttribute('href', url);
+    var navUrl = os === 'mac' ? '#install' : url;
+    var heroUrl = os === 'mac' ? '#install' : url;
+    if (navCta) navCta.setAttribute('href', navUrl);
+    if (heroCta) heroCta.setAttribute('href', heroUrl);
 
     var OS_ICONS = {
       mac:
