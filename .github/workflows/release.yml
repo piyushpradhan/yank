@@ -424,6 +424,18 @@ jobs:
 
             app "Yank.app"
 
+            # Tauri ships the macOS bundle linker-signed with no sealed
+            # resources, which macOS rejects as "damaged" on first launch.
+            # Strip any stray xattrs Brew may have left, then re-apply a
+            # proper ad-hoc signature with sealed resources so the validity
+            # check passes. No Developer ID needed.
+            postflight do
+              system_command "/usr/bin/xattr",
+                             args: ["-cr", "#{appdir}/Yank.app"]
+              system_command "/usr/bin/codesign",
+                             args: ["--force", "--deep", "--sign", "-", "#{appdir}/Yank.app"]
+            end
+
             zap trash: [
               "~/Library/Application Support/com.getyank.app",
               "~/Library/Caches/com.getyank.app",
