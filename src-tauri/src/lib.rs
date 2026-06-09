@@ -53,8 +53,25 @@ fn focus_library(app: &tauri::AppHandle) {
         let _ = w.show();
         let _ = w.unminimize();
         let _ = w.set_focus();
+        set_dock_visible(app, true);
     }
 }
+
+/// Show/hide the dock icon. Yank is a menu-bar app first; the dock icon
+/// should only appear while the library window is on screen, not when
+/// the chromeless palette is the only visible surface.
+#[cfg(target_os = "macos")]
+fn set_dock_visible(app: &tauri::AppHandle, visible: bool) {
+    let policy = if visible {
+        tauri::ActivationPolicy::Regular
+    } else {
+        tauri::ActivationPolicy::Accessory
+    };
+    let _ = app.set_activation_policy(policy);
+}
+
+#[cfg(not(target_os = "macos"))]
+fn set_dock_visible(_app: &tauri::AppHandle, _visible: bool) {}
 
 /// Remove Windows window-chrome artifacts from the chromeless palette.
 /// Even with `decorations: false`, Windows may still draw sizing borders
@@ -302,6 +319,7 @@ pub fn run() {
                             let _ = w.show();
                             let _ = w.unminimize();
                             let _ = w.set_focus();
+                            set_dock_visible(app, true);
                             let _ = app.emit("library-filter", "all");
                         }
                     }
@@ -318,12 +336,14 @@ pub fn run() {
                             let _ = w.show();
                             let _ = w.unminimize();
                             let _ = w.set_focus();
+                            set_dock_visible(app, true);
                             let _ = app.emit("library-filter", "pinned");
                         }
                     }
                     "hide" => {
                         if let Some(w) = app.get_webview_window("library") {
                             let _ = w.hide();
+                            set_dock_visible(app, false);
                         }
                     }
                     "autostart" => {
@@ -366,10 +386,12 @@ pub fn run() {
                         if let Some(w) = app.get_webview_window("library") {
                             if w.is_visible().unwrap_or(false) {
                                 let _ = w.hide();
+                                set_dock_visible(app, false);
                             } else {
                                 let _ = w.show();
                                 let _ = w.unminimize();
                                 let _ = w.set_focus();
+                                set_dock_visible(app, true);
                             }
                         }
                     }
@@ -378,10 +400,12 @@ pub fn run() {
 
             if let Some(w) = app.get_webview_window("library") {
                 let wc = w.clone();
+                let app_handle = app.handle().clone();
                 w.on_window_event(move |event| {
                     if let WindowEvent::CloseRequested { api, .. } = event {
                         api.prevent_close();
                         let _ = wc.hide();
+                        set_dock_visible(&app_handle, false);
                     }
                 });
             }
@@ -465,6 +489,16 @@ pub fn run() {
 
             Ok(())
         })
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while building tauri application")
+        .run(|_app_handle, _event| {
+            // macOS fires `Reopen` when the user clicks the dock icon
+            // (or double-clicks the .app). The dock icon is only present
+            // while the library window is on screen, so route the click
+            // straight back to the library.
+            #[cfg(target_os = "macos")]
+            if let tauri::RunEvent::Reopen { .. } = _event {
+                focus_library(_app_handle);
+            }
+        });
 }
