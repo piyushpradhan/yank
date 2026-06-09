@@ -50,7 +50,7 @@ const BREW_CMD = "brew install --cask piyushpradhan/yank/yank";
         </header>
 
         <p class="install__lede">
-          Tap the command, paste it into Terminal. Yank lives in
+          Copy the command, paste it into Terminal. Yank lives in
           <code>/Applications</code> and updates with <code>brew upgrade</code>.
         </p>
 
@@ -71,7 +71,7 @@ const BREW_CMD = "brew install --cask piyushpradhan/yank/yank";
             <svg class="cmd__check" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M5 12l5 5L20 7"/>
             </svg>
-            <span class="cmd__label">Copy</span>
+            <span class="cmd__label" aria-live="polite"></span>
           </span>
         </button>
 
@@ -99,7 +99,7 @@ const BREW_CMD = "brew install --cask piyushpradhan/yank/yank";
               <svg class="cmd__check" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <path d="M5 12l5 5L20 7"/>
               </svg>
-              <span class="cmd__label">Copy</span>
+              <span class="cmd__label" aria-live="polite"></span>
             </span>
           </button>
         </details>
@@ -189,7 +189,7 @@ const BREW_CMD = "brew install --cask piyushpradhan/yank/yank";
             <svg class="cmd__check" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M5 12l5 5L20 7"/>
             </svg>
-            <span class="cmd__label">Copy</span>
+            <span class="cmd__label" aria-live="polite"></span>
           </span>
         </button>
       </article>
@@ -351,7 +351,8 @@ const BREW_CMD = "brew install --cask piyushpradhan/yank/yank";
   .cmd.is-copied .cmd__copy { display: none; }
   .cmd.is-copied .cmd__check { display: inline-block; color: var(--accent-500); }
   .cmd.is-copied .cmd__action { color: var(--accent-500); }
-  .cmd.is-copied .cmd__label::after { content: 'ied'; }
+  .cmd__label::after { content: 'Copy'; }
+  .cmd.is-copied .cmd__label::after { content: 'Copied'; }
 
   .install__primary {
     width: 100%;
