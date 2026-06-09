@@ -219,14 +219,19 @@ jobs:
           shopt -s nullglob
           dir="src-tauri/target/${{ matrix.target }}/release/bundle"
           assets=""
-          # `.sig` files are emitted alongside the installers the updater can
-          # consume (`.app.tar.gz`, `.nsis.zip`, `.msi.zip`, `.AppImage`,
-          # `.AppImage.tar.gz`). Glob both the binaries and the `.sig`s so the
-          # release ends up with everything the updater needs.
-          for sub in msi nsis dmg appimage deb macos; do
-            for f in "$dir/$sub"/*; do
-              [ -f "$f" ] && assets+="$f"$'\n'
-            done
+          # Allowlist by extension — the bundler writes intermediate helpers
+          # (e.g. dmg/bundle_dmg.sh, macos/icon.icns) into these dirs that
+          # must NOT be uploaded. Match only the installers and their `.sig`
+          # companions the updater can consume.
+          for f in \
+            "$dir"/msi/*.msi "$dir"/msi/*.msi.zip "$dir"/msi/*.msi.zip.sig \
+            "$dir"/nsis/*-setup.exe "$dir"/nsis/*.nsis.zip "$dir"/nsis/*.nsis.zip.sig \
+            "$dir"/dmg/*.dmg \
+            "$dir"/appimage/*.AppImage "$dir"/appimage/*.AppImage.sig \
+            "$dir"/appimage/*.AppImage.tar.gz "$dir"/appimage/*.AppImage.tar.gz.sig \
+            "$dir"/deb/*.deb "$dir"/deb/*.deb.sig \
+            "$dir"/macos/*.app.tar.gz "$dir"/macos/*.app.tar.gz.sig; do
+            [ -f "$f" ] && assets+="$f"$'\n'
           done
           assets="${assets%$'\n'}"
           echo "files<<EOF" >> "$GITHUB_OUTPUT"
