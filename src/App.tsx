@@ -176,7 +176,16 @@ function App() {
       )}
 
       {hintDismissed === false && (
-        <WelcomeModal shortcut={shortcut} onDismiss={() => setHintDismissed(true)} />
+        <WelcomeModal
+          shortcut={shortcut}
+          onDismiss={(autostartEnabled) => {
+            // Mirror the autostart choice into local tweaks state so the
+            // Tweaks panel reflects what the OS just got told, without a
+            // round-trip to get_autostart.
+            setTweaks((prev) => ({ ...prev, autostart: autostartEnabled }));
+            setHintDismissed(true);
+          }}
+        />
       )}
 
       {app.toast && <Toast t={t} toast={app.toast} />}

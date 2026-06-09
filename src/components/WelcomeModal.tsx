@@ -1,20 +1,29 @@
 import { invoke } from '@tauri-apps/api/core';
-import { Box, Button, Card, Inline, Kbd, Stack, Text } from 'ember-design-system';
-import { Fragment } from 'react';
+import { Box, Button, Card, Inline, Kbd, Stack, Switch, Text } from 'ember-design-system';
+import { Fragment, useState } from 'react';
 import { getKeyIcon } from '../lib/keyIcons';
 import { DEFAULT_SHORTCUT, tokensOf, type ShortcutConfig } from '../lib/shortcut';
 
 interface WelcomeModalProps {
   shortcut: ShortcutConfig | null;
-  onDismiss: () => void;
+  onDismiss: (autostartEnabled: boolean) => void;
 }
 
 export function WelcomeModal({ shortcut, onDismiss }: WelcomeModalProps) {
   const tokens = tokensOf(shortcut ?? DEFAULT_SHORTCUT);
+  // Default ON: a clipboard manager has to be running to capture clips —
+  // an off-by-default toggle here just leads to "why didn't it save X?".
+  const [autostart, setAutostart] = useState(true);
 
   const dismiss = () => {
+    // Fire the autostart write before dismissing the modal — on macOS this
+    // installs the LaunchAgent plist, on Windows the HKCU\…\Run registry
+    // value, on Linux the ~/.config/autostart/.desktop file (all handled by
+    // tauri-plugin-autostart). If the user opted out, explicitly disable
+    // so a re-install can't silently inherit a stale LaunchAgent.
+    void invoke('set_autostart', { enabled: autostart }).catch(() => {});
     void invoke('set_hint_dismissed', { dismissed: true }).catch(() => {});
-    onDismiss();
+    onDismiss(autostart);
   };
 
   return (
@@ -131,6 +140,30 @@ export function WelcomeModal({ shortcut, onDismiss }: WelcomeModalProps) {
               </Text>{' '}
               → Global shortcut.
             </Text>
+          </Box>
+
+          <Box
+            px={4}
+            py={3}
+            radius="md"
+            style={{ border: '1px solid var(--border-subtle)' }}
+          >
+            <Inline justify="between" align="center" gap={3}>
+              <Stack gap={1} style={{ minWidth: 0 }}>
+                <Text size={13} weight="semibold">
+                  Launch Yank at login
+                </Text>
+                <Text size={11.5} tone="secondary" style={{ lineHeight: 1.5 }}>
+                  Yank needs to be running to capture clips. You can change this in Tweaks.
+                </Text>
+              </Stack>
+              <Switch
+                switchSize="md"
+                checked={autostart}
+                onChange={(e) => setAutostart(e.currentTarget.checked)}
+                aria-label="Launch Yank at login"
+              />
+            </Inline>
           </Box>
 
           <Inline justify="center">
