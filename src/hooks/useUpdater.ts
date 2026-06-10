@@ -60,13 +60,32 @@ export function useUpdater(): Updater {
     if (!isTauri || inFlight.current) return;
     inFlight.current = true;
     setStatus({ kind: 'checking' });
+
+    // Check phase: a failure here usually means the release endpoint is mid-flight
+    // (GitHub creates the release before latest.json is uploaded) or the network
+    // is flaky. In both cases the user already has the latest *published* version,
+    // so surface a calm "up to date" rather than a red error.
+    let update: Update | null;
     try {
-      const update = await check();
-      if (!update) {
-        pending.current = null;
-        setStatus({ kind: 'uptodate' });
-        return;
-      }
+      update = await check();
+    } catch (err) {
+      pending.current = null;
+      // eslint-disable-next-line no-console
+      console.warn('[updater] check failed, treating as up-to-date:', err);
+      setStatus({ kind: 'uptodate' });
+      inFlight.current = false;
+      return;
+    }
+
+    if (!update) {
+      pending.current = null;
+      setStatus({ kind: 'uptodate' });
+      inFlight.current = false;
+      return;
+    }
+
+    // Download/install phase: failures here are real — surface them.
+    try {
       pending.current = update;
       setStatus({
         kind: 'downloading',
