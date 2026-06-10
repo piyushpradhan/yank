@@ -226,32 +226,6 @@ pub fn get_loaded_shortcut(app: &AppHandle) -> ShortcutConfig {
     load_shortcut(app)
 }
 
-const PLAIN_TEXT_KEY: &str = "plainTextOnly";
-
-pub static PLAIN_TEXT_ONLY: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
-
-#[tauri::command]
-pub fn get_plain_text_only(app: AppHandle) -> bool {
-    let Ok(store) = app.store(STORE_PATH) else {
-        return false;
-    };
-    let v = store
-        .get(PLAIN_TEXT_KEY)
-        .and_then(|v| v.as_bool())
-        .unwrap_or(false);
-    PLAIN_TEXT_ONLY.store(v, std::sync::atomic::Ordering::Relaxed);
-    v
-}
-
-#[tauri::command]
-pub fn set_plain_text_only(app: AppHandle, enabled: bool) -> Result<(), String> {
-    let store = app.store(STORE_PATH).map_err(|e| e.to_string())?;
-    store.set(PLAIN_TEXT_KEY, serde_json::json!(enabled));
-    store.save().map_err(|e| e.to_string())?;
-    PLAIN_TEXT_ONLY.store(enabled, std::sync::atomic::Ordering::Relaxed);
-    Ok(())
-}
-
 const THEME_KEY: &str = "theme";
 
 #[tauri::command]

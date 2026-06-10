@@ -882,6 +882,26 @@ h4 {
   letter-spacing: -0.028em;
   margin-top: var(--s-3);
 }
+.faq-feedback {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  margin-top: var(--s-5);
+  padding: var(--s-2) var(--s-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+  letter-spacing: 0.02em;
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: border-color 160ms, color 160ms, background 160ms;
+}
+.faq-feedback:hover {
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+  background: var(--bg-subtle);
+}
 .faq-list {
   display: flex;
   flex-direction: column;

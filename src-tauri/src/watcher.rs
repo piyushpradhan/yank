@@ -23,20 +23,14 @@ pub fn spawn(app: AppHandle) {
         loop {
             std::thread::sleep(Duration::from_millis(500));
 
-            // Check for image first. When plain-text-only mode is on, skip image
-            // capture entirely. arboard's get_image works on Windows, macOS, and
-            // Linux — gating this to Windows used to silence cross-platform
-            // warnings, but it disabled image capture on the other platforms too.
-            if !crate::settings::PLAIN_TEXT_ONLY.load(std::sync::atomic::Ordering::Relaxed) {
-                if let Ok(img) = cb.get_image() {
-                    let hash = image_hash(&img);
-                    if last_image_hash != Some(hash) {
-                        last_image_hash = Some(hash);
-                        let source = active_window_title();
-                        insert_image_and_emit(&app, &img, source);
-                    }
-                    continue;
+            if let Ok(img) = cb.get_image() {
+                let hash = image_hash(&img);
+                if last_image_hash != Some(hash) {
+                    last_image_hash = Some(hash);
+                    let source = active_window_title();
+                    insert_image_and_emit(&app, &img, source);
                 }
+                continue;
             }
 
             // Check for text

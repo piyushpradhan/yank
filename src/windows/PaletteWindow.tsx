@@ -44,9 +44,6 @@ export function PaletteWindow() {
         setTweaks((prev) => ({ ...prev, theme: theme as ThemeMode }));
       })
       .catch(() => {});
-    invoke<boolean>('get_plain_text_only')
-      .then((enabled) => setTweaks((prev) => ({ ...prev, plainTextOnly: enabled })))
-      .catch(() => {});
   }, []);
 
   useEffect(() => {

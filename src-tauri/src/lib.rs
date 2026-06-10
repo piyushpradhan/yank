@@ -223,8 +223,6 @@ pub fn run() {
             settings::set_shortcut,
             settings::get_autostart,
             settings::set_autostart,
-            settings::get_plain_text_only,
-            settings::set_plain_text_only,
             settings::get_theme,
             settings::set_theme,
         ])

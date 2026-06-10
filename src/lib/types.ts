@@ -51,7 +51,6 @@ export interface Tweaks {
   previewMode: PreviewMode;
   paletteShortcut?: string;
   autostart?: boolean;
-  plainTextOnly?: boolean;
 }
 
 /**

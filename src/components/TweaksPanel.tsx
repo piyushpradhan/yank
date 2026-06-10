@@ -313,18 +313,6 @@ export function TweaksPanel({
             off
           </Chip>
         </Row>
-        <Row label="Plain text only">
-          <Chip
-            active={tweaks.plainTextOnly ?? false}
-            onClick={() => {
-              const next = !(tweaks.plainTextOnly ?? false);
-              set('plainTextOnly', next);
-              void invoke('set_plain_text_only', { enabled: next });
-            }}
-          >
-            {(tweaks.plainTextOnly ?? false) ? 'always' : 'auto'}
-          </Chip>
-        </Row>
       </Section>
 
       <Section title="Global shortcut">
@@ -346,30 +334,6 @@ export function TweaksPanel({
             {tweaks.autostart ? 'on' : 'off'}
           </Chip>
         </Row>
-      </Section>
-
-      <Section title="Updates">
-        <Row label={`Version ${updater.currentVersion ?? '—'}`}>
-          {updater.status.kind === 'ready' ? (
-            <Button size="sm" variant="primary" onClick={() => void updater.restart()}>
-              Restart to install
-            </Button>
-          ) : (
-            <Button
-              size="sm"
-              variant="ghost"
-              disabled={updater.status.kind === 'checking' || updater.status.kind === 'downloading'}
-              onClick={() => void updater.check()}
-            >
-              {updaterLabel(updater.status)}
-            </Button>
-          )}
-        </Row>
-        {updater.status.kind === 'error' && (
-          <Text size={11} tone="danger">
-            {updater.status.message}
-          </Text>
-        )}
       </Section>
 
       <Box px={4} py={3} style={{ background: 'color-mix(in oklab, var(--status-danger) 5%, transparent)' }}>
@@ -417,31 +381,79 @@ export function TweaksPanel({
           background: 'var(--bg-surface)',
         }}
       >
-        <button
-          type="button"
-          onClick={() => {
-            void openUrl('https://github.com/piyushpradhan/yank/issues').catch(() => {});
-          }}
-          style={{
-            all: 'unset',
-            cursor: 'pointer',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 4,
-            color: 'var(--text-tertiary)',
-          }}
-          onMouseEnter={(e) => {
-            (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-secondary)';
-          }}
-          onMouseLeave={(e) => {
-            (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-tertiary)';
-          }}
-        >
-          <Text size={11} style={{ color: 'inherit' }}>
-            Feedback, bugs, ideas
+        <Inline justify="between" align="center" gap={2}>
+          <button
+            type="button"
+            disabled={
+              updater.status.kind === 'checking' || updater.status.kind === 'downloading'
+            }
+            onClick={() => {
+              if (updater.status.kind === 'ready') {
+                void updater.restart();
+              } else {
+                void updater.check();
+              }
+            }}
+            style={{
+              all: 'unset',
+              cursor:
+                updater.status.kind === 'checking' || updater.status.kind === 'downloading'
+                  ? 'default'
+                  : 'pointer',
+              color: 'var(--text-tertiary)',
+              minWidth: 0,
+            }}
+            onMouseEnter={(e) => {
+              if (
+                updater.status.kind !== 'checking' &&
+                updater.status.kind !== 'downloading'
+              ) {
+                (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-secondary)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-tertiary)';
+            }}
+            title={updaterLabel(updater.status)}
+          >
+            <Text size={11} style={{ color: 'inherit' }}>
+              v{updater.currentVersion ?? '—'}
+              {updater.status.kind === 'ready' ? ' · restart to install' : ''}
+              {updater.status.kind === 'checking' ? ' · checking…' : ''}
+              {updater.status.kind === 'downloading' ? ' · downloading…' : ''}
+            </Text>
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              void openUrl('https://github.com/piyushpradhan/yank/issues').catch(() => {});
+            }}
+            style={{
+              all: 'unset',
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 4,
+              color: 'var(--text-tertiary)',
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-secondary)';
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-tertiary)';
+            }}
+          >
+            <Text size={11} style={{ color: 'inherit' }}>
+              Feedback, bugs, ideas
+            </Text>
+            <LuArrowUpRight size={11} aria-hidden />
+          </button>
+        </Inline>
+        {updater.status.kind === 'error' && (
+          <Text as="div" size={11} tone="danger" style={{ marginTop: 6 }}>
+            {updater.status.message}
           </Text>
-          <LuArrowUpRight size={11} aria-hidden />
-        </button>
+        )}
       </Box>
       </Card>
     </>

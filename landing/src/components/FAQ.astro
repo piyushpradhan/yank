@@ -7,6 +7,19 @@ import { faqs } from "../lib/faqs";
     <div>
       <span class="eyebrow">FAQ</span>
       <h2 id="faq-heading">Reasonable questions, honest answers.</h2>
+      <a
+        class="faq-feedback"
+        href="https://github.com/piyushpradhan/yank/issues"
+        target="_blank"
+        rel="noopener noreferrer"
+        data-track-github="feedback"
+      >
+        <span>Feedback, bugs, ideas</span>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M7 17 17 7"/>
+          <path d="M7 7h10v10"/>
+        </svg>
+      </a>
     </div>
 
     <div class="faq-list" itemscope itemtype="https://schema.org/FAQPage">
@@ -33,3 +46,15 @@ import { faqs } from "../lib/faqs";
     </div>
   </div>
 </section>
+
+<script>
+  function track(name: string, data?: Record<string, unknown>) {
+    (window as any).umami?.track?.(name, data);
+  }
+  document.querySelectorAll('.faq [data-track-github]').forEach(function (a) {
+    a.addEventListener('click', function () {
+      var target = a instanceof HTMLElement ? a.dataset.trackGithub : undefined;
+      track('github_click', { location: 'faq', target: target || 'feedback' });
+    });
+  });
+</script>

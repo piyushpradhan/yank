@@ -62,9 +62,6 @@ function App() {
     void invoke<boolean>('get_autostart')
       .then((enabled) => setTweaks((prev) => ({ ...prev, autostart: enabled })))
       .catch(() => {});
-    void invoke<boolean>('get_plain_text_only')
-      .then((enabled) => setTweaks((prev) => ({ ...prev, plainTextOnly: enabled })))
-      .catch(() => {});
     void invoke<ShortcutConfig>('get_shortcut')
       .then((sc) => setShortcut(sc))
       .catch(() => setShortcut(DEFAULT_SHORTCUT));
