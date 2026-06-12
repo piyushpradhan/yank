@@ -224,8 +224,8 @@ jobs:
           # must NOT be uploaded. Match only the installers and their `.sig`
           # companions the updater can consume.
           for f in \
-            "$dir"/msi/*.msi "$dir"/msi/*.msi.zip "$dir"/msi/*.msi.zip.sig \
-            "$dir"/nsis/*-setup.exe "$dir"/nsis/*.nsis.zip "$dir"/nsis/*.nsis.zip.sig \
+            "$dir"/msi/*.msi "$dir"/msi/*.msi.sig "$dir"/msi/*.msi.zip "$dir"/msi/*.msi.zip.sig \
+            "$dir"/nsis/*-setup.exe "$dir"/nsis/*-setup.exe.sig "$dir"/nsis/*.nsis.zip "$dir"/nsis/*.nsis.zip.sig \
             "$dir"/dmg/*.dmg \
             "$dir"/appimage/*.AppImage "$dir"/appimage/*.AppImage.sig \
             "$dir"/appimage/*.AppImage.tar.gz "$dir"/appimage/*.AppImage.tar.gz.sig \
@@ -261,10 +261,17 @@ jobs:
           # First `.sig` wins per platform. The bundler emits exactly one per
           # updater-eligible installer; if both .app.tar.gz.sig and .dmg.sig
           # appear (future tauri versions), the .app.tar.gz one is preferred.
+          #
+          # Tauri v2 (modern, createUpdaterArtifacts: true) signs the installer
+          # directly: NSIS → `*-setup.exe` + `*-setup.exe.sig`, MSI → `*.msi` +
+          # `*.msi.sig`. The `.nsis.zip`/`.msi.zip` names are the legacy
+          # v1-compatible format — kept here as fallbacks for older toolchains.
           sig_path=""
           for candidate in \
             "$dir"/macos/*.app.tar.gz.sig \
+            "$dir"/nsis/*-setup.exe.sig \
             "$dir"/nsis/*.nsis.zip.sig \
+            "$dir"/msi/*.msi.sig \
             "$dir"/msi/*.msi.zip.sig \
             "$dir"/appimage/*.AppImage.tar.gz.sig \
             "$dir"/appimage/*.AppImage.sig; do
