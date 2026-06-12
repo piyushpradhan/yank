@@ -1,4 +1,5 @@
 mod categorize;
+mod color_names;
 mod commands;
 pub mod db;
 pub mod embed;

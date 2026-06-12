@@ -7,6 +7,7 @@ use std::time::Duration;
 use rusqlite::params;
 use tauri::{AppHandle, Emitter, Manager};
 
+use crate::color_names;
 use crate::db::Db;
 use crate::embed::{self, EmbedConfig, EmbedTask, Provider};
 use crate::local_embed::{self, LocalState};
@@ -139,7 +140,7 @@ fn build_doc_text(category: &str, label: &str, source: &str, content: &str) -> S
     let label_t = label.trim();
     let source_t = source.trim();
 
-    let mut parts: Vec<String> = Vec::with_capacity(5);
+    let mut parts: Vec<String> = Vec::with_capacity(6);
     if !label_t.is_empty() {
         parts.push(label_t.to_string());
     }
@@ -150,7 +151,19 @@ fn build_doc_text(category: &str, label: &str, source: &str, content: &str) -> S
     if !label_t.is_empty() {
         parts.push(label_t.to_string());
     }
-    parts.push(body);
+    // Colour enrichment: for colour clips, append the nearest named colours
+    // so the embedding vector encodes human-readable colour semantics. A
+    // query like "orange" can then match a clip containing "#ff6b35".
+    let enriched = if category == "color" {
+        color_names::enrich_color_text(trimmed)
+    } else {
+        String::new()
+    };
+    if enriched.is_empty() {
+        parts.push(body);
+    } else {
+        parts.push(format!("{body} {enriched}"));
+    }
     parts.join("\n")
 }
 
@@ -162,4 +175,53 @@ fn store_embedding(app: &AppHandle, id: i64, vec: &[f32], model_id: &str) {
         "UPDATE items SET embedding = ?1, embedding_model = ?2 WHERE id = ?3",
         params![bytes, model_id, id],
     );
+}
+
+#[cfg(test)]
+mod tests {
+    use super::build_doc_text;
+
+    #[test]
+    fn color_enrichment_appends_named_colors() {
+        let text = build_doc_text("color", "", "Chrome", "#ff0000");
+        assert!(text.contains("red"), "expected 'red' in doc text, got: {text}");
+    }
+
+    #[test]
+    fn color_enrichment_with_label_and_source() {
+        let text = build_doc_text("color", "Red Hex Code", "Figma", "#ff6b35");
+        assert!(text.contains("Red Hex Code"), "label missing");
+        assert!(text.contains("[color]"), "category tag missing");
+        assert!(text.contains("(from Figma)"), "source missing");
+        assert!(text.contains("#ff6b35"), "content missing");
+        assert!(
+            text.contains("orange") || text.contains("coral") || text.contains("tomato"),
+            "expected warm-color name in doc text, got: {text}"
+        );
+    }
+
+    #[test]
+    fn non_color_no_enrichment() {
+        let text = build_doc_text("text", "", "", "hello world");
+        assert!(!text.contains("red"), "non-color should not be enriched");
+        assert!(text.contains("hello world"), "content should be present");
+    }
+
+    #[test]
+    fn color_enrichment_rgb() {
+        let text = build_doc_text("color", "", "", "rgb(0, 0, 128)");
+        assert!(text.contains("navy"), "expected 'navy' in doc text, got: {text}");
+    }
+
+    #[test]
+    fn color_enrichment_hsl() {
+        let text = build_doc_text("color", "", "", "hsl(0, 100%, 50%)");
+        assert!(text.contains("red"), "expected 'red' in doc text, got: {text}");
+    }
+
+    #[test]
+    fn color_enrichment_unparseable_no_enrichment() {
+        let text = build_doc_text("color", "", "", "not a valid color");
+        assert!(!text.contains("red"), "unparseable color should not be enriched");
+    }
 }

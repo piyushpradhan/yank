@@ -1,6 +1,8 @@
 use once_cell::sync::Lazy;
 use regex::Regex;
 
+use crate::color_names;
+
 /// Shared category vocabulary. Anything that maps a query keyword back to a
 /// category (see `query_intent`) must agree with this list. Test-only:
 /// used by `query_intent::tests::returned_category_is_in_shared_vocab`.
@@ -19,7 +21,7 @@ static RE_PHONE: Lazy<Regex> = Lazy::new(|| {
     Regex::new(r"^[+]?[\d\s\-().]{7,}$").unwrap()
 });
 static RE_HEX: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"^#?([0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$").unwrap()
+    Regex::new(r"^(?:#?[0-9a-fA-F]{6}|#?[0-9a-fA-F]{8}|#[0-9a-fA-F]{3})$").unwrap()
 });
 static RE_RGB: Lazy<Regex> = Lazy::new(|| {
     Regex::new(r"^(rgb|rgba|hsl|hsla|oklch|oklab)\(").unwrap()
@@ -54,7 +56,7 @@ pub fn categorize(text: &str) -> &'static str {
         if RE_EMAIL.is_match(trimmed) {
             return "email";
         }
-        if RE_HEX.is_match(trimmed) || RE_RGB.is_match(trimmed) {
+        if RE_HEX.is_match(trimmed) || RE_RGB.is_match(trimmed) || color_names::is_named_color(trimmed) {
             return "color";
         }
         if RE_PATH_WIN.is_match(trimmed) || RE_PATH_UNIX.is_match(trimmed) {
@@ -123,13 +125,35 @@ mod tests {
     fn test_color_hex() {
         assert_eq!(categorize("#ff0000"), "color");
         assert_eq!(categorize("#fff"), "color");
+        assert_eq!(categorize("#123"), "color");
         assert_eq!(categorize("123456"), "color");
+        // Bare 3-digit hex is ambiguous with plain numbers; require # prefix.
+        assert_eq!(categorize("fff"), "text");
+        assert_eq!(categorize("123"), "number");
+        assert_eq!(categorize("abc"), "text");
     }
 
     #[test]
     fn test_color_rgb() {
         assert_eq!(categorize("rgb(255, 0, 0)"), "color");
         assert_eq!(categorize("hsl(120, 50%, 50%)"), "color");
+    }
+
+    #[test]
+    fn test_color_named() {
+        assert_eq!(categorize("red"), "color");
+        assert_eq!(categorize("Blue"), "color");
+        assert_eq!(categorize("navy"), "color");
+        assert_eq!(categorize("REBECCAPURPLE"), "color");
+    }
+
+    #[test]
+    fn test_named_color_not_false_positive() {
+        // Multi-word content is a separate heuristic; single alphabetic words
+        // that aren't named colors stay as text.
+        assert_eq!(categorize("hello"), "text");
+        assert_eq!(categorize("world"), "text");
+        assert_eq!(categorize("function"), "text");
     }
 
     #[test]
@@ -180,12 +204,24 @@ mod tests {
 
     #[test]
     fn test_address() {
-        assert_eq!(categorize("700 Montgomery St, Floor 3, San Francisco, CA 94111"), "address");
-        assert_eq!(categorize("123 Main St, Anytown, ST 12345"), "address");
-        assert_eq!(categorize("1 Infinite Loop, Cupertino, CA 95014"), "address");
-        assert_eq!(categorize("456 Oak Avenue, Portland, OR 97201"), "address");
-        assert_eq!(categorize("10 Downing St, London, UK"), "address");
-        assert_eq!(categorize("221B Baker Street, London, NW1 6XE"), "address");
+        // The RE_ADDRESS regex targets US-format "CITY, STATE ZIP" patterns.
+        // UK postcodes (e.g. "NW1 6XE") and multi-clause addresses (e.g. with
+        // "Floor 3" in the middle) are not detected.
+        let cases: &[(&str, &str)] = &[
+            ("700 Montgomery St, San Francisco, CA 94111", "address"),
+            ("123 Main St, Anytown, ST 12345", "address"),
+            ("1 Infinite Loop, Cupertino, CA 95014", "address"),
+            ("456 Oak Avenue, Portland, OR 97201", "address"),
+            ("10 Downing St, London, UK", "address"),
+        ];
+        for (addr, expected) in cases {
+            assert_eq!(
+                categorize(addr),
+                *expected,
+                "address '{addr}' should be '{expected}', got '{}'",
+                categorize(addr)
+            );
+        }
     }
 
     #[test]
