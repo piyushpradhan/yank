@@ -224,4 +224,158 @@ mod tests {
         let text = build_doc_text("color", "", "", "not a valid color");
         assert!(!text.contains("red"), "unparseable color should not be enriched");
     }
+
+    // -- Integration: full pipeline for colour clips with source attribution --
+
+    #[test]
+    fn full_pipeline_hex_from_chrome() {
+        // Simulates a user copying #ff0000 from Chrome, then searching
+        // "red hex from Chrome" or "the red one I copied".
+        let text = build_doc_text("color", "Red Hex Code", "Google Chrome", "#ff0000");
+        assert!(text.contains("Red Hex Code"), "label: {text}");
+        assert!(text.contains("[color]"), "category tag: {text}");
+        assert!(text.contains("(from Google Chrome)"), "source: {text}");
+        assert!(text.contains("#ff0000"), "content: {text}");
+        assert!(text.contains("red"), "enriched colour name: {text}");
+    }
+
+    #[test]
+    fn full_pipeline_rgba_from_figma() {
+        let text = build_doc_text("color", "Button Orange", "Figma", "rgba(255, 107, 53, 1.0)");
+        assert!(text.contains("Button Orange"));
+        assert!(text.contains("[color]"));
+        assert!(text.contains("(from Figma)"));
+        assert!(
+            text.contains("orange")
+                || text.contains("coral")
+                || text.contains("tomato")
+                || text.contains("darkorange"),
+            "warm-colour name expected in: {text}"
+        );
+    }
+
+    #[test]
+    fn full_pipeline_hsl_from_vscode() {
+        let text = build_doc_text("color", "", "Code", "hsl(240, 100%, 50%)");
+        assert!(text.contains("[color]"), "category: {text}");
+        assert!(text.contains("(from Code)"), "source: {text}");
+        assert!(text.contains("blue"), "expected blue from hsl(240, 100%, 50%): {text}");
+    }
+
+    #[test]
+    fn full_pipeline_named_color_from_notes() {
+        let text = build_doc_text("color", "", "Notes", "crimson");
+        assert!(text.contains("[color]"), "category: {text}");
+        assert!(text.contains("(from Notes)"), "source: {text}");
+        assert!(text.contains("crimson"), "content: {text}");
+        // Exact named-colour matches return only that name (not nearby names).
+    }
+
+    #[test]
+    fn full_pipeline_short_hex_from_terminal() {
+        let text = build_doc_text("color", "Background", "Terminal", "#fff");
+        assert!(text.contains("[color]"));
+        assert!(text.contains("(from Terminal)"));
+        assert!(text.contains("white"), "#fff should map to white: {text}");
+    }
+
+    #[test]
+    fn non_color_clips_are_unaffected() {
+        // URLs, text snippets, code — must stay exactly as before.
+        let url = build_doc_text("url", "GitHub PR", "Chrome", "https://github.com/anomalyco/yank/pull/42");
+        assert!(url.contains("GitHub PR"));
+        assert!(url.contains("[url]"));
+        assert!(url.contains("(from Chrome)"));
+        assert!(!url.contains(" red "), "URL doc text should never be colour-enriched");
+        assert!(!url.contains(" blue "));
+
+        let text = build_doc_text("text", "", "Notes", "hello world");
+        assert!(text.contains("hello world"));
+        assert!(text.contains("[text]"));
+        assert!(!text.contains(" red "));
+
+        let code = build_doc_text("code", "React Hook", "VSCode", "const [count, setCount] = useState(0)");
+        assert!(code.contains("useState"));
+        assert!(!code.contains(" red "));
+    }
+
+    #[test]
+    fn enrichment_idempotent_for_unparseable_colors() {
+        // Even if categorised as "color", unparseable values don't break anything.
+        let text = build_doc_text("color", "", "", "something weird");
+        assert!(text.contains("something weird"));
+        assert!(!text.contains("weird red"), "unparseable content should not add random names");
+    }
+
+    #[test]
+    fn source_attribution_present_when_label_missing() {
+        // When no AI label exists, source + category + colour names still provide
+        // enough signal for "orange color from Figma" style queries.
+        let text = build_doc_text("color", "", "Figma", "#ffa500");
+        assert!(text.contains("[color]"), "category: {text}");
+        assert!(text.contains("(from Figma)"), "source: {text}");
+        assert!(text.contains("orange"), "colour name: {text}");
+        assert!(!text.contains("Red Hex Code"), "no spurious text: {text}");
+    }
+
+    #[test]
+    fn all_color_formats_roundtrip_to_correct_names() {
+        let cases: &[(&str, &[&str])] = &[
+            ("#ff0000", &["red"]),
+            ("#00ff00", &["lime"]),
+            ("#0000ff", &["blue"]),
+            ("#ffff00", &["yellow"]),
+            ("#ff00ff", &["fuchsia", "magenta"]),
+            ("#00ffff", &["aqua", "cyan"]),
+            ("#000000", &["black"]),
+            ("#ffffff", &["white"]),
+            ("#ffa500", &["orange"]),
+            ("#800080", &["purple"]),
+            ("#008000", &["green"]),
+            ("#ffc0cb", &["pink"]),
+            ("rgb(255, 0, 0)", &["red"]),
+            ("rgb(0, 128, 0)", &["green"]),
+            ("hsl(240, 100%, 50%)", &["blue"]),
+            ("hsl(60, 100%, 50%)", &["yellow"]),
+        ];
+        for (content, expected_names) in cases {
+            let text = build_doc_text("color", "", "Figma", content);
+            let matched = expected_names.iter().any(|n| text.contains(n));
+            assert!(
+                matched,
+                "content '{content}' should enrich with one of {:?}, got: {text}",
+                expected_names
+            );
+        }
+    }
+
+    #[test]
+    fn demo_color_search_enrichment() {
+        // This test prints the full embedding text for real-world scenarios,
+        // showing exactly what the embedding model sees when a user searches.
+        let scenarios: &[(&str, &str, &str, &str)] = &[
+            // (category, label, source, content)
+            ("color", "Red Button", "Figma", "#ff0000"),
+            ("color", "Brand Orange", "Figma", "rgba(255, 107, 53, 1.0)"),
+            ("color", "Navy Text", "Chrome", "hsl(240, 100%, 25%)"),
+            ("color", "", "Chrome", "#00ff00"),
+            ("color", "Dark Mode BG", "Terminal", "#1a1a2e"),
+            ("text", "Meeting notes", "Notes", "discuss the orange hex from Figma"),
+            ("url", "GitHub PR", "Chrome", "https://github.com/anomalyco/yank/pull/42"),
+        ];
+
+        println!("\n======== COLOUR SEMANTIC SEARCH — EMBEDDING TEXT ========\n");
+        for (cat, label, source, content) in scenarios {
+            let text = build_doc_text(cat, label, source, content);
+            println!("--- content: {content}");
+            println!("    label:   {label}");
+            println!("    source:  {source}");
+            println!("    DOC TEXT:");
+            for line in text.lines() {
+                println!("      {line}");
+            }
+            println!();
+        }
+        println!("==========================================================\n");
+    }
 }
