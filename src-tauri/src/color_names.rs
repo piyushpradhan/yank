@@ -177,6 +177,14 @@ static RE_NAMED_COLOR_WHOLE: Lazy<Regex> = Lazy::new(|| {
 
 // -- Public API ----------------------------------------------------------
 
+/// Resolve a CSS named color to RGB (case-insensitive). Unlike
+/// [`parse_color_to_rgb`], this *only* consults the named-color table, so a
+/// bare-word query token like "fff" (a valid 3-digit hex) is not mistaken
+/// for a color name.
+pub fn named_rgb(name: &str) -> Option<(u8, u8, u8)> {
+    COLORS.get(&name.to_ascii_lowercase() as &str).copied()
+}
+
 /// Returns `true` when `text` is a known CSS named color (case-insensitive).
 pub fn is_named_color(text: &str) -> bool {
     let trimmed = text.trim();

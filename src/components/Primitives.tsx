@@ -1,5 +1,6 @@
-import { Badge, Box, Inline, Text, Dot, type BadgeTone } from 'ember-design-system';
+import { Badge, Box, Inline, Stack, Text, Dot, type BadgeTone } from 'ember-design-system';
 import { catStyle, CATEGORY_TONE } from '../lib/category';
+import { colorForms } from '../lib/color';
 import type { Category, ClipItem, Theme } from '../lib/types';
 
 interface CategoryChipProps {
@@ -68,8 +69,16 @@ export function ItemBody({ t, item, compact = false }: ItemBodyProps) {
   const c = catStyle(t, item.category);
 
   if (item.category === 'color') {
+    const forms = colorForms(item.content);
+    const rows: [string, string][] = forms
+      ? [
+          ['HEX', forms.hex],
+          ['RGB', forms.rgb],
+          ['HSL', forms.hsl],
+        ]
+      : [];
     return (
-      <Inline gap={3}>
+      <Inline gap={3} align="start">
         <Box
           radius="md"
           border="subtle"
@@ -81,9 +90,31 @@ export function ItemBody({ t, item, compact = false }: ItemBodyProps) {
             boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.1)',
           }}
         />
-        <Text as="code" family="mono" tone="primary" size={compact ? 12 : 13}>
-          {item.content}
-        </Text>
+        {forms ? (
+          <Stack gap={1} style={{ minWidth: 0 }}>
+            {rows.map(([k, v]) => (
+              <Inline key={k} gap={2} align="center">
+                <Text
+                  family="mono"
+                  size={10.5}
+                  tone="tertiary"
+                  transform="uppercase"
+                  tracking="widest"
+                  style={{ width: 28, flexShrink: 0 }}
+                >
+                  {k}
+                </Text>
+                <Text as="code" family="mono" tone="primary" size={compact ? 12 : 13}>
+                  {v}
+                </Text>
+              </Inline>
+            ))}
+          </Stack>
+        ) : (
+          <Text as="code" family="mono" tone="primary" size={compact ? 12 : 13}>
+            {item.content}
+          </Text>
+        )}
       </Inline>
     );
   }
