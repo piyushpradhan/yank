@@ -158,7 +158,12 @@ function PaletteRow({
           shrink={0}
           radius="sm"
           border="subtle"
-          style={{ height: 18, width: 18, background: item.content }}
+          style={{
+            height: 20,
+            width: 20,
+            background: item.content,
+            boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.1)',
+          }}
         />
       )}
 

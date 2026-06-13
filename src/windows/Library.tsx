@@ -328,6 +328,7 @@ function ListRow({
     item.category === 'phone' ||
     item.category === 'number';
   const isImage = item.category === 'image';
+  const isColor = item.category === 'color';
   const imageUrl = useImageUrl(isImage ? item.id : '', getImage ?? NO_IMAGE);
   const labelPending = !item.labelGenerated && aiLabelsEnabled;
   // When no AI label exists and none is being awaited, the heading row would
@@ -391,35 +392,63 @@ function ListRow({
           )}
         </Inline>
       )}
-      <Text
-        as="div"
-        family={isMono ? 'mono' : 'sans'}
-        size={showLabelRow ? 11.5 : t.dense ? 12.5 : 13.5}
-        leading={showLabelRow ? 1.4 : 1.3}
-        tracking={showLabelRow ? undefined : 'tight'}
-        weight={showLabelRow ? 'regular' : 'medium'}
-        tone={showLabelRow ? 'secondary' : 'primary'}
-        truncate
-      >
-        {isImage ? (
-          imageUrl ? (
-            <Image
-              src={imageUrl}
-              alt={item.preview}
-              radius="sm"
-              bg
-              fit="contain"
-              style={{ height: 40 }}
-            />
+      {isColor ? (
+        <Inline gap={2} align="center" style={{ minWidth: 0 }}>
+          <Box
+            shrink={0}
+            radius="sm"
+            border="subtle"
+            style={{
+              height: 20,
+              width: 20,
+              background: item.content,
+              boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.1)',
+            }}
+          />
+          <Text
+            as="span"
+            family="mono"
+            size={showLabelRow ? 11.5 : t.dense ? 12.5 : 13.5}
+            leading={showLabelRow ? 1.4 : 1.3}
+            tracking={showLabelRow ? undefined : 'tight'}
+            weight={showLabelRow ? 'regular' : 'medium'}
+            tone={showLabelRow ? 'secondary' : 'primary'}
+            truncate
+          >
+            {showLabelRow ? item.preview : highlightMatch(t, item.preview, query)}
+          </Text>
+        </Inline>
+      ) : (
+        <Text
+          as="div"
+          family={isMono ? 'mono' : 'sans'}
+          size={showLabelRow ? 11.5 : t.dense ? 12.5 : 13.5}
+          leading={showLabelRow ? 1.4 : 1.3}
+          tracking={showLabelRow ? undefined : 'tight'}
+          weight={showLabelRow ? 'regular' : 'medium'}
+          tone={showLabelRow ? 'secondary' : 'primary'}
+          truncate
+        >
+          {isImage ? (
+            imageUrl ? (
+              <Image
+                src={imageUrl}
+                alt={item.preview}
+                radius="sm"
+                bg
+                fit="contain"
+                style={{ height: 40 }}
+              />
+            ) : (
+              <Box aria-hidden radius="sm" bg="subtle" style={{ height: 40, width: 64 }} />
+            )
+          ) : showLabelRow ? (
+            item.preview
           ) : (
-            <Box aria-hidden radius="sm" bg="subtle" style={{ height: 40, width: 64 }} />
-          )
-        ) : showLabelRow ? (
-          item.preview
-        ) : (
-          highlightMatch(t, item.preview, query)
-        )}
-      </Text>
+            highlightMatch(t, item.preview, query)
+          )}
+        </Text>
+      )}
     </Box>
   );
 }
