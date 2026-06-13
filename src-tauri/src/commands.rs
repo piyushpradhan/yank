@@ -379,6 +379,15 @@ pub async fn search_semantic(
     let category_filter: Option<&str> = intent.category;
     let category_dto = intent.category.map(|c| c.to_string());
 
+    // Explicit colour intent — a named colour ("indigo"), or a raw value
+    // ("#4b0082", "rgb(75,0,130)"), even when the user never typed the word
+    // "color". `query_intent` only catches the generic keyword forms, so on
+    // its own a query like "indigo copied from chrome" embeds as plain text
+    // and the real swatch competes with prose that merely mentions colour.
+    // When we resolve a concrete target below, colour clips get ranked by
+    // perceptual closeness to it so the actual value the user copied wins.
+    let color_intent = crate::color_intent::detect(&q_trimmed);
+
     // Pure time / category query ("yesterday", "numbers", "numbers
     // yesterday"): skip embedding entirely and return newest items
     // matching the SQL filters, pinned first.
@@ -489,11 +498,61 @@ pub async fn search_semantic(
     // off-category neighbour, but a clearly-better off-category match
     // still wins.
     const CAT_BOOST: f32 = 0.010;
-    if let Some(want) = category_filter {
+    // An explicit colour request implies the `color` category even when the
+    // user never typed the keyword, so fold it into the soft boost.
+    let cat_want = category_filter.or(if color_intent.is_color { Some("color") } else { None });
+    if let Some(want) = cat_want {
         for (_, (score, item)) in fused.iter_mut() {
             if item.category == want {
                 *score += CAT_BOOST;
             }
+        }
+    }
+
+    // Colour-similarity boost. When the query resolved to a concrete colour,
+    // rank stored `color` clips by perceptual distance to it. This is scoped
+    // to colour items, so it can only reorder swatches — never promote
+    // unrelated text or code. The boost for a near-exact match clears the
+    // ceiling a non-colour item can reach from both pools combined
+    // (~2/(K+1) ≈ 0.033), so the colour the user actually copied surfaces;
+    // it then fades linearly to zero at COLOR_MAX_DIST, giving the "certain
+    // accuracy" gate — only genuinely-close swatches get promoted.
+    if let Some((tr, tg, tb)) = color_intent.target {
+        const COLOR_MAX_DIST: f32 = 64.0;
+        const COLOR_BOOST: f32 = 0.06;
+        let mut stmt_color = conn
+            .prepare(
+                "SELECT id, content, category, label, preview, source, pinned,
+                        deleted, deleted_at, last_used_at
+                 FROM items
+                 WHERE deleted = 0 AND category = 'color'
+                   AND created_at BETWEEN ?1 AND ?2",
+            )
+            .map_err(map_err)?;
+        let color_rows: Vec<ClipItem> = stmt_color
+            .query_map(params![from_ms, to_ms], row_to_item)
+            .map_err(map_err)?
+            .filter_map(|r| r.ok())
+            .collect();
+        for item in color_rows {
+            let Some((r, g, b)) = crate::color_names::parse_color_to_rgb(&item.content) else {
+                continue;
+            };
+            let dr = tr as f32 - r as f32;
+            let dg = tg as f32 - g as f32;
+            let db_ = tb as f32 - b as f32;
+            let dist = (dr * dr + dg * dg + db_ * db_).sqrt();
+            if dist > COLOR_MAX_DIST {
+                continue;
+            }
+            let boost = COLOR_BOOST * (1.0 - dist / COLOR_MAX_DIST);
+            // A clip beyond the vector/BM25 pools (the swatch the user wants
+            // but never described in words) still belongs here, so insert it
+            // if absent rather than only boosting in-pool hits.
+            fused
+                .entry(item.id.clone())
+                .and_modify(|(s, _)| *s += boost)
+                .or_insert((boost, item));
         }
     }
 
