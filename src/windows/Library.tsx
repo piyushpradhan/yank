@@ -592,7 +592,12 @@ export function Library({
       cancelled = true;
       clearTimeout(h);
     };
-  }, [query, mode, app, semanticAvailable]);
+    // Depend on the stable `app.semanticSearch` callback, not the whole `app`
+    // object — `useAppState` returns a fresh object every render, and a failed
+    // search flips provider health (re-rendering the parent), which would
+    // otherwise re-fire this effect forever and flicker the empty state.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query, mode, app.semanticSearch, semanticAvailable]);
 
   const dismissTimeChip = useCallback(async () => {
     try {
