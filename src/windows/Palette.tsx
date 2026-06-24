@@ -275,7 +275,9 @@ export function Palette({
     if (offToastShownRef.current) return;
     offToastShownRef.current = true;
     app.showToast(semanticOffMessage, 'info');
-  }, [mode, semanticOffMessage, app]);
+    // Depend on the stable `app.showToast`, not the whole (unstable) `app`.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode, semanticOffMessage, app.showToast]);
 
   useEffect(() => {
     if (mode !== 'semantic' || !query.trim()) {
@@ -317,7 +319,13 @@ export function Palette({
       cancelled = true;
       clearTimeout(h);
     };
-  }, [query, mode, app, semanticAvailable]);
+    // Depend on the stable `app.semanticSearch` callback, not the whole `app`
+    // object — `useAppState` returns a fresh object every render, and a failed
+    // search flips provider health (re-rendering the parent), which would
+    // otherwise re-fire this effect forever and flicker the empty state between
+    // "Thinking…" and "Semantic search failed."
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query, mode, app.semanticSearch, semanticAvailable]);
 
   const results = useMemo(() => {
     if (mode === 'semantic' && semanticResults !== null) {
