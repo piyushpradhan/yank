@@ -75,6 +75,11 @@ const BREW_CMD = "brew install --cask piyushpradhan/yank/yank";
           </span>
         </button>
 
+        <p class="install__note">
+          Apple Silicon only · Intel Mac build coming soon — for now,
+          <a href="https://github.com/piyushpradhan/yank#building-from-source">build from source</a>.
+        </p>
+
         <details class="install__alt">
           <summary>Prefer a direct download?</summary>
           <p>
@@ -369,6 +374,14 @@ const BREW_CMD = "brew install --cask piyushpradhan/yank/yank";
     color: var(--text-tertiary);
     letter-spacing: 0.04em;
   }
+  .install__note a {
+    color: var(--accent-600);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    text-decoration-color: color-mix(in oklab, var(--accent-500) 40%, transparent);
+  }
+  [data-theme='dark'] .install__note a { color: var(--accent-500); }
+  .install__note a:hover { text-decoration-color: currentColor; }
 
   .install__alt {
     margin-top: auto;
