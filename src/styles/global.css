@@ -134,6 +134,13 @@ kbd,
   box-shadow: var(--shadow-md);
 }
 
+/* Palette search sits on a translucent near-white background in light mode;
+ * the design-system default (text-tertiary at .5 opacity) washes out there. */
+.palette-search::placeholder {
+  color: var(--text-secondary) !important;
+  opacity: 0.75 !important;
+}
+
 .time-chip-close {
   display: inline-flex;
   align-items: center;

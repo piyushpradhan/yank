@@ -449,7 +449,7 @@ export function Palette({
           >
             <LuSearch
               size={16}
-              color={mode === 'semantic' ? 'var(--accent-ember-500)' : 'var(--text-tertiary)'}
+              color={mode === 'semantic' ? 'var(--accent-ember-500)' : 'var(--text-secondary)'}
               style={{ flexShrink: 0, transition: 'color 150ms' }}
             />
             <Input
@@ -459,7 +459,7 @@ export function Palette({
               placeholder={
                 mode === 'semantic' ? 'Describe what you need…' : 'Search clipboard history'
               }
-              className="!border-none !bg-transparent !text-lg"
+              className="palette-search !border-none !bg-transparent !text-lg"
               disableFocus
             />
             <Button
