@@ -141,10 +141,34 @@ fn insert_text_and_emit(app: &AppHandle, text: &str, source: Option<String>) {
     let db: Arc<Db> = app.state::<Arc<Db>>().inner().clone();
     let id = {
         let conn = db.0.lock().unwrap();
-        match crate::db::insert_item(&conn, text, category, &preview, source.as_deref()) {
-            Ok(id) => id,
+
+        // If this exact content already exists (non-deleted), just bump its
+        // last_used_at instead of inserting a duplicate.  This prevents every
+        // paste FROM Yank from creating a second entry in the history.
+        match crate::db::dedup_text(&conn, text) {
+            Ok(Some(existing_id)) => {
+                let now = chrono::Utc::now().timestamp_millis();
+                let _ = conn.execute(
+                    "UPDATE items SET last_used_at = ?1 WHERE id = ?2",
+                    rusqlite::params![now, existing_id],
+                );
+                existing_id
+            }
+            Ok(None) => match crate::db::insert_item(
+                &conn,
+                text,
+                category,
+                &preview,
+                source.as_deref(),
+            ) {
+                Ok(id) => id,
+                Err(err) => {
+                    eprintln!("[watcher] insert failed: {err}");
+                    return;
+                }
+            },
             Err(err) => {
-                eprintln!("[watcher] insert failed: {err}");
+                eprintln!("[watcher] dedup check failed: {err}");
                 return;
             }
         }

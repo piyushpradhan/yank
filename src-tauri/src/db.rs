@@ -113,6 +113,25 @@ pub fn insert_item(
     Ok(conn.last_insert_rowid())
 }
 
+/// Check whether `content` already exists in a non-deleted, non-image item.
+/// If so the watcher touches the existing row instead of inserting a duplicate —
+/// this prevents a round-trip through the clipboard (e.g. copying FROM Yank)
+/// from creating an extra entry.
+pub fn dedup_text(conn: &Connection, content: &str) -> rusqlite::Result<Option<i64>> {
+    let result = conn.query_row(
+        "SELECT id FROM items
+          WHERE content = ?1 AND category != 'image' AND deleted = 0
+          ORDER BY last_used_at DESC LIMIT 1",
+        params![content],
+        |r| r.get(0),
+    );
+    match result {
+        Ok(id) => Ok(Some(id)),
+        Err(rusqlite::Error::QueryReturnedNoRows) => Ok(None),
+        Err(e) => Err(e),
+    }
+}
+
 pub fn insert_image_item(
     conn: &Connection,
     image_data: &[u8],
