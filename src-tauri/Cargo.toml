@@ -1,6 +1,6 @@
 [package]
 name = "yank"
-version = "0.7.53"
+version = "0.7.54"
 description = "Yank — clipboard with natural-language search"
 authors = ["you"]
 edition = "2021"
