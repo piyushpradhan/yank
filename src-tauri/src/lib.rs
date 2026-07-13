@@ -416,6 +416,29 @@ pub fn run() {
                 #[cfg(target_os = "windows")]
                 strip_palette_chrome(&w);
 
+                // macOS: make the palette a non-activating floating panel so it
+                // receives keyboard events without stealing focus from whichever
+                // app the user was in.  NSNonactivatingPanelMask (1<<7) means
+                // the panel can become key (get keystrokes) without activating
+                // the owning application.
+                #[cfg(target_os = "macos")]
+                {
+                    use objc::{msg_send, sel, sel_impl, runtime::Object};
+                    if let Ok(ptr) = w.ns_window() {
+                        let ns_window = ptr as *mut Object;
+                        unsafe {
+                            let current_style: u64 = msg_send![ns_window, styleMask];
+                            let _: () =
+                                msg_send![ns_window, setStyleMask: (current_style | (1u64 << 7))];
+
+                            // canJoinAllSpaces (1<<0) | fullScreenAuxiliary (1<<17)
+                            // | ignoresCycle (1<<20)
+                            let behavior: u64 = (1u64 << 0) | (1u64 << 17) | (1u64 << 20);
+                            let _: () = msg_send![ns_window, setCollectionBehavior: behavior];
+                        }
+                    }
+                }
+
                 let wc = w.clone();
                 w.on_window_event(move |event| match event {
                     WindowEvent::CloseRequested { api, .. } => {
