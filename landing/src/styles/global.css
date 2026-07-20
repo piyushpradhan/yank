@@ -3,12 +3,13 @@
 /* Bridge ember-design-system tokens into Tailwind v4 utilities. */
 @theme {
   --font-sans:
-    'Geist Sans', 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --font-mono:
     'Geist Mono', 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
-  --font-serif:
-    'Source Serif 4', ui-serif, Georgia, 'Times New Roman', serif;
-  --font-display: var(--font-serif);
+  /* Friendly single-typeface system — Inter everywhere; the old serif/display
+     roles now resolve to Inter so editorial copy reads as one voice. */
+  --font-serif: var(--font-sans);
+  --font-display: var(--font-sans);
 
   --color-canvas: var(--bg-canvas);
   --color-surface: var(--bg-surface);
@@ -44,15 +45,14 @@
    Tokens supplied by ember-design-system. Local aliases below.
    ------------------------------------------------------------------ */
 :root {
-  /* Font overrides — ember-design-system's tokens.css sets --font-sans/mono/display
-     to Inter/JetBrains Mono which we don't load. Re-declare here so cascade wins. */
+  /* Friendly, rounded, Inter-led design language (see landing design.md).
+     Inter for headings and body; Geist Mono kept only for terminal/command UI. */
   --font-sans:
-    'Geist Sans', 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --font-mono:
     'Geist Mono', 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
-  --font-serif:
-    'Source Serif 4', ui-serif, Georgia, 'Times New Roman', serif;
-  --font-display: var(--font-serif);
+  --font-serif: var(--font-sans);
+  --font-display: var(--font-sans);
 
   /* Aliases so design rules using --accent-* resolve against ember vars */
   --accent-50: var(--accent-ember-50);
@@ -88,9 +88,10 @@
   --t-5xl: 60px;
   --t-6xl: 76px;
 
-  --r-sm: 4px;
-  --r-md: 6px;
-  --r-lg: 10px;
+  /* Rounded, approachable — cards 16px, controls 12px, CTAs pill (design.md §5) */
+  --r-sm: 10px;
+  --r-md: 12px;
+  --r-lg: 16px;
   --r-pill: 999px;
 }
 
@@ -166,7 +167,7 @@ h2,
 h3,
 h4 {
   font-family: var(--font-display);
-  font-weight: 500;
+  font-weight: 700;
   letter-spacing: -0.02em;
   color: var(--text-primary);
   margin: 0;
@@ -180,38 +181,54 @@ h4 {
   padding: 0 var(--s-5);
 }
 
+/* Pill chip — the friendly badge that opens each section (design.md rounded tags) */
 .eyebrow {
-  font-family: var(--font-mono);
-  font-size: var(--t-2xs);
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--text-tertiary);
+  font-family: var(--font-sans);
+  font-size: var(--t-xs);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--accent-600);
+  background: var(--accent-soft);
+  border: 1px solid color-mix(in oklab, var(--accent-500) 22%, transparent);
+  border-radius: var(--r-pill);
+  padding: var(--s-2) var(--s-3);
   display: inline-flex;
   align-items: center;
   gap: var(--s-2);
+  line-height: 1;
 }
 .eyebrow::before {
   content: '';
-  width: 18px;
-  height: 1px;
-  background: var(--border-strong);
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent-500);
+}
+[data-theme='dark'] .eyebrow {
+  color: var(--accent-700);
 }
 
 /* ---------- Top bar ---------- */
+/* Floating, detached nav — rounded bar that hovers over the canvas (design.md) */
 .topbar {
   position: sticky;
   top: 0;
   z-index: 50;
-  background: color-mix(in oklab, var(--bg-canvas) 80%, transparent);
-  backdrop-filter: saturate(180%) blur(12px);
-  -webkit-backdrop-filter: saturate(180%) blur(12px);
-  border-bottom: 1px solid var(--border-subtle);
+  padding: var(--s-3) var(--s-5);
+  background: transparent;
 }
 .topbar .row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 64px;
+  height: 60px;
+  padding: 0 var(--s-4) 0 var(--s-5);
+  background: color-mix(in oklab, var(--bg-surface) 78%, transparent);
+  backdrop-filter: saturate(180%) blur(14px);
+  -webkit-backdrop-filter: saturate(180%) blur(14px);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-pill);
+  box-shadow: var(--shadow-sm);
 }
 .brand {
   display: flex;
@@ -269,6 +286,11 @@ h4 {
     display: none;
   }
 }
+@media (max-width: 480px) {
+  .brand .tag {
+    display: none;
+  }
+}
 
 .icon-btn {
   width: 36px;
@@ -298,10 +320,10 @@ h4 {
   justify-content: center;
   gap: var(--s-2);
   height: 36px;
-  padding: 0 var(--s-4);
-  border-radius: var(--r-sm);
+  padding: 0 var(--s-5);
+  border-radius: var(--r-pill);
   font-size: var(--t-sm);
-  font-weight: 500;
+  font-weight: 600;
   line-height: 1;
   white-space: nowrap;
   transition:
@@ -387,21 +409,28 @@ h4 {
 }
 
 /* ---------- Hero ---------- */
+/* Centered hero — copy stacked over a wide product visual (design.md layout) */
 .hero {
   position: relative;
-  padding: var(--s-12) 0 var(--s-10);
+  padding: var(--s-12) 0 var(--s-8);
   overflow: hidden;
   border-top: 0;
 }
 .hero .grid {
-  display: grid;
-  grid-template-columns: 1.05fr 1fr;
-  gap: var(--s-10);
+  display: flex;
+  flex-direction: column;
   align-items: center;
+  gap: var(--s-8);
+}
+.hero-copy {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  max-width: 760px;
 }
 @media (max-width: 960px) {
   .hero .grid {
-    grid-template-columns: 1fr;
     gap: var(--s-8);
   }
 }
@@ -409,8 +438,8 @@ h4 {
   font-size: clamp(44px, 6vw, var(--t-6xl));
   line-height: 1.02;
   letter-spacing: -0.035em;
-  margin-top: var(--s-4);
-  font-weight: 400;
+  margin-top: var(--s-5);
+  font-weight: 700;
 }
 .hero h1 em {
   font-style: italic;
@@ -419,14 +448,15 @@ h4 {
 .hero .lede {
   font-family: var(--font-serif);
   font-size: var(--t-lg);
-  line-height: 1.5;
+  line-height: 1.55;
   color: var(--text-secondary);
   margin-top: var(--s-5);
-  max-width: 52ch;
+  max-width: 58ch;
 }
 .hero .ctas {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: var(--s-3);
   margin-top: var(--s-6);
   flex-wrap: wrap;
@@ -434,11 +464,13 @@ h4 {
 .hero .meta {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: var(--s-5);
   margin-top: var(--s-5);
   font-size: var(--t-xs);
   color: var(--text-tertiary);
   font-family: var(--font-mono);
+  flex-wrap: wrap;
 }
 .hero .meta .dot {
   width: 4px;
@@ -462,8 +494,89 @@ h4 {
   color: var(--accent-500);
 }
 
+/* Example query chips — natural-language recall made visible */
+.hero-queries {
+  list-style: none;
+  margin: var(--s-6) 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--s-3);
+  max-width: 600px;
+}
+.hero-queries li {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  font-family: var(--font-mono);
+  font-size: var(--t-sm);
+  color: var(--text-secondary);
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-pill);
+  padding: var(--s-2) var(--s-4);
+  white-space: nowrap;
+}
+.hero-queries li::before {
+  content: '›';
+  color: var(--accent-500);
+  font-weight: 600;
+}
+
+/* Trust row — version/size/platforms + Product Hunt, given room to breathe */
+.hero-trust {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-5);
+  margin-top: var(--s-6);
+}
+.hero-trust .meta {
+  margin-top: 0;
+}
+.ph-badge {
+  display: inline-flex;
+  opacity: 0.92;
+  transition: opacity 160ms;
+}
+.ph-badge:hover {
+  opacity: 1;
+}
+
+/* Product visual with an ambient accent glow so it reads as a showpiece */
+.hero-visual {
+  position: relative;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+.hero-glow {
+  position: absolute;
+  top: -8%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 82%;
+  height: 72%;
+  background: radial-gradient(
+    50% 60% at 50% 0%,
+    color-mix(in oklab, var(--accent-500) 26%, transparent),
+    transparent 72%
+  );
+  filter: blur(48px);
+  z-index: 0;
+  pointer-events: none;
+}
+.hero-visual .app {
+  position: relative;
+  z-index: 1;
+}
+
 /* ---------- App preview (hero right) ---------- */
 .app {
+  width: 100%;
+  max-width: 920px;
+  margin-inline: auto;
   background: var(--bg-surface);
   border: 1px solid var(--border-default);
   border-radius: var(--r-lg);
@@ -471,6 +584,7 @@ h4 {
   overflow: hidden;
   font-size: var(--t-sm);
   position: relative;
+  text-align: left;
 }
 .app__chrome {
   display: flex;
@@ -680,44 +794,43 @@ h4 {
 /* ---------- Sections ---------- */
 .section {
   padding: var(--s-12) 0;
-  border-top: 1px solid var(--border-subtle);
 }
+/* Centered section intro — badge, heading, supporting line stacked (design.md) */
 .section-head {
   display: flex;
-  justify-content: space-between;
-  align-items: end;
-  gap: var(--s-6);
-  margin-bottom: var(--s-8);
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--s-4);
+  max-width: 640px;
+  margin: 0 auto var(--s-10);
+}
+.section-head > div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-4);
 }
 .section-head h2 {
   font-size: clamp(30px, 4vw, var(--t-4xl));
   line-height: 1.1;
-  max-width: 18ch;
+  max-width: 20ch;
   letter-spacing: -0.028em;
-  margin-top: var(--s-3);
 }
 .section-head p {
   font-family: var(--font-serif);
   font-size: var(--t-md);
   color: var(--text-secondary);
-  max-width: 38ch;
+  max-width: 48ch;
   margin: 0;
   line-height: 1.55;
-}
-@media (max-width: 760px) {
-  .section-head {
-    flex-direction: column;
-    align-items: start;
-  }
 }
 
 /* ---------- Features grid ---------- */
 .features {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: var(--s-6) var(--s-8);
-  border-top: 1px solid var(--border-subtle);
-  padding-top: var(--s-8);
+  gap: var(--s-5);
 }
 @media (max-width: 960px) {
   .features {
@@ -729,26 +842,46 @@ h4 {
     grid-template-columns: 1fr;
   }
 }
+/* Filled rounded feature cards (design.md §4 card component) */
 .feature {
   position: relative;
-  padding-top: var(--s-3);
-  border-top: 1px solid var(--border-subtle);
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-lg);
+  padding: var(--s-6);
+  transition:
+    transform 160ms var(--easing-standard),
+    box-shadow 160ms var(--easing-standard),
+    border-color 160ms;
+}
+.feature:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--border-default);
 }
 .feature .num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 30px;
+  min-width: 30px;
+  padding: 0 var(--s-2);
   font-family: var(--font-mono);
-  font-size: var(--t-2xs);
-  color: var(--text-tertiary);
-  letter-spacing: 0.08em;
-  position: absolute;
-  top: var(--s-3);
-  right: 0;
+  font-size: var(--t-xs);
+  font-weight: 500;
+  color: var(--accent-600);
+  background: var(--accent-soft);
+  border-radius: var(--r-pill);
+  letter-spacing: 0.04em;
+}
+[data-theme='dark'] .feature .num {
+  color: var(--accent-700);
 }
 .feature h3 {
-  font-size: var(--t-xl);
+  font-size: var(--t-lg);
   letter-spacing: -0.015em;
-  font-weight: 500;
-  margin-top: var(--s-3);
-  margin-right: var(--s-6);
+  font-weight: 600;
+  margin-top: var(--s-4);
 }
 .feature p {
   font-family: var(--font-serif);
@@ -778,24 +911,31 @@ h4 {
 }
 .steps li {
   display: grid;
-  grid-template-columns: 56px 1fr;
+  grid-template-columns: 44px 1fr;
   gap: var(--s-4);
-  padding: var(--s-5) 0;
-  border-top: 1px solid var(--border-subtle);
-}
-.steps li:last-child {
-  border-bottom: 1px solid var(--border-subtle);
+  padding: var(--s-4) 0;
 }
 .steps .n {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent-600);
+  border: 1px solid color-mix(in oklab, var(--accent-500) 22%, transparent);
   font-family: var(--font-mono);
-  font-size: var(--t-xs);
-  color: var(--text-tertiary);
-  letter-spacing: 0.08em;
-  padding-top: 4px;
+  font-size: var(--t-sm);
+  font-weight: 600;
+  letter-spacing: 0;
+}
+[data-theme='dark'] .steps .n {
+  color: var(--accent-700);
 }
 .steps h3 {
   font-size: var(--t-xl);
-  font-weight: 500;
+  font-weight: 600;
   letter-spacing: -0.015em;
 }
 .steps p {
@@ -867,26 +1007,28 @@ h4 {
 }
 
 /* ---------- FAQ ---------- */
+/* Centered, narrow FAQ column (design.md whitespace-forward layout) */
 .faq {
-  display: grid;
-  grid-template-columns: 1fr 1.6fr;
-  gap: var(--s-10);
+  max-width: 760px;
+  margin: 0 auto;
 }
-@media (max-width: 900px) {
-  .faq {
-    grid-template-columns: 1fr;
-  }
+.faq > div:first-child {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--s-4);
+  margin-bottom: var(--s-8);
 }
 .faq h2 {
   font-size: clamp(30px, 4vw, var(--t-4xl));
   letter-spacing: -0.028em;
-  margin-top: var(--s-3);
 }
 .faq-feedback {
   display: inline-flex;
   align-items: center;
   gap: var(--s-2);
-  margin-top: var(--s-5);
+  margin-top: 0;
   padding: var(--s-2) var(--s-3);
   border: 1px solid var(--border-subtle);
   border-radius: 999px;
@@ -905,13 +1047,18 @@ h4 {
 .faq-list {
   display: flex;
   flex-direction: column;
+  gap: var(--s-3);
 }
 details.q {
-  padding: var(--s-5) 0;
-  border-top: 1px solid var(--border-subtle);
+  padding: var(--s-4) var(--s-5);
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  transition: border-color 160ms, background 160ms;
 }
-details.q:last-child {
-  border-bottom: 1px solid var(--border-subtle);
+details.q[open] {
+  background: var(--bg-surface);
+  border-color: var(--border-default);
 }
 details.q summary {
   list-style: none;
@@ -922,6 +1069,7 @@ details.q summary {
   gap: var(--s-4);
   font-family: var(--font-display);
   font-size: var(--t-lg);
+  font-weight: 600;
   letter-spacing: -0.01em;
   color: var(--text-primary);
 }
