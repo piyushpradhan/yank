@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { invoke } from '@tauri-apps/api/core';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { listen } from '@tauri-apps/api/event';
 import { highlightMatch, searchItems } from '../lib/search';
@@ -6,19 +7,11 @@ import { relTime } from '../lib/time';
 import type { CategoryDisplay, ClipItem, SearchMode, Theme } from '../lib/types';
 import type { AppState } from '../hooks/useAppState';
 import { useImageUrl } from '../hooks/useImageUrl';
-import {
-  Box,
-  Button,
-  Image,
-  Inline,
-  Input,
-  Kbd,
-  Stack,
-  Text,
-} from 'ember-design-system';
+import { Box, Button, Image, Inline, Input, Kbd, Stack, Text } from 'ember-design-system';
 import {
   LuArrowUpDown,
   LuEllipsis,
+  LuPencil,
   LuPin,
   LuSearch,
   LuSparkles,
@@ -30,6 +23,7 @@ import { ItemBody } from '../components/Primitives';
 import { ImagePreview } from '../components/ImagePreview';
 import { CopyButton, PinButton, DeleteButton, ActionSeparator } from '../components/ActionButtons';
 import { MdKeyboardBackspace, MdKeyboardCommandKey, MdKeyboardReturn } from 'react-icons/md';
+import { IS_MAC } from '../lib/platform';
 
 // Stable no-op so useImageUrl's effect deps stay stable for non-image rows.
 const NO_IMAGE = (): Promise<Blob | null> => Promise.resolve(null);
@@ -228,6 +222,8 @@ export function Palette({
   const [semanticResults, setSemanticResults] = useState<ClipItem[] | null>(null);
   const [semanticError, setSemanticError] = useState<string | null>(null);
   const [semanticLoading, setSemanticLoading] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [draft, setDraft] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const offToastShownRef = useRef(false);
@@ -242,11 +238,20 @@ export function Palette({
     inputRef.current?.focus();
 
     listen('palette-shown', () => {
+      setQuery(initialQuery);
+      setMode(initialMode);
+      setSelected(initialSelected);
+      setSemanticResults(null);
+      setSemanticError(null);
+      setSemanticLoading(false);
+      setEditingId(null);
       inputRef.current?.focus();
       inputRef.current?.select();
-    }).then((f) => {
-      paletteShownUnlisten = f;
-    }).catch(() => {});
+    })
+      .then((f) => {
+        paletteShownUnlisten = f;
+      })
+      .catch(() => {});
 
     getCurrentWindow()
       .onFocusChanged((focused) => {
@@ -264,7 +269,7 @@ export function Palette({
       paletteShownUnlisten?.();
       focusUnlisten?.();
     };
-  }, []);
+  }, [initialMode, initialQuery, initialSelected]);
 
   // One-shot toast per mount whenever the user is in semantic mode but the
   // feature is off, misconfigured, or the provider has errored — saves them
@@ -345,6 +350,11 @@ export function Palette({
   const selectedItem = displayResults[selected] ?? null;
 
   useEffect(() => {
+    setEditingId(null);
+    setDraft(selectedItem?.content ?? '');
+  }, [selectedItem?.id, selectedItem?.content]);
+
+  useEffect(() => {
     const lock = pinLockRef.current;
     if (lock != null && displayResults.length > 0) {
       pinLockRef.current = null;
@@ -362,7 +372,32 @@ export function Palette({
     (el as HTMLElement | undefined)?.scrollIntoView?.({ block: 'nearest' });
   }, [selected]);
 
+  const pasteItem = async (item: ClipItem, content = item.content) => {
+    if (!(await app.copyItem(item.id, content))) return;
+    if (!IS_MAC) {
+      onClose();
+      return;
+    }
+    invoke('paste_to_frontmost_app').catch((err) => {
+      console.error('auto-paste failed', err);
+      onClose();
+    });
+  };
+
   const onKey = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.target instanceof HTMLTextAreaElement) {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        setDraft(selectedItem?.content ?? '');
+        setEditingId(null);
+        inputRef.current?.focus();
+      } else if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && selectedItem) {
+        e.preventDefault();
+        void pasteItem(selectedItem, draft);
+      }
+      return;
+    }
+
     if (e.key === 'ArrowDown') {
       e.preventDefault();
       setSelected((s) => Math.min(s + 1, lastIdx));
@@ -373,8 +408,7 @@ export function Palette({
       e.preventDefault();
       const it = displayResults[selected];
       if (it) {
-        app.copyItem(it.id);
-        onClose();
+        void pasteItem(it, editingId === it.id ? draft : it.content);
       }
     } else if (e.key === 'Tab') {
       e.preventDefault();
@@ -401,6 +435,12 @@ export function Palette({
       e.preventDefault();
       if (mode === 'fuzzy' && !semanticAvailable) return;
       setMode((m) => (m === 'fuzzy' ? 'semantic' : 'fuzzy'));
+    } else if (e.key.toLowerCase() === 'e' && document.activeElement !== inputRef.current) {
+      e.preventDefault();
+      if (selectedItem?.category !== 'image') {
+        setDraft(selectedItem.content);
+        setEditingId(selectedItem.id);
+      }
     }
   };
 
@@ -563,8 +603,7 @@ export function Palette({
                 getImage={app.getImage}
                 onMouseEnter={() => setSelected(i)}
                 onClick={() => {
-                  app.copyItem(item.id);
-                  onClose();
+                  void pasteItem(item);
                 }}
               />
             ))}
@@ -684,11 +723,53 @@ export function Palette({
                       </Text>
                     </Box>
                   )}
+                  {editingId === selectedItem.id && (
+                    <Box
+                      as="span"
+                      shrink={0}
+                      border="subtle"
+                      radius="sm"
+                      style={{ padding: '2px 6px' }}
+                    >
+                      <Text
+                        family="mono"
+                        size={10}
+                        weight="medium"
+                        tone="tertiary"
+                        transform="uppercase"
+                        tracking="widest"
+                      >
+                        Temporary edit
+                      </Text>
+                    </Box>
+                  )}
                 </Inline>
               </Box>
               <Box grow={1} display="flex" align="start" justify="center" overflow="auto" p={4}>
                 {selectedItem.category === 'image' ? (
                   <ImagePreview item={selectedItem} getImage={app.getImage} maxHeight="280px" />
+                ) : editingId === selectedItem.id ? (
+                  <textarea
+                    autoFocus
+                    aria-label="Temporary clipboard text"
+                    value={draft}
+                    onChange={(event) => setDraft(event.target.value)}
+                    spellCheck={selectedItem.category !== 'code'}
+                    style={{
+                      width: '100%',
+                      minHeight: 280,
+                      resize: 'none',
+                      border: '1px solid var(--border-default)',
+                      borderRadius: 'var(--radius-lg)',
+                      padding: 12,
+                      background: 'var(--bg-surface)',
+                      color: 'var(--text-primary)',
+                      fontFamily: selectedItem.category === 'code' ? 'monospace' : 'inherit',
+                      fontSize: 13,
+                      lineHeight: 1.55,
+                      outline: 'none',
+                    }}
+                  />
                 ) : (
                   <Box fullWidth style={{ maxWidth: 400, minWidth: 0 }}>
                     <ItemBody t={t} item={selectedItem} />
@@ -706,10 +787,35 @@ export function Palette({
               >
                 <CopyButton
                   onClick={() => {
-                    app.copyItem(selectedItem.id);
-                    onClose();
+                    void pasteItem(
+                      selectedItem,
+                      editingId === selectedItem.id ? draft : selectedItem.content
+                    );
                   }}
+                  label={IS_MAC ? 'Paste' : 'Copy'}
                 />
+
+                {selectedItem.category !== 'image' && (
+                  <>
+                    <ActionSeparator />
+                    <Button
+                      size="sm"
+                      variant={editingId === selectedItem.id ? 'primary' : 'secondary'}
+                      leadingIcon={<LuPencil size={13} />}
+                      onClick={() => {
+                        if (editingId === selectedItem.id) {
+                          setDraft(selectedItem.content);
+                          setEditingId(null);
+                        } else {
+                          setDraft(selectedItem.content);
+                          setEditingId(selectedItem.id);
+                        }
+                      }}
+                    >
+                      {editingId === selectedItem.id ? 'Cancel edit' : 'Edit'}
+                    </Button>
+                  </>
+                )}
 
                 <ActionSeparator />
 

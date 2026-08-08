@@ -31,7 +31,7 @@ export interface AppState {
   libraryOpen: boolean;
   setLibraryOpen: (v: boolean) => void;
   showToast: (msg: string, kind?: ToastKind, undo?: () => void) => void;
-  copyItem: (id: string) => void;
+  copyItem: (id: string, contentOverride?: string) => Promise<boolean>;
   pinItem: (id: string) => void;
   deleteItem: (id: string) => void;
   updateLabel: (id: string, label: string) => void;
@@ -142,19 +142,26 @@ export function useAppState(): AppState {
   );
 
   const copyItem = useCallback(
-    async (id: string) => {
+    async (id: string, contentOverride?: string) => {
       const it = itemsRef.current.find((i) => i.id === id);
-      if (!it) return;
-      if (it.category === "image") {
-        await invoke("copy_image", { id }).catch((err) => console.error("copy_image failed", err));
-      } else {
-        writeText(it.content).catch((err) => console.error("clipboard write failed", err));
+      if (!it) return false;
+      try {
+        if (it.category === "image") {
+          await invoke("copy_image", { id });
+        } else {
+          await writeText(contentOverride ?? it.content);
+        }
+      } catch (err) {
+        console.error("clipboard write failed", err);
+        showToast("Copy failed", "info");
+        return false;
       }
       invoke("touch_item", { id }).then(
         () => void refresh(),
         (err) => console.error("touch_item failed", err),
       );
       showToast(`Copied "${truncate(it.label, 40)}"`, "copy");
+      return true;
     },
     [refresh, showToast],
   );

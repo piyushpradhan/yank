@@ -1,11 +1,12 @@
 import { Box, Button, Divider, Kbd, Tooltip } from 'ember-design-system';
-import { LuCopy, LuPencil, LuPin, LuPinOff, LuTrash2 } from 'react-icons/lu';
+import { LuClipboardPaste, LuCopy, LuPencil, LuPin, LuPinOff, LuTrash2 } from 'react-icons/lu';
 import { MdKeyboardBackspace, MdKeyboardCommandKey } from 'react-icons/md';
 import type { ReactNode } from 'react';
 
 interface CopyButtonProps {
   onClick: () => void;
   trailingKbd?: ReactNode;
+  label?: string;
 }
 
 function ShortcutTooltipContent({ children }: { children: ReactNode }) {
@@ -16,10 +17,15 @@ function ShortcutTooltipContent({ children }: { children: ReactNode }) {
   );
 }
 
-export function CopyButton({ onClick, trailingKbd }: CopyButtonProps) {
+export function CopyButton({ onClick, trailingKbd, label = 'Copy' }: CopyButtonProps) {
   const button = (
-    <Button size="sm" variant="primary" onClick={onClick} leadingIcon={<LuCopy size={13} />}>
-      Copy
+    <Button
+      size="sm"
+      variant="primary"
+      onClick={onClick}
+      leadingIcon={label === 'Paste' ? <LuClipboardPaste size={13} /> : <LuCopy size={13} />}
+    >
+      {label}
     </Button>
   );
 

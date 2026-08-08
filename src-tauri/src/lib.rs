@@ -13,8 +13,8 @@ pub mod query_time;
 mod settings;
 mod watcher;
 
-use std::sync::{Arc, Mutex, OnceLock};
 use std::str::FromStr;
+use std::sync::{Arc, Mutex, OnceLock};
 use tauri::{
     menu::{CheckMenuItem, Menu, MenuItem, PredefinedMenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
@@ -30,6 +30,23 @@ use crate::settings::{get_loaded_shortcut, ShortcutConfig};
 
 pub static SHORTCUT: OnceLock<Arc<Mutex<Option<Shortcut>>>> = OnceLock::new();
 
+#[cfg(target_os = "macos")]
+fn focus_palette(window: &tauri::WebviewWindow) {
+    use objc::{msg_send, runtime::Object, sel, sel_impl};
+
+    if let Ok(ptr) = window.ns_window() {
+        let ns_window = ptr as *mut Object;
+        unsafe {
+            let _: () = msg_send![ns_window, makeKeyAndOrderFront: std::ptr::null_mut::<Object>()];
+        }
+    }
+}
+
+#[cfg(not(target_os = "macos"))]
+fn focus_palette(window: &tauri::WebviewWindow) {
+    let _ = window.set_focus();
+}
+
 /// Toggle the palette window. Used by both the global hotkey and the
 /// CLI flag (`--palette`) so the two paths share identical behaviour.
 fn toggle_palette(app: &tauri::AppHandle) {
@@ -40,7 +57,7 @@ fn toggle_palette(app: &tauri::AppHandle) {
         } else {
             let _ = w.center();
             let _ = w.show();
-            let _ = w.set_focus();
+            focus_palette(&w);
             let _ = app.emit("palette-shown", ());
         }
     }
@@ -216,6 +233,7 @@ pub fn run() {
             commands::strip_category,
             commands::get_image,
             commands::copy_image,
+            commands::paste_to_frontmost_app,
             settings::get_settings,
             settings::set_settings,
             settings::test_embed_provider,
@@ -327,7 +345,7 @@ pub fn run() {
                         if let Some(w) = app.get_webview_window("palette") {
                             let _ = w.center();
                             let _ = w.show();
-                            let _ = w.set_focus();
+                            focus_palette(&w);
                             let _ = app.emit("palette-shown", ());
                         }
                     }

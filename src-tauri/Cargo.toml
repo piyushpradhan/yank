@@ -43,4 +43,5 @@ tauri-plugin-updater = "2"
 tauri-plugin-process = "2"
 
 [target.'cfg(target_os = "macos")'.dependencies]
+core-graphics = "0.25"
 objc = "0.2"

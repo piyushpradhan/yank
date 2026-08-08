@@ -3,7 +3,7 @@ use image::{ImageBuffer, Rgba};
 use rusqlite::params;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
-use tauri::{AppHandle, Emitter, State};
+use tauri::{AppHandle, Emitter, Manager, State};
 
 use crate::db::Db;
 
@@ -246,6 +246,50 @@ pub fn copy_image(id: String, db: State<'_, Arc<Db>>) -> Result<(), String> {
         bytes: decoded.bytes.into(),
     })
     .map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+#[cfg(target_os = "macos")]
+fn send_paste_keystroke() -> Result<(), String> {
+    use core_graphics::{
+        event::{CGEvent, CGEventFlags, CGEventTapLocation, KeyCode},
+        event_source::{CGEventSource, CGEventSourceStateID},
+    };
+
+    #[link(name = "ApplicationServices", kind = "framework")]
+    extern "C" {
+        fn CGPreflightPostEventAccess() -> bool;
+        fn CGRequestPostEventAccess() -> bool;
+    }
+
+    let trusted = unsafe { CGPreflightPostEventAccess() || CGRequestPostEventAccess() };
+    if !trusted {
+        return Err("Accessibility permission is required to paste automatically".into());
+    }
+
+    for key_down in [true, false] {
+        let source = CGEventSource::new(CGEventSourceStateID::HIDSystemState)
+            .map_err(|_| "failed to create keyboard event source")?;
+        let event = CGEvent::new_keyboard_event(source, KeyCode::ANSI_V, key_down)
+            .map_err(|_| "failed to create paste keyboard event")?;
+        event.set_flags(CGEventFlags::CGEventFlagCommand);
+        event.post(CGEventTapLocation::HID);
+    }
+    Ok(())
+}
+
+#[tauri::command]
+pub fn paste_to_frontmost_app(app: AppHandle) -> Result<(), String> {
+    if let Some(window) = app.get_webview_window("palette") {
+        window.hide().map_err(map_err)?;
+    }
+
+    #[cfg(target_os = "macos")]
+    {
+        std::thread::sleep(std::time::Duration::from_millis(50));
+        send_paste_keystroke()?;
+    }
+
     Ok(())
 }
 

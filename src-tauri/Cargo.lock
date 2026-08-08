@@ -7456,10 +7456,11 @@ checksum = "7a5a4b21e1a62b67a2970e6831bc091d7b87e119e7f9791aef9702e3bef04448"
 
 [[package]]
 name = "yank"
-version = "0.7.46"
+version = "0.7.55"
 dependencies = [
  "arboard",
  "chrono",
+ "core-graphics",
  "fastembed",
  "image",
  "objc",
