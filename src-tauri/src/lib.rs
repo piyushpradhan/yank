@@ -185,6 +185,10 @@ pub fn build_shortcut(sc: &ShortcutConfig) -> Shortcut {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    #[cfg(target_os = "linux")]
+    // Avoid WebKitGTK leaving stale rows behind while scrolling transparent windows.
+    std::env::set_var("WEBKIT_DISABLE_COMPOSITING_MODE", "1");
+
     tauri::Builder::default()
         // Single-instance must be registered first so a second `yank`
         // invocation hands its args to the running app instead of starting

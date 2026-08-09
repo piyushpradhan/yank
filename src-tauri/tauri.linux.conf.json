@@ -1,0 +1,11 @@
+{
+  "productName": "Yank Clipboard",
+  "bundle": {
+    "linux": {
+      "deb": {
+        "conflicts": ["yank"],
+        "replaces": ["yank"]
+      }
+    }
+  }
+}

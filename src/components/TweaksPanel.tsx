@@ -8,7 +8,7 @@ import type { Updater } from '../hooks/useUpdater';
 import {
   DEFAULT_SHORTCUT,
   hasAnyModifier,
-  isModifierCode,
+  modifierFromCode,
   modifiersFromEvent,
   tokensOf,
   type ShortcutConfig,
@@ -81,6 +81,7 @@ function ShortcutRecorder({
 
   useEffect(() => {
     if (!recording) return;
+    let heldModifiers = 0;
     const onKeyDown = (e: KeyboardEvent) => {
       e.preventDefault();
       e.stopPropagation();
@@ -89,10 +90,14 @@ function ShortcutRecorder({
         setError(null);
         return;
       }
-      if (isModifierCode(e.code)) return;
-      const modifiers = modifiersFromEvent(e);
+      const pressedModifier = modifierFromCode(e.code);
+      if (pressedModifier) {
+        heldModifiers |= pressedModifier;
+        return;
+      }
+      const modifiers = modifiersFromEvent(e, heldModifiers);
       if (!hasAnyModifier(modifiers)) {
-        setError('Needs at least one modifier (Ctrl, Shift, Alt, Cmd)');
+        setError('Needs at least one modifier (Ctrl, Shift, Alt, Super/Cmd)');
         return;
       }
       const next: ShortcutConfig = { modifiers, key: e.code };
@@ -108,8 +113,15 @@ function ShortcutRecorder({
           setError(msg);
         });
     };
+    const onKeyUp = (e: KeyboardEvent) => {
+      heldModifiers &= ~modifierFromCode(e.code);
+    };
     window.addEventListener('keydown', onKeyDown, true);
-    return () => window.removeEventListener('keydown', onKeyDown, true);
+    window.addEventListener('keyup', onKeyUp, true);
+    return () => {
+      window.removeEventListener('keydown', onKeyDown, true);
+      window.removeEventListener('keyup', onKeyUp, true);
+    };
   }, [recording, onChange]);
 
   const tokens = tokensOf(value ?? DEFAULT_SHORTCUT);

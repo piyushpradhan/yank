@@ -65,21 +65,15 @@ export function labelFromCode(code: string): string {
   }
 }
 
-// Bare KeyboardEvent.code values that represent a pure modifier press.
-// Recording one of these alone is not a valid shortcut.
-export function isModifierCode(code: string): boolean {
-  return (
-    code === 'ControlLeft' ||
-    code === 'ControlRight' ||
-    code === 'ShiftLeft' ||
-    code === 'ShiftRight' ||
-    code === 'AltLeft' ||
-    code === 'AltRight' ||
-    code === 'MetaLeft' ||
-    code === 'MetaRight' ||
-    code === 'OSLeft' ||
-    code === 'OSRight'
-  );
+// Convert a physical modifier key into keyboard-types' persisted bitmask.
+export function modifierFromCode(code: string): number {
+  if (code === 'ControlLeft' || code === 'ControlRight') return MOD.CONTROL;
+  if (code === 'ShiftLeft' || code === 'ShiftRight') return MOD.SHIFT;
+  if (code === 'AltLeft' || code === 'AltRight') return MOD.ALT;
+  if (code === 'MetaLeft' || code === 'MetaRight' || code === 'OSLeft' || code === 'OSRight') {
+    return MOD.META;
+  }
+  return 0;
 }
 
 // Display tokens for the modifiers + key, in the order users expect to read them.
@@ -95,8 +89,8 @@ export function tokensOf(sc: ShortcutConfig): string[] {
   return tokens;
 }
 
-export function modifiersFromEvent(e: KeyboardEvent): number {
-  let mods = 0;
+export function modifiersFromEvent(e: KeyboardEvent, heldModifiers = 0): number {
+  let mods = heldModifiers;
   if (e.ctrlKey) mods |= MOD.CONTROL;
   if (e.shiftKey) mods |= MOD.SHIFT;
   if (e.altKey) mods |= MOD.ALT;
