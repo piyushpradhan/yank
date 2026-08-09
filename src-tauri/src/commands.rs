@@ -286,7 +286,12 @@ pub fn paste_to_frontmost_app(app: AppHandle) -> Result<(), String> {
 
     #[cfg(target_os = "macos")]
     {
-        std::thread::sleep(std::time::Duration::from_millis(50));
+        let restored = crate::restore_previous_application();
+        std::thread::sleep(std::time::Duration::from_millis(if restored {
+            25
+        } else {
+            100
+        }));
         send_paste_keystroke()?;
     }
 

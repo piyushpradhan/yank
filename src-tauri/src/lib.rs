@@ -14,6 +14,8 @@ mod settings;
 mod watcher;
 
 use std::str::FromStr;
+#[cfg(target_os = "macos")]
+use std::sync::atomic::{AtomicI32, Ordering};
 use std::sync::{Arc, Mutex, OnceLock};
 use tauri::{
     menu::{CheckMenuItem, Menu, MenuItem, PredefinedMenuItem},
@@ -31,12 +33,71 @@ use crate::settings::{get_loaded_shortcut, ShortcutConfig};
 pub static SHORTCUT: OnceLock<Arc<Mutex<Option<Shortcut>>>> = OnceLock::new();
 
 #[cfg(target_os = "macos")]
+static PREVIOUS_APP_PID: AtomicI32 = AtomicI32::new(0);
+
+#[cfg(target_os = "macos")]
+fn remember_frontmost_application() {
+    use objc::{class, msg_send, runtime::Object, sel, sel_impl};
+
+    unsafe {
+        let workspace: *mut Object = msg_send![class!(NSWorkspace), sharedWorkspace];
+        let frontmost: *mut Object = msg_send![workspace, frontmostApplication];
+        if frontmost.is_null() {
+            return;
+        }
+        let pid: i32 = msg_send![frontmost, processIdentifier];
+        if pid > 0 {
+            PREVIOUS_APP_PID.store(pid, Ordering::SeqCst);
+        }
+    }
+}
+
+#[cfg(not(target_os = "macos"))]
+fn remember_frontmost_application() {}
+
+#[cfg(target_os = "macos")]
+pub(crate) fn restore_previous_application() -> bool {
+    use objc::{class, msg_send, runtime::Object, sel, sel_impl};
+
+    let pid = PREVIOUS_APP_PID.swap(0, Ordering::SeqCst);
+    if pid <= 0 {
+        return false;
+    }
+
+    unsafe {
+        let previous: *mut Object = msg_send![
+            class!(NSRunningApplication),
+            runningApplicationWithProcessIdentifier: pid
+        ];
+        if previous.is_null() {
+            return false;
+        }
+        // NSApplicationActivateIgnoringOtherApps
+        let activated: bool = msg_send![previous, activateWithOptions: 2usize];
+        if !activated {
+            return false;
+        }
+
+        for _ in 0..10 {
+            let active: bool = msg_send![previous, isActive];
+            if active {
+                return true;
+            }
+            std::thread::sleep(std::time::Duration::from_millis(10));
+        }
+        false
+    }
+}
+
+#[cfg(target_os = "macos")]
 fn focus_palette(window: &tauri::WebviewWindow) {
-    use objc::{msg_send, runtime::Object, sel, sel_impl};
+    use objc::{class, msg_send, runtime::Object, sel, sel_impl};
 
     if let Ok(ptr) = window.ns_window() {
         let ns_window = ptr as *mut Object;
         unsafe {
+            let ns_app: *mut Object = msg_send![class!(NSApplication), sharedApplication];
+            let _: () = msg_send![ns_app, activateIgnoringOtherApps: true];
             let _: () = msg_send![ns_window, makeKeyAndOrderFront: std::ptr::null_mut::<Object>()];
         }
     }
@@ -47,6 +108,16 @@ fn focus_palette(window: &tauri::WebviewWindow) {
     let _ = window.set_focus();
 }
 
+fn show_palette(app: &tauri::AppHandle, window: &tauri::WebviewWindow) {
+    if !window.is_visible().unwrap_or(false) {
+        remember_frontmost_application();
+    }
+    let _ = window.center();
+    let _ = window.show();
+    focus_palette(window);
+    let _ = app.emit("palette-shown", ());
+}
+
 /// Toggle the palette window. Used by both the global hotkey and the
 /// CLI flag (`--palette`) so the two paths share identical behaviour.
 fn toggle_palette(app: &tauri::AppHandle) {
@@ -55,10 +126,7 @@ fn toggle_palette(app: &tauri::AppHandle) {
         if visible {
             let _ = w.hide();
         } else {
-            let _ = w.center();
-            let _ = w.show();
-            focus_palette(&w);
-            let _ = app.emit("palette-shown", ());
+            show_palette(app, &w);
         }
     }
 }
@@ -347,10 +415,7 @@ pub fn run() {
                     }
                     "palette" => {
                         if let Some(w) = app.get_webview_window("palette") {
-                            let _ = w.center();
-                            let _ = w.show();
-                            focus_palette(&w);
-                            let _ = app.emit("palette-shown", ());
+                            show_palette(app, &w);
                         }
                     }
                     "show_pinned" => {
@@ -438,21 +503,16 @@ pub fn run() {
                 #[cfg(target_os = "windows")]
                 strip_palette_chrome(&w);
 
-                // macOS: make the palette a non-activating floating panel so it
-                // receives keyboard events without stealing focus from whichever
-                // app the user was in.  NSNonactivatingPanelMask (1<<7) means
-                // the panel can become key (get keystrokes) without activating
-                // the owning application.
+                // macOS: keep the palette available across Spaces and fullscreen
+                // apps. It intentionally remains activating so the search input
+                // can become first responder; the previous app is restored when
+                // the user chooses an item.
                 #[cfg(target_os = "macos")]
                 {
                     use objc::{msg_send, sel, sel_impl, runtime::Object};
                     if let Ok(ptr) = w.ns_window() {
                         let ns_window = ptr as *mut Object;
                         unsafe {
-                            let current_style: u64 = msg_send![ns_window, styleMask];
-                            let _: () =
-                                msg_send![ns_window, setStyleMask: (current_style | (1u64 << 7))];
-
                             // canJoinAllSpaces (1<<0) | fullScreenAuxiliary (1<<17)
                             // | ignoresCycle (1<<20)
                             let behavior: u64 = (1u64 << 0) | (1u64 << 17) | (1u64 << 20);
