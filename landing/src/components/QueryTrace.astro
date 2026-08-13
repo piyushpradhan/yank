@@ -1,0 +1,439 @@
+<section class="section trace-section" id="trace" data-screen-label="trace" aria-labelledby="trace-heading">
+  <div class="wrap">
+    <div class="section-head">
+      <div>
+        <span class="eyebrow">Inside a search</span>
+        <h2 id="trace-heading">Your words go in. The right clip comes out.</h2>
+      </div>
+      <p>
+        Yank separates time, type, and meaning before searching. Try a query
+        and watch the local pipeline work.
+      </p>
+    </div>
+
+    <div class="trace-shell">
+      <form class="trace-query" id="trace-query-form">
+        <label for="trace-query-input">Describe something you copied</label>
+        <div class="trace-input-row">
+          <span aria-hidden="true">›</span>
+          <input
+            id="trace-query-input"
+            name="query"
+            value="Rust code I copied yesterday"
+            autocomplete="off"
+            spellcheck="false"
+          />
+          <button class="btn btn--primary" type="submit">Trace query</button>
+        </div>
+        <div class="trace-samples" aria-label="Example searches">
+          <span>Try</span>
+          <button type="button" data-query="phone numbers I saved last week">phone numbers</button>
+          <button type="button" data-query="links I copied today">links from today</button>
+          <button type="button" data-query="code from terminal last Friday">terminal code</button>
+        </div>
+      </form>
+
+      <ol class="trace-stages" id="trace-stages" aria-live="polite">
+        <li class="trace-stage">
+          <span class="trace-stage__number">01</span>
+          <div>
+            <strong>Raw query</strong>
+            <span data-trace-value="raw">Rust code I copied yesterday</span>
+          </div>
+        </li>
+        <li class="trace-stage">
+          <span class="trace-stage__number">02</span>
+          <div>
+            <strong>Time filter</strong>
+            <span data-trace-value="time">yesterday becomes a date window</span>
+          </div>
+        </li>
+        <li class="trace-stage">
+          <span class="trace-stage__number">03</span>
+          <div>
+            <strong>Intent</strong>
+            <span data-trace-value="intent">code / meaning: “Rust”</span>
+          </div>
+        </li>
+        <li class="trace-stage">
+          <span class="trace-stage__number">04</span>
+          <div>
+            <strong>Search twice</strong>
+            <span data-trace-value="pools">semantic meaning + exact text</span>
+          </div>
+        </li>
+        <li class="trace-stage">
+          <span class="trace-stage__number">05</span>
+          <div>
+            <strong>Best match</strong>
+            <span data-trace-value="result">fuse both ranks, then boost code</span>
+          </div>
+        </li>
+      </ol>
+
+      <div class="trace-note">
+        <span>Runs locally</span>
+        <p>
+          SQLite FTS5 handles exact text. On-device embeddings handle meaning.
+          Reciprocal Rank Fusion combines both without sending your clipboard away.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .trace-section {
+    position: relative;
+  }
+
+  .trace-shell {
+    overflow: hidden;
+    border: 1px solid var(--border-default);
+    border-radius: var(--r-lg);
+    background: var(--bg-surface);
+    box-shadow: var(--shadow-md);
+  }
+
+  .trace-query {
+    padding: var(--s-6);
+    border-bottom: 1px solid var(--border-subtle);
+    background: var(--bg-subtle);
+  }
+
+  .trace-query label {
+    display: block;
+    margin-bottom: var(--s-3);
+    color: var(--text-secondary);
+    font-size: var(--t-sm);
+    font-weight: 600;
+  }
+
+  .trace-input-row {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: var(--s-3);
+    min-height: 58px;
+    padding: 7px 8px 7px var(--s-5);
+    border: 1px solid var(--border-default);
+    border-radius: var(--r-md);
+    background: var(--bg-surface);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .trace-input-row > span {
+    color: var(--accent-500);
+    font-family: var(--font-mono);
+    font-size: var(--t-xl);
+    line-height: 1;
+  }
+
+  .trace-input-row input {
+    min-width: 0;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: var(--text-primary);
+    font-family: var(--font-mono);
+    font-size: var(--t-md);
+  }
+
+  .trace-input-row:focus-within {
+    border-color: var(--accent-500);
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent-500) 14%, transparent);
+  }
+
+  .trace-input-row .btn {
+    height: 42px;
+  }
+
+  .trace-samples {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--s-2);
+    margin-top: var(--s-3);
+  }
+
+  .trace-samples > span {
+    margin-right: var(--s-1);
+    color: var(--text-tertiary);
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+  }
+
+  .trace-samples button {
+    padding: 5px 9px;
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--r-pill);
+    background: var(--bg-surface);
+    color: var(--text-secondary);
+    font-family: var(--font-mono);
+    font-size: var(--t-2xs);
+    transition:
+      color 120ms,
+      border-color 120ms,
+      background 120ms,
+      transform 120ms;
+  }
+
+  .trace-samples button:hover {
+    border-color: var(--border-strong);
+    background: var(--accent-soft);
+    color: var(--accent-600);
+  }
+
+  .trace-samples button:active {
+    transform: translateY(1px);
+  }
+
+  .trace-stages {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    margin: 0;
+    padding: var(--s-5);
+    list-style: none;
+  }
+
+  .trace-stage {
+    position: relative;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-content: start;
+    gap: var(--s-3);
+    min-height: 150px;
+    padding: var(--s-5);
+    border-right: 1px solid var(--border-subtle);
+    opacity: 0.4;
+    transform: translateY(5px);
+    transition:
+      opacity 220ms var(--easing-standard),
+      transform 220ms var(--easing-standard),
+      background 220ms var(--easing-standard);
+  }
+
+  .trace-stage:last-child {
+    border-right: 0;
+  }
+
+  .trace-stage.is-active {
+    background: var(--accent-soft);
+    opacity: 1;
+    transform: none;
+  }
+
+  .trace-stage__number {
+    color: var(--accent-600);
+    font-family: var(--font-mono);
+    font-size: var(--t-2xs);
+    font-weight: 600;
+  }
+
+  .trace-stage strong {
+    display: block;
+    color: var(--text-primary);
+    font-size: var(--t-sm);
+    font-weight: 600;
+    line-height: 1.35;
+  }
+
+  .trace-stage div > span {
+    display: block;
+    margin-top: var(--s-2);
+    color: var(--text-secondary);
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    line-height: 1.55;
+    overflow-wrap: anywhere;
+  }
+
+  .trace-note {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: var(--s-5);
+    padding: var(--s-4) var(--s-6);
+    border-top: 1px solid var(--border-subtle);
+    background: var(--bg-subtle);
+  }
+
+  .trace-note > span {
+    padding: 4px 9px;
+    border-radius: var(--r-pill);
+    background: color-mix(in oklab, var(--status-success) 14%, transparent);
+    color: var(--status-success);
+    font-family: var(--font-mono);
+    font-size: var(--t-2xs);
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .trace-note p {
+    color: var(--text-secondary);
+    font-size: var(--t-sm);
+    line-height: 1.5;
+  }
+
+  @media (max-width: 960px) {
+    .trace-stages {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .trace-stage:nth-child(2),
+    .trace-stage:nth-child(4) {
+      border-right: 0;
+    }
+
+    .trace-stage:nth-child(-n + 3) {
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .trace-stage:last-child {
+      grid-column: 1 / -1;
+      min-height: 110px;
+      border-top: 1px solid var(--border-subtle);
+    }
+  }
+
+  @media (max-width: 600px) {
+    .trace-query {
+      padding: var(--s-4);
+    }
+
+    .trace-input-row {
+      grid-template-columns: auto minmax(0, 1fr);
+      padding: var(--s-3) var(--s-4);
+    }
+
+    .trace-input-row input {
+      font-size: var(--t-sm);
+    }
+
+    .trace-input-row .btn {
+      grid-column: 1 / -1;
+      width: 100%;
+    }
+
+    .trace-stages {
+      grid-template-columns: 1fr;
+      padding: var(--s-3);
+    }
+
+    .trace-stage,
+    .trace-stage:nth-child(2),
+    .trace-stage:nth-child(4),
+    .trace-stage:last-child {
+      grid-column: auto;
+      min-height: 0;
+      border-right: 0;
+      border-top: 0;
+      border-bottom: 1px solid var(--border-subtle);
+      padding: var(--s-4);
+    }
+
+    .trace-stage:last-child {
+      border-bottom: 0;
+    }
+
+    .trace-note {
+      grid-template-columns: 1fr;
+      gap: var(--s-3);
+      padding: var(--s-4);
+    }
+
+    .trace-note > span {
+      justify-self: start;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .trace-stage {
+      opacity: 1;
+      transform: none;
+    }
+  }
+</style>
+
+<script>
+  const form = document.getElementById('trace-query-form');
+  const input = document.getElementById('trace-query-input');
+  const stages = Array.from(document.querySelectorAll<HTMLElement>('.trace-stage'));
+  const timers: number[] = [];
+
+  const categoryPattern = /\b(phone\s+numbers?|phones?|email\s+addresses?|emails?|hex\s+codes?|colou?rs?|urls?|links?|websites?|code\s+snippets?|snippets?|code|file\s+paths?|paths?|files?|street\s+addresses?|addresses?|numbers?|screenshots?|pictures?|images?)\b/i;
+  const fillerPattern = /\b(?:that\s+)?(?:the\s+ones?\s+)?i\s+(?:copied|yanked|saved|had|wrote|made|took|wanted|needed|kept|grabbed)\b/gi;
+  const timePattern = /\b(yesterday|today|(?:this|last|past)\s+(?:week|month|year)|(?:last|on)\s+(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)|\d+\s+(?:minute|hour|day|week|month|year)s?\s+ago|\d{4}-\d{2}-\d{2})\b/i;
+
+  const categories: Record<string, string> = {
+    phone: 'phone', phones: 'phone', 'phone number': 'phone', 'phone numbers': 'phone',
+    email: 'email', emails: 'email', 'email address': 'email', 'email addresses': 'email',
+    color: 'color', colors: 'color', colour: 'color', colours: 'color', 'hex code': 'color', 'hex codes': 'color',
+    url: 'url', urls: 'url', link: 'url', links: 'url', website: 'url', websites: 'url',
+    code: 'code', snippet: 'code', snippets: 'code', 'code snippet': 'code', 'code snippets': 'code',
+    path: 'path', paths: 'path', file: 'path', files: 'path', 'file path': 'path', 'file paths': 'path',
+    address: 'address', addresses: 'address', 'street address': 'address', 'street addresses': 'address',
+    number: 'number', numbers: 'number', image: 'image', images: 'image', picture: 'image', pictures: 'image', screenshot: 'image', screenshots: 'image',
+  };
+
+  function stripMatch(value: string, match: RegExpMatchArray | null) {
+    if (!match || match.index == null) return value;
+    return `${value.slice(0, match.index)} ${value.slice(match.index + match[0].length)}`
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  function parseQuery(query: string) {
+    const timeMatch = query.match(timePattern);
+    let residue = stripMatch(query, timeMatch);
+    const categoryMatch = residue.match(categoryPattern);
+    const category = categoryMatch
+      ? categories[categoryMatch[0].toLowerCase().replace(/\s+/g, ' ')] ?? 'text'
+      : null;
+    residue = stripMatch(residue, categoryMatch)
+      .replace(fillerPattern, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+    return { time: timeMatch?.[0] ?? null, category, residue };
+  }
+
+  function setValue(name: string, value: string) {
+    const node = document.querySelector(`[data-trace-value="${name}"]`);
+    if (node) node.textContent = value;
+  }
+
+  function runTrace(query: string) {
+    timers.splice(0).forEach(window.clearTimeout);
+    const clean = query.trim();
+    const parsed = parseQuery(clean);
+    const meaning = parsed.residue || 'no extra meaning';
+    setValue('raw', clean || 'Type a query above');
+    setValue('time', parsed.time ? `${parsed.time} becomes a date window` : 'all dates stay in scope');
+    setValue('intent', `${parsed.category ?? 'any type'} / meaning: “${meaning}”`);
+    setValue('pools', clean ? 'semantic meaning + exact text' : 'waiting for a query');
+    setValue('result', parsed.category ? `fuse both ranks, then boost ${parsed.category}` : 'fuse both ranks, then prefer recent clips');
+
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    stages.forEach((stage) => stage.classList.remove('is-active'));
+    stages.forEach((stage, index) => {
+      timers.push(window.setTimeout(() => stage.classList.add('is-active'), reduceMotion ? 0 : index * 150));
+    });
+  }
+
+  form?.addEventListener('submit', (event) => {
+    event.preventDefault();
+    if (input instanceof HTMLInputElement) runTrace(input.value);
+  });
+
+  document.querySelectorAll<HTMLButtonElement>('.trace-samples [data-query]').forEach((button) => {
+    button.addEventListener('click', () => {
+      if (!(input instanceof HTMLInputElement)) return;
+      input.value = button.dataset.query ?? '';
+      runTrace(input.value);
+      input.focus();
+    });
+  });
+
+  runTrace(input instanceof HTMLInputElement ? input.value : '');
+  console.assert(parseQuery('links I copied yesterday').residue === '', 'query trace parser order');
+</script>
