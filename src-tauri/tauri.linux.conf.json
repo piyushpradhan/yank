@@ -1,5 +1,41 @@
 {
   "productName": "Yank Clipboard",
+  "app": {
+    "windows": [
+      {
+        "label": "library",
+        "title": "Yank",
+        "width": 1080,
+        "height": 720,
+        "minWidth": 520,
+        "minHeight": 400,
+        "center": true,
+        "decorations": false,
+        "transparent": true,
+        "resizable": true,
+        "windowEffects": {
+          "effects": ["mica"],
+          "state": "active"
+        }
+      },
+      {
+        "label": "palette",
+        "title": "Yank Palette",
+        "url": "index.html?window=palette",
+        "width": 720,
+        "height": 520,
+        "decorations": false,
+        "transparent": false,
+        "shadow": false,
+        "resizable": false,
+        "alwaysOnTop": true,
+        "skipTaskbar": true,
+        "center": true,
+        "visible": false,
+        "focus": false
+      }
+    ]
+  },
   "bundle": {
     "linux": {
       "deb": {

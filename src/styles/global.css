@@ -87,6 +87,17 @@ body {
   background: transparent;
 }
 
+/* WebKitGTK mis-computes scroll damage when it paints into a translucent
+ * window, so previously-drawn rows survive as ghosts inside the palette's
+ * scrolling list. Linux therefore renders the palette opaque end-to-end: the
+ * window is created with `transparent: false` (src-tauri/tauri.linux.conf.json)
+ * and the page paints a solid surface instead of blending with the desktop.
+ * The translucent treatment is kept for macOS and Windows, which composite it
+ * correctly and are the only platforms where Tauri's `windowEffects` apply. */
+[data-os='linux'][data-window='palette'] body {
+  background: var(--bg-surface);
+}
+
 button {
   font: inherit;
 }

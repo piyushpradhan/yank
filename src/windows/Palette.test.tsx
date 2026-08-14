@@ -23,7 +23,7 @@ vi.mock('@tauri-apps/api/window', () => ({
     onFocusChanged: async () => () => {},
   }),
 }));
-vi.mock('../lib/platform', () => ({ IS_MAC: true }));
+vi.mock('../lib/platform', () => ({ IS_MAC: true, IS_LINUX: false }));
 
 const item: ClipItem = {
   id: '1',

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { listen } from '@tauri-apps/api/event';
@@ -23,7 +23,7 @@ import { ItemBody } from '../components/Primitives';
 import { ImagePreview } from '../components/ImagePreview';
 import { CopyButton, PinButton, DeleteButton, ActionSeparator } from '../components/ActionButtons';
 import { MdKeyboardBackspace, MdKeyboardCommandKey, MdKeyboardReturn } from 'react-icons/md';
-import { IS_MAC } from '../lib/platform';
+import { IS_LINUX, IS_MAC } from '../lib/platform';
 
 // Stable no-op so useImageUrl's effect deps stay stable for non-image rows.
 const NO_IMAGE = (): Promise<Blob | null> => Promise.resolve(null);
@@ -444,6 +444,21 @@ export function Palette({
     }
   };
 
+  // The frosted-glass surface is macOS/Windows only. On Linux, WebKitGTK
+  // mis-computes scroll damage inside a translucent, backdrop-filtered layer
+  // and leaves previously-painted rows on screen as the list scrolls
+  // (tauri-apps/tauri#14811, tauri-apps/tauri#14924). Both halves of the effect
+  // feed that bug, so Linux drops the blur and paints an opaque surface; the
+  // window is created with `transparent: false` there (tauri.linux.conf.json),
+  // leaving nothing for translucency to blend against anyway.
+  const surface: CSSProperties = IS_LINUX
+    ? { background: 'var(--bg-surface)' }
+    : {
+        background: `color-mix(in oklab, var(--bg-surface) ${t.dark ? 35 : 78}%, transparent)`,
+        backdropFilter: 'blur(40px) saturate(160%)',
+        WebkitBackdropFilter: 'blur(40px) saturate(160%)',
+      };
+
   return (
     <Box
       position="absolute"
@@ -463,9 +478,7 @@ export function Palette({
           maxHeight: '100%',
           border: '1px solid var(--border-default)',
           borderRadius: 'var(--window-radius)',
-          background: `color-mix(in oklab, var(--bg-surface) ${t.dark ? 35 : 78}%, transparent)`,
-          backdropFilter: 'blur(40px) saturate(160%)',
-          WebkitBackdropFilter: 'blur(40px) saturate(160%)',
+          ...surface,
           boxShadow: `0 80px 160px -30px rgba(0,0,0,${t.dark ? 0.75 : 0.3}),
                       0 20px 40px -10px rgba(0,0,0,${t.dark ? 0.5 : 0.14})`,
           animation: 'paletteScaleIn 180ms cubic-bezier(.2,.9,.3,1.1)',

@@ -253,9 +253,12 @@ pub fn build_shortcut(sc: &ShortcutConfig) -> Shortcut {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    #[cfg(target_os = "linux")]
-    // Avoid WebKitGTK leaving stale rows behind while scrolling transparent windows.
-    std::env::set_var("WEBKIT_DISABLE_COMPOSITING_MODE", "1");
+    // NOTE: Linux once set `WEBKIT_DISABLE_COMPOSITING_MODE=1` here to stop
+    // WebKitGTK leaving stale rows behind while scrolling the palette. It never
+    // fixed the ghosting — it only disables accelerated compositing, while the
+    // actual triggers were the transparent window surface and the palette's
+    // `backdrop-filter`. Both are now removed on Linux (tauri.linux.conf.json
+    // and Palette.tsx), so the app keeps GPU compositing on every platform.
 
     tauri::Builder::default()
         // Single-instance must be registered first so a second `yank`

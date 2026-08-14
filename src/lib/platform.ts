@@ -11,6 +11,7 @@ function detect(): OS {
 
 export const OS: OS = detect();
 export const IS_MAC = OS === 'macos';
+export const IS_LINUX = OS === 'linux';
 
 export const WINDOW_RADIUS_PX = (() => {
   switch (OS) {
