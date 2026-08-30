@@ -307,7 +307,19 @@ pub fn run() {
         // hotkeys: users bind their DE's keyboard shortcut to
         // `yank --palette` and the running app handles it.
         .plugin(tauri_plugin_single_instance::init(|app, args, _cwd| {
-            handle_cli_args(app, &args, true);
+            // The plugin delivers second-instance args on its listener
+            // thread (a tokio worker on macOS), not the main thread, and
+            // everything reachable from here — show_palette's AppKit
+            // window ordering (`makeKeyAndOrderFront:`), focus_library,
+            // the NSWorkspace query in remember_frontmost_application —
+            // must run on the main thread. Modern AppKit traps on
+            // off-main-thread window ordering (SIGTRAP, #58), so marshal
+            // the dispatch before any window is touched. The hotkey and
+            // tray paths are already delivered on the main thread; this
+            // is the only off-main entry point into toggle_palette.
+            let app_in_cb = app.clone();
+            let args = args.clone();
+            let _ = app.run_on_main_thread(move || handle_cli_args(&app_in_cb, &args, true));
         }))
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_clipboard_manager::init())

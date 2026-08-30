@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented in this file.
 
+## [0.7.62] - 2026-08-30
+
+### Fixed
+
+- **macOS: `yank --palette` no longer crashes the app (#58).** Invoking the documented CLI toggle while Yank was running hit `EXC_BREAKPOINT (SIGTRAP)` in AppKit: the single-instance plugin delivers second-instance arguments on its listener thread (a tokio worker), and `show_palette` performs raw AppKit window ordering (`makeKeyAndOrderFront:`) on whatever thread called it — which modern AppKit traps on. The single-instance callback now marshals its dispatch onto the main thread before touching any window, so `toggle_palette` / `show_palette` / `focus_library` always execute there. The global-hotkey and tray paths were already main-thread and are unaffected. This was a pre-existing latent bug (present since the `--palette` CLI fallback shipped), not a regression from 0.7.61 — recent macOS builds simply started asserting where they used to tolerate off-main-thread ordering.
+
 ## [0.7.61] - 2026-08-30
 
 ### Fixed
