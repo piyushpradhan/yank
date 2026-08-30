@@ -318,6 +318,7 @@ jobs:
           tag_name: ${{ needs.prepare.outputs.tag }}
           draft: false
           generate_release_notes: true
+          body_path: CHANGELOG.md
           fail_on_unmatched_files: false
           files: ${{ steps.assets.outputs.files }}
 
