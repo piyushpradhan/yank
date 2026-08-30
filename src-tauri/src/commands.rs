@@ -278,22 +278,40 @@ fn send_paste_keystroke() -> Result<(), String> {
     Ok(())
 }
 
+#[cfg(not(target_os = "macos"))]
+fn send_paste_keystroke() -> Result<(), String> {
+    use enigo::{Direction, Enigo, Key, Keyboard, Settings};
+
+    // enigo synthesises input for the currently-focused window on Windows
+    // (SendInput) and X11/Wayland (XTest / virtual keyboard). The clipboard is
+    // already set by the caller; this only triggers the target app's paste.
+    let mut enigo = Enigo::new(&Settings::default()).map_err(|e| e.to_string())?;
+    enigo
+        .key(Key::Control, Direction::Press)
+        .map_err(|e| e.to_string())?;
+    enigo
+        .key(Key::Unicode('v'), Direction::Click)
+        .map_err(|e| e.to_string())?;
+    enigo
+        .key(Key::Control, Direction::Release)
+        .map_err(|e| e.to_string())?;
+    Ok(())
+}
+
 #[tauri::command]
 pub fn paste_to_frontmost_app(app: AppHandle) -> Result<(), String> {
     if let Some(window) = app.get_webview_window("palette") {
         window.hide().map_err(map_err)?;
     }
 
-    #[cfg(target_os = "macos")]
-    {
-        let restored = crate::restore_previous_application();
-        std::thread::sleep(std::time::Duration::from_millis(if restored {
-            25
-        } else {
-            100
-        }));
-        send_paste_keystroke()?;
-    }
+    // Hand focus back to the app the user was in before the palette opened,
+    // then synthesize Cmd/Ctrl+V there. When we couldn't restore a specific
+    // target (the palette opened cold, or the platform has no such handle —
+    // Linux leaves it to the WM), wait a beat longer for the OS to settle
+    // focus on its own.
+    let restored = crate::restore_previous_application();
+    std::thread::sleep(std::time::Duration::from_millis(if restored { 25 } else { 100 }));
+    send_paste_keystroke()?;
 
     Ok(())
 }

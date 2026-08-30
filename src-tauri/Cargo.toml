@@ -45,3 +45,14 @@ tauri-plugin-process = "2"
 [target.'cfg(target_os = "macos")'.dependencies]
 core-graphics = "0.25"
 objc = "0.2"
+
+[target.'cfg(target_os = "windows")'.dependencies]
+enigo = { version = "0.2", default-features = false }
+
+[target.'cfg(target_os = "linux")'.dependencies]
+# Pure-Rust backends (x11rb for X11 XTest, wayland for the wlroots/KDE
+# virtual-keyboard protocol) so the Linux build has no native libxdo
+# dependency at build or run time. libei is deliberately omitted: it needs a
+# portal/XDG portal service that most distros do not ship, so it would be
+# dead weight. macOS never uses enigo (CGEvent handles paste there).
+enigo = { version = "0.2", default-features = false, features = ["x11rb", "wayland"] }

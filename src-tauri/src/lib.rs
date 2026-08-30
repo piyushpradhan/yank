@@ -16,6 +16,8 @@ mod watcher;
 use std::str::FromStr;
 #[cfg(target_os = "macos")]
 use std::sync::atomic::{AtomicI32, Ordering};
+#[cfg(target_os = "windows")]
+use std::sync::atomic::{AtomicIsize, Ordering};
 use std::sync::{Arc, Mutex, OnceLock};
 use tauri::{
     menu::{CheckMenuItem, Menu, MenuItem, PredefinedMenuItem},
@@ -52,8 +54,46 @@ fn remember_frontmost_application() {
     }
 }
 
-#[cfg(not(target_os = "macos"))]
+/// The HWND of the window that had focus right before the palette opened.
+/// Windows has no global "frontmost app" API, so we remember the concrete
+/// foreground window and hand focus back to it before synthesizing Ctrl+V.
+#[cfg(target_os = "windows")]
+static PREVIOUS_FOREGROUND: AtomicIsize = AtomicIsize::new(0);
+
+#[cfg(target_os = "windows")]
+fn remember_frontmost_application() {
+    use windows::Win32::UI::WindowsAndMessaging::GetForegroundWindow;
+    let hwnd = unsafe { GetForegroundWindow() };
+    PREVIOUS_FOREGROUND.store(hwnd.0 as isize, Ordering::SeqCst);
+}
+
+// X11/Wayland give focus back to the previously-focused window automatically
+// once the palette hides, so there is no window handle to remember here.
+#[cfg(target_os = "linux")]
 fn remember_frontmost_application() {}
+
+#[cfg(target_os = "windows")]
+pub(crate) fn restore_previous_application() -> bool {
+    use windows::Win32::Foundation::HWND;
+    use windows::Win32::UI::WindowsAndMessaging::SetForegroundWindow;
+
+    let raw = PREVIOUS_FOREGROUND.swap(0, Ordering::SeqCst);
+    if raw == 0 {
+        return false;
+    }
+    // Failure is tolerated: some targets (elevated windows, UIPI) refuse to
+    // yield the foreground, in which case the paste lands wherever the OS
+    // left focus. The clipboard is already set, so nothing is lost.
+    unsafe {
+        let _ = SetForegroundWindow(HWND(raw as *mut std::ffi::c_void));
+    }
+    true
+}
+
+#[cfg(target_os = "linux")]
+pub(crate) fn restore_previous_application() -> bool {
+    false
+}
 
 #[cfg(target_os = "macos")]
 pub(crate) fn restore_previous_application() -> bool {

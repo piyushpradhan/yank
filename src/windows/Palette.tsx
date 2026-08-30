@@ -23,7 +23,7 @@ import { ItemBody } from '../components/Primitives';
 import { ImagePreview } from '../components/ImagePreview';
 import { CopyButton, PinButton, DeleteButton, ActionSeparator } from '../components/ActionButtons';
 import { MdKeyboardBackspace, MdKeyboardCommandKey, MdKeyboardReturn } from 'react-icons/md';
-import { IS_LINUX, IS_MAC } from '../lib/platform';
+import { IS_LINUX } from '../lib/platform';
 
 // Stable no-op so useImageUrl's effect deps stay stable for non-image rows.
 const NO_IMAGE = (): Promise<Blob | null> => Promise.resolve(null);
@@ -374,10 +374,6 @@ export function Palette({
 
   const pasteItem = async (item: ClipItem, content = item.content) => {
     if (!(await app.copyItem(item.id, content))) return;
-    if (!IS_MAC) {
-      onClose();
-      return;
-    }
     invoke('paste_to_frontmost_app').catch((err) => {
       console.error('auto-paste failed', err);
       onClose();
@@ -805,7 +801,7 @@ export function Palette({
                       editingId === selectedItem.id ? draft : selectedItem.content
                     );
                   }}
-                  label={IS_MAC ? 'Paste' : 'Copy'}
+                  label="Paste"
                 />
 
                 {selectedItem.category !== 'image' && (
