@@ -163,8 +163,7 @@ jobs:
             build-essential \
             curl \
             wget \
-            file \
-            libxdo-dev
+            file
 
       - uses: actions/setup-node@v4
         with:

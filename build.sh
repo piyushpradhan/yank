@@ -3,7 +3,7 @@
 #
 # Mirrors build.ps1 (Windows) and the Makefile, with one extra trick:
 #   `./build.sh install` also installs the Tauri system prereqs for your
-#   distro (libwebkit2gtk, libxdo, etc.) so you don't have to look them up.
+#   distro (libwebkit2gtk, appindicator, etc.) so you don't have to look them up.
 #
 # Usage:
 #   ./build.sh             # same as ./build.sh build
@@ -60,7 +60,6 @@ install_system_deps() {
                 libayatana-appindicator3-dev \
                 librsvg2-dev \
                 libssl-dev \
-                libxdo-dev \
                 libfuse2 \
                 build-essential \
                 pkg-config \
@@ -74,7 +73,6 @@ install_system_deps() {
                 openssl-devel \
                 libappindicator-gtk3-devel \
                 librsvg2-devel \
-                libxdo-devel \
                 fuse-libs \
                 pkgconf-pkg-config \
                 @development-tools \
@@ -89,7 +87,6 @@ install_system_deps() {
                 openssl \
                 libayatana-appindicator \
                 librsvg \
-                xdotool \
                 fuse2 \
                 pkgconf \
                 curl wget file
@@ -102,7 +99,6 @@ install_system_deps() {
                 libopenssl-devel \
                 libayatana-appindicator3-devel \
                 librsvg-devel \
-                xdotool-devel \
                 libfuse2 \
                 pkgconf-pkg-config \
                 curl wget file
