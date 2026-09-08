@@ -65,11 +65,15 @@ Pre-built installers are attached to every [GitHub Release](../../releases). mac
 | `yank_<version>_amd64.AppImage` | Portable binary — works on most distros |
 | `yank_<version>_amd64.deb`      | Debian/Ubuntu/PopOS package |
 
+Notes:
+
+- **GNOME? Use the `.deb`.** The tray icon needs the AppIndicator extension on stock GNOME, and the `.deb` installs the right integration.
+- **Wayland?** Global shortcuts are X11-only on Linux. Bind a keyboard shortcut in your desktop settings to run `yank --palette` instead — it toggles the palette through the running app.
+- **AppImage won't launch?** Install FUSE (`sudo apt install libfuse2`) or use the `.deb`.
+
 ### macOS
 
 Build from source: `make build` (produces `.dmg`)
-
-> **Wayland note:** Global shortcuts restricted on Wayland. Bind your DE's shortcut to `yank --palette` instead.
 
 ## Quick Start
 
