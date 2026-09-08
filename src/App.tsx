@@ -62,6 +62,9 @@ function App() {
     void invoke<boolean>('get_autostart')
       .then((enabled) => setTweaks((prev) => ({ ...prev, autostart: enabled })))
       .catch(() => {});
+    void invoke<boolean>('get_minimized_on_start')
+      .then((minimized) => setTweaks((prev) => ({ ...prev, minimizedOnStart: minimized })))
+      .catch(() => {});
     void invoke<ShortcutConfig>('get_shortcut')
       .then((sc) => setShortcut(sc))
       .catch(() => setShortcut(DEFAULT_SHORTCUT));

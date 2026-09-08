@@ -51,6 +51,7 @@ export interface Tweaks {
   previewMode: PreviewMode;
   paletteShortcut?: string;
   autostart?: boolean;
+  minimizedOnStart?: boolean;
 }
 
 export interface PlatformInfo {

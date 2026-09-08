@@ -247,3 +247,29 @@ pub fn set_theme(app: AppHandle, theme: String) -> Result<(), String> {
     let _ = app.emit("theme-changed", &theme);
     Ok(())
 }
+
+const MINIMIZED_ON_START_KEY: &str = "minimizedOnStart";
+
+/// Default is `true` — the autostart plugin launches with `--minimized`, so
+/// "start minimized" is the expected behaviour until the user opts out.
+pub fn start_minimized_enabled(app: &AppHandle) -> bool {
+    let Ok(store) = app.store(STORE_PATH) else {
+        return true;
+    };
+    store
+        .get(MINIMIZED_ON_START_KEY)
+        .and_then(|v| v.as_bool())
+        .unwrap_or(true)
+}
+
+#[tauri::command]
+pub fn get_minimized_on_start(app: AppHandle) -> bool {
+    start_minimized_enabled(&app)
+}
+
+#[tauri::command]
+pub fn set_minimized_on_start(app: AppHandle, minimized: bool) -> Result<(), String> {
+    let store = app.store(STORE_PATH).map_err(|e| e.to_string())?;
+    store.set(MINIMIZED_ON_START_KEY, serde_json::json!(minimized));
+    store.save().map_err(|e| e.to_string())
+}

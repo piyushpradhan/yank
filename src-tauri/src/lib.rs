@@ -251,10 +251,22 @@ fn strip_palette_chrome(w: &tauri::WebviewWindow) {
 /// Dispatch CLI args. `is_second_instance` is true when invoked via the
 /// single-instance plugin (a second `yank ...` call routed to
 /// the running app). Honoured flags:
+///   --minimized hide the library at launch (autostart's default behaviour)
 ///   --palette   toggle the palette
 ///   --library   focus the library
 ///   (bare)      focus the library on second instance; no-op on first
 fn handle_cli_args(app: &tauri::AppHandle, args: &[String], is_second_instance: bool) {
+    if should_start_minimized(args) {
+        // Autostart passes `--minimized`, but the user can turn that off via
+        // the Tweaks "start minimized" toggle. When the setting is on, keep
+        // the library out of the way at login instead of popping it up.
+        if settings::start_minimized_enabled(app) {
+            if let Some(w) = app.get_webview_window("library") {
+                let _ = w.hide();
+            }
+        }
+        return;
+    }
     if args.iter().any(|a| a == "--palette") {
         toggle_palette(app);
         return;
@@ -268,6 +280,12 @@ fn handle_cli_args(app: &tauri::AppHandle, args: &[String], is_second_instance: 
     if is_second_instance {
         focus_library(app);
     }
+}
+
+/// True when the launch args request a minimized start. Extracted for a
+/// unit test; the actual hide is gated on the persisted setting too.
+fn should_start_minimized(args: &[String]) -> bool {
+    args.iter().any(|a| a == "--minimized")
 }
 
 pub fn build_shortcut(sc: &ShortcutConfig) -> Shortcut {
@@ -373,6 +391,8 @@ pub fn run() {
             settings::set_autostart,
             settings::get_theme,
             settings::set_theme,
+            settings::get_minimized_on_start,
+            settings::set_minimized_on_start,
             platform_info::platform_info,
         ])
         .setup(move |app| {
@@ -663,4 +683,16 @@ pub fn run() {
                 focus_library(_app_handle);
             }
         });
+}
+
+#[cfg(test)]
+mod tests {
+    use super::should_start_minimized;
+
+    #[test]
+    fn minimized_flag_is_detected() {
+        assert!(should_start_minimized(&["--minimized".into()]));
+        assert!(!should_start_minimized(&["--palette".into()]));
+        assert!(!should_start_minimized(&[]));
+    }
 }

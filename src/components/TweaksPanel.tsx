@@ -359,6 +359,18 @@ export function TweaksPanel({
             {tweaks.autostart ? 'on' : 'off'}
           </Chip>
         </Row>
+        <Row label="Start minimized">
+          <Chip
+            active={!!tweaks.minimizedOnStart}
+            onClick={() => {
+              const next = !tweaks.minimizedOnStart;
+              onChange({ ...tweaks, minimizedOnStart: next });
+              void invoke('set_minimized_on_start', { minimized: next });
+            }}
+          >
+            {tweaks.minimizedOnStart ? 'on' : 'off'}
+          </Chip>
+        </Row>
       </Section>
 
       <Box px={4} py={3} style={{ background: 'color-mix(in oklab, var(--status-danger) 5%, transparent)' }}>
