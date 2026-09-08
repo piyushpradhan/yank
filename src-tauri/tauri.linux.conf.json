@@ -11,12 +11,8 @@
         "minHeight": 400,
         "center": true,
         "decorations": false,
-        "transparent": true,
-        "resizable": true,
-        "windowEffects": {
-          "effects": ["mica"],
-          "state": "active"
-        }
+        "transparent": false,
+        "resizable": true
       },
       {
         "label": "palette",

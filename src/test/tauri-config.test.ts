@@ -24,6 +24,15 @@ const linuxWindows = linuxConfig.app.windows as unknown as WindowConfig[];
 
 /** The only intended differences between the base and the Linux window config. */
 const linuxOverrides: Record<string, (w: WindowConfig) => WindowConfig> = {
+  library: (w) => {
+    // The library scrolls a list too, so it hits the same WebKitGTK ghosting
+    // class as the palette. It's the last transparent Linux surface — make it
+    // opaque and drop the Windows-only mica entry (a no-op on Linux that just
+    // confuses reviewers).
+    const next: WindowConfig = { ...w, transparent: false };
+    delete next.windowEffects;
+    return next;
+  },
   palette: (w) => {
     // WebKitGTK mis-computes scroll damage while painting into a translucent
     // window and leaves previously-drawn rows on screen as ghosts, so the
