@@ -48,7 +48,7 @@ const theme: Theme = {
 beforeEach(() => {
   mocks.listeners.clear();
   mocks.invoke.mockReset();
-  mocks.invoke.mockResolvedValue(undefined);
+  mocks.invoke.mockResolvedValue('pasted');
 });
 
 it('starts each palette session fresh and pastes a temporary edit without changing the item', async () => {
@@ -93,8 +93,9 @@ it('starts each palette session fresh and pastes a temporary edit without changi
   await waitFor(() => {
     expect(copyItem).toHaveBeenCalledWith('1', 'Temporary version');
     expect(mocks.invoke).toHaveBeenCalledWith('paste_to_frontmost_app');
+    // A successful paste closes the palette immediately.
+    expect(onClose).toHaveBeenCalled();
   });
-  expect(onClose).not.toHaveBeenCalled();
   expect(item.content).toBe('Hello, world');
 });
 
@@ -172,4 +173,45 @@ it('uses the same copy-then-paste flow for Enter and row clicks', async () => {
   expect(row).not.toBeNull();
   fireEvent.click(row!);
   await waitFor(() => expect(calls).toEqual(['copy', 'paste', 'copy', 'paste']));
+});
+
+it('shows a copy fallback pill and stays open when auto-paste falls back to copy-only', async () => {
+  mocks.invoke.mockImplementation(async (command: string) => {
+    if (command === 'paste_to_frontmost_app') return 'copied';
+    return undefined;
+  });
+  const copyItem = vi.fn(async () => true);
+  const onClose = vi.fn();
+  const app = {
+    items: [item],
+    copyItem,
+    pinItem: vi.fn(),
+    deleteItem: vi.fn(),
+    getImage: vi.fn(async () => null),
+    semanticSearch: vi.fn(),
+    showToast: vi.fn(),
+  } as unknown as AppState;
+
+  render(
+    <Palette
+      t={theme}
+      showLabels
+      categoryMode="chip"
+      app={app}
+      onClose={onClose}
+      semanticAvailable={false}
+      semanticOffMessage={null}
+      anthropicEnabled={false}
+    />
+  );
+
+  fireEvent.click(screen.getByRole('button', { name: 'Paste' }));
+
+  await waitFor(() => {
+    expect(screen.getByText('Copied — paste with Ctrl+V')).toBeTruthy();
+  });
+  expect(onClose).not.toHaveBeenCalled();
+
+  // The pill is transient: after the grace window the palette closes itself.
+  await waitFor(() => expect(onClose).toHaveBeenCalled(), { timeout: 1200 });
 });

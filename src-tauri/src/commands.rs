@@ -250,7 +250,7 @@ pub fn copy_image(id: String, db: State<'_, Arc<Db>>) -> Result<(), String> {
 }
 
 #[cfg(target_os = "macos")]
-fn send_paste_keystroke() -> Result<(), String> {
+fn send_paste_keystroke() -> Result<&'static str, String> {
     use core_graphics::{
         event::{CGEvent, CGEventFlags, CGEventTapLocation, KeyCode},
         event_source::{CGEventSource, CGEventSourceStateID},
@@ -275,17 +275,34 @@ fn send_paste_keystroke() -> Result<(), String> {
         event.set_flags(CGEventFlags::CGEventFlagCommand);
         event.post(CGEventTapLocation::HID);
     }
-    Ok(())
+    Ok("pasted")
+}
+
+/// Map whether a synthesized paste actually happened to the string the
+/// frontend keys off. Kept as a pure function so the fallback branch stays
+/// testable without instantiating a real input backend. Only the enigo path
+/// (Windows/Linux) can fall back to copy-only; macOS pastes or errors.
+#[cfg(not(target_os = "macos"))]
+fn paste_outcome(pasted: bool) -> &'static str {
+    if pasted { "pasted" } else { "copied" }
 }
 
 #[cfg(not(target_os = "macos"))]
-fn send_paste_keystroke() -> Result<(), String> {
+fn send_paste_keystroke() -> Result<&'static str, String> {
     use enigo::{Direction, Enigo, Key, Keyboard, Settings};
 
     // enigo synthesises input for the currently-focused window on Windows
     // (SendInput) and X11/Wayland (XTest / virtual keyboard). The clipboard is
     // already set by the caller; this only triggers the target app's paste.
-    let mut enigo = Enigo::new(&Settings::default()).map_err(|e| e.to_string())?;
+    //
+    // On GNOME/Mutter Wayland there is no virtual-keyboard protocol to talk
+    // to, so `Enigo::new` fails. That's not an error worth surfacing — the
+    // item is already on the clipboard — so we report "copied" and let the
+    // frontend tell the user to paste manually instead of closing silently.
+    let mut enigo = match Enigo::new(&Settings::default()) {
+        Ok(enigo) => enigo,
+        Err(_) => return Ok(paste_outcome(false)),
+    };
     enigo
         .key(Key::Control, Direction::Press)
         .map_err(|e| e.to_string())?;
@@ -295,11 +312,11 @@ fn send_paste_keystroke() -> Result<(), String> {
     enigo
         .key(Key::Control, Direction::Release)
         .map_err(|e| e.to_string())?;
-    Ok(())
+    Ok(paste_outcome(true))
 }
 
 #[tauri::command]
-pub fn paste_to_frontmost_app(app: AppHandle) -> Result<(), String> {
+pub fn paste_to_frontmost_app(app: AppHandle) -> Result<String, String> {
     if let Some(window) = app.get_webview_window("palette") {
         window.hide().map_err(map_err)?;
     }
@@ -311,9 +328,9 @@ pub fn paste_to_frontmost_app(app: AppHandle) -> Result<(), String> {
     // focus on its own.
     let restored = crate::restore_previous_application();
     std::thread::sleep(std::time::Duration::from_millis(if restored { 25 } else { 100 }));
-    send_paste_keystroke()?;
+    let outcome = send_paste_keystroke()?;
 
-    Ok(())
+    Ok(outcome.to_string())
 }
 
 #[tauri::command]
@@ -823,4 +840,14 @@ pub fn spawn_sweeper(app: AppHandle) {
             let _ = app.emit("clip-swept", n);
         }
     });
+}
+
+#[cfg(test)]
+mod tests {
+    #[cfg(not(target_os = "macos"))]
+    #[test]
+    fn paste_outcome_reports_copied_when_backend_falls_back() {
+        assert_eq!(super::paste_outcome(true), "pasted");
+        assert_eq!(super::paste_outcome(false), "copied");
+    }
 }

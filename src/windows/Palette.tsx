@@ -224,6 +224,10 @@ export function Palette({
   const [semanticLoading, setSemanticLoading] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState('');
+  // Transient "Copied — paste with Ctrl+V" pill shown when auto-paste fell
+  // back to copy-only (e.g. GNOME/Mutter Wayland has no virtual keyboard).
+  const [pasteNotice, setPasteNotice] = useState<string | null>(null);
+  const pasteNoticeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const offToastShownRef = useRef(false);
@@ -245,6 +249,11 @@ export function Palette({
       setSemanticError(null);
       setSemanticLoading(false);
       setEditingId(null);
+      setPasteNotice(null);
+      if (pasteNoticeTimer.current) {
+        clearTimeout(pasteNoticeTimer.current);
+        pasteNoticeTimer.current = null;
+      }
       inputRef.current?.focus();
       inputRef.current?.select();
     })
@@ -268,6 +277,10 @@ export function Palette({
     return () => {
       paletteShownUnlisten?.();
       focusUnlisten?.();
+      if (pasteNoticeTimer.current) {
+        clearTimeout(pasteNoticeTimer.current);
+        pasteNoticeTimer.current = null;
+      }
     };
   }, [initialMode, initialQuery, initialSelected]);
 
@@ -374,10 +387,26 @@ export function Palette({
 
   const pasteItem = async (item: ClipItem, content = item.content) => {
     if (!(await app.copyItem(item.id, content))) return;
-    invoke('paste_to_frontmost_app').catch((err) => {
-      console.error('auto-paste failed', err);
-      onClose();
-    });
+    invoke<string>('paste_to_frontmost_app')
+      .then((outcome) => {
+        if (outcome === 'copied') {
+          // The clipboard is set but the compositor refused synthesized input
+          // (e.g. GNOME/Mutter Wayland). Keep the palette open briefly so the
+          // user sees the fallback hint, then close.
+          setPasteNotice('Copied — paste with Ctrl+V');
+          if (pasteNoticeTimer.current) clearTimeout(pasteNoticeTimer.current);
+          pasteNoticeTimer.current = setTimeout(() => {
+            setPasteNotice(null);
+            onClose();
+          }, 800);
+        } else {
+          onClose();
+        }
+      })
+      .catch((err) => {
+        console.error('auto-paste failed', err);
+        onClose();
+      });
   };
 
   const onKey = (e: React.KeyboardEvent<HTMLDivElement>) => {
@@ -856,6 +885,28 @@ export function Palette({
           )}
         </Stack>
       </Inline>
+
+      {pasteNotice && (
+        <Box
+          position="absolute"
+          style={{
+            bottom: 16,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 510,
+            padding: '7px 16px',
+            borderRadius: 999,
+            background: 'var(--bg-surface)',
+            border: '1px solid var(--border-default)',
+            boxShadow: 'var(--shadow-md)',
+            animation: 'toastIn 180ms var(--easing-standard)',
+          }}
+        >
+          <Text size={12.5} weight="medium">
+            {pasteNotice}
+          </Text>
+        </Box>
+      )}
     </Box>
   );
 }
