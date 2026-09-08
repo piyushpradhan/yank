@@ -53,6 +53,10 @@ export interface Tweaks {
   autostart?: boolean;
 }
 
+export interface PlatformInfo {
+  wayland: boolean;
+}
+
 /**
  * Theme view exposed to components. Colors and fonts are now applied via
  * Tailwind utilities backed by ember-design-system CSS variables, so this

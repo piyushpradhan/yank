@@ -8,6 +8,7 @@ mod embed_queue;
 mod label;
 mod label_queue;
 pub mod local_embed;
+mod platform_info;
 pub mod query_intent;
 pub mod query_time;
 mod settings;
@@ -372,6 +373,7 @@ pub fn run() {
             settings::set_autostart,
             settings::get_theme,
             settings::set_theme,
+            platform_info::platform_info,
         ])
         .setup(move |app| {
             // Updater plugin is desktop-only; init here so the app handle is

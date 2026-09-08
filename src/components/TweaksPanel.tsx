@@ -13,7 +13,7 @@ import {
   tokensOf,
   type ShortcutConfig,
 } from '../lib/shortcut';
-import type { CategoryDisplay, Density, PreviewMode, Tweaks } from '../lib/types';
+import type { CategoryDisplay, Density, PlatformInfo, PreviewMode, Tweaks } from '../lib/types';
 
 interface TweaksPanelProps {
   tweaks: Tweaks;
@@ -190,6 +190,13 @@ export function TweaksPanel({
   const [clearArmed, setClearArmed] = useState(false);
   const [clearing, setClearing] = useState(false);
   const [clearError, setClearError] = useState<string | null>(null);
+  const [wayland, setWayland] = useState(false);
+
+  useEffect(() => {
+    invoke<PlatformInfo>('platform_info')
+      .then((info) => setWayland(info.wayland))
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -331,6 +338,12 @@ export function TweaksPanel({
         <Row label="Open palette">
           <ShortcutRecorder value={shortcut} onChange={onShortcutChange} />
         </Row>
+        {wayland && (
+          <Text size={11} tone="secondary" style={{ lineHeight: 1.5 }}>
+            Wayland: global shortcuts aren't supported by your compositor. Bind a keyboard
+            shortcut in your desktop settings to run <Text as="b">yank --palette</Text> instead.
+          </Text>
+        )}
       </Section>
 
       <Section title="System">
