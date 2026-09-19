@@ -354,17 +354,15 @@ pub fn update_label(
 ) -> Result<(), String> {
     let conn = db.0.lock().map_err(|e| e.to_string())?;
     let id_num: i64 = id.parse().map_err(map_err)?;
-    // Clearing embedding_model marks the item for re-embedding on the next
-    // queue tick — the label is part of the embedded text now, so an edit
-    // here needs to flow into the vector or semantic search will see stale
-    // content for this id.
+    // Re-ranking reads the label at query time, so no cache to invalidate —
+    // the edited label flows into the next search automatically.
     conn.execute(
-        "UPDATE items SET label = ?1, embedding_model = NULL WHERE id = ?2",
+        "UPDATE items SET label = ?1 WHERE id = ?2",
         params![label, id_num],
     )
     .map_err(map_err)?;
     drop(conn);
-    crate::embed_queue::kick(&app);
+    let _ = app;
     Ok(())
 }
 
@@ -422,15 +420,11 @@ pub struct SearchResponse {
 pub async fn search_semantic(
     query: String,
     limit: Option<usize>,
-    app: tauri::AppHandle,
     db: State<'_, Arc<Db>>,
     settings: State<'_, crate::settings::SettingsState>,
-    local: State<'_, crate::local_embed::LocalState>,
 ) -> Result<SearchResponse, String> {
-    use crate::embed::{self, EmbedConfig, EmbedTask, Provider};
-    use crate::local_embed;
-
-    let cfg: EmbedConfig = settings.0.read().map_err(|e| e.to_string())?.clone();
+    let cfg: crate::embed::EmbedConfig =
+        settings.0.read().map_err(|e| e.to_string())?.clone();
     if !cfg.is_active() {
         return Err("semantic search not configured".into());
     }
@@ -440,10 +434,9 @@ pub async fn search_semantic(
     }
     let limit = limit.unwrap_or(20);
 
-    // Pull any date phrase out of the query before we embed it. The
-    // residue ("semantic") is what hits the vector and BM25 pools; the
-    // window becomes a SQL filter on `created_at` so we never have to
-    // rank items outside it.
+    // Pull any date phrase out of the query before judging it. The residue
+    // ("semantic") is what Jev compares against candidates; the window
+    // becomes a SQL filter on `created_at` so we never rank items outside it.
     let parsed = crate::query_time::parse(chrono::Local::now(), &q_trimmed);
     let time_dto = parsed.time.as_ref().map(|t| TimeWindowDto {
         from_ms: t.from_ms,
@@ -452,29 +445,23 @@ pub async fn search_semantic(
     });
     let time_bounds = parsed.time.as_ref().map(|t| (t.from_ms, t.to_ms));
 
-    // Then pull category intent ("numbers", "links", "code snippets") and
-    // shed filler verbs ("I copied"). Filler removal cleans up the residue
-    // that gets embedded so common phrases like "I copied" stop dominating
-    // the query vector. Category is a *soft* signal during hybrid search
-    // (RRF boost below) — applied as a hard SQL filter only for pure
-    // category queries with no semantic residue ("numbers").
+    // Pull category intent ("numbers", "links", "code snippets") and shed
+    // filler verbs ("I copied"). Category is a *soft* signal during ranking
+    // (boost below) — applied as a hard SQL filter only for pure category
+    // queries with no semantic residue ("numbers").
     let intent = crate::query_intent::parse(&parsed.semantic);
     let semantic_q = intent.semantic.trim().to_string();
     let category_filter: Option<&str> = intent.category;
     let category_dto = intent.category.map(|c| c.to_string());
 
-    // Explicit colour intent — a named colour ("indigo"), or a raw value
-    // ("#4b0082", "rgb(75,0,130)"), even when the user never typed the word
-    // "color". `query_intent` only catches the generic keyword forms, so on
-    // its own a query like "indigo copied from chrome" embeds as plain text
-    // and the real swatch competes with prose that merely mentions colour.
-    // When we resolve a concrete target below, colour clips get ranked by
-    // perceptual closeness to it so the actual value the user copied wins.
+    // Explicit colour intent — a named colour ("indigo") or a raw value
+    // ("#4b0082") even when the user never typed the word "color". When we
+    // resolve a concrete target below, colour clips get ranked by perceptual
+    // closeness to it so the actual swatch the user copied wins.
     let color_intent = crate::color_intent::detect(&q_trimmed);
 
-    // Pure time / category query ("yesterday", "numbers", "numbers
-    // yesterday"): skip embedding entirely and return newest items
-    // matching the SQL filters, pinned first.
+    // Pure time / category query ("yesterday", "numbers"): skip Jev entirely
+    // and return newest items matching the SQL filters, pinned first.
     if semantic_q.is_empty() {
         if time_bounds.is_some() || category_filter.is_some() {
             let (from, to) = time_bounds.unwrap_or((i64::MIN, i64::MAX));
@@ -485,103 +472,45 @@ pub async fn search_semantic(
         return Ok(SearchResponse { items: Vec::new(), time_window: None, category: None });
     }
 
-    // Embed the residue outside the DB lock.
-    let q_vec = if matches!(cfg.provider, Provider::Local) {
-        local_embed::embed_local(
-            local.inner(),
-            local_embed::cache_dir(&app),
-            &cfg.local_model,
-            &semantic_q,
-            EmbedTask::Query,
-        )
-        .await?
-    } else {
-        let client = reqwest::Client::builder()
-            .timeout(std::time::Duration::from_secs(30))
-            .build()
-            .map_err(|e| e.to_string())?;
-        embed::embed(&cfg, &client, &semantic_q, EmbedTask::Query).await?
+    // Fast search: BM25 shortlist. Re-ranking can only promote candidates the
+    // shortlist contains, so it is sized generously (bounded by the Jev
+    // request cap in `jev::MAX_CANDIDATES`).
+    let db: Arc<Db> = db.inner().clone();
+    let candidates: Vec<ClipItem> = {
+        let conn = db.0.lock().map_err(|e| e.to_string())?;
+        bm25_pool(&conn, &semantic_q, crate::jev::MAX_CANDIDATES, time_bounds)
+            .unwrap_or_default()
     };
 
-    // Pool A — vector candidates. K is intentionally wider than `limit`
-    // because RRF then re-ranks this pool against the BM25 pool before
-    // we trim to the final window.
-    const VEC_POOL: usize = 50;
-    const FTS_POOL: usize = 50;
-    // Loose floor — RRF fusion does the actual ranking, this just drops
-    // embeddings that are clearly orthogonal to the query.
-    const VEC_THRESHOLD: f32 = 0.15;
-    // Standard RRF constant from the original paper; dampens runaway rank
-    // differences so the two pools blend smoothly.
-    const RRF_K: f32 = 60.0;
-
-    let db: Arc<Db> = db.inner().clone();
-    let conn = db.0.lock().map_err(|e| e.to_string())?;
-    let model_id = cfg.model_id();
-    let (from_ms, to_ms) = time_bounds.unwrap_or((i64::MIN, i64::MAX));
-
-    // --- Pool A: cosine --------------------------------------------------
-    let mut stmt_vec = conn
-        .prepare(
-            "SELECT id, content, category, label, preview, source, pinned,
-                    deleted, deleted_at, last_used_at, embedding
-             FROM items
-             WHERE deleted = 0 AND embedding IS NOT NULL AND embedding_model = ?1
-               AND created_at BETWEEN ?2 AND ?3",
-        )
-        .map_err(map_err)?;
-
-    let mut scored: Vec<(f32, ClipItem)> = stmt_vec
-        .query_map(params![model_id, from_ms, to_ms], |row| {
-            let item = row_to_item(row)?;
-            let bytes: Vec<u8> = row.get("embedding")?;
-            let vec = embed::from_bytes(&bytes);
-            Ok((embed::cosine(&q_vec, &vec), item))
-        })
-        .map_err(map_err)?
-        .filter_map(|r| r.ok())
+    // One batched Jev call scores the whole shortlist. No DB lock is held
+    // across this network await.
+    let model = cfg.typesafe_model.clone();
+    let api_key = cfg.typesafe_api_key.trim().to_string();
+    let candidate_texts: Vec<(String, String)> = candidates
+        .iter()
+        .map(|c| (c.id.clone(), candidate_text(c)))
         .collect();
+    let client = reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(30))
+        .build()
+        .map_err(|e| e.to_string())?;
+    let nouls =
+        crate::jev::rerank(&client, &api_key, &model, &semantic_q, &candidate_texts).await?;
 
-    scored.retain(|(score, _)| *score >= VEC_THRESHOLD);
-    scored.sort_by(|a, b| b.0.partial_cmp(&a.0).unwrap_or(std::cmp::Ordering::Equal));
-    scored.truncate(VEC_POOL);
-
-    // --- Pool B: BM25 via FTS5 ------------------------------------------
-    let fts_pool = bm25_pool(&conn, &semantic_q, FTS_POOL, time_bounds)
-        .unwrap_or_default();
-
-    // --- Reciprocal Rank Fusion -----------------------------------------
-    // For each item present in either pool, score = Σ 1 / (RRF_K + rank_i).
-    // Items in both pools are boosted; items unique to one still get a
-    // contribution from that pool. Robust to BM25's unbounded scale and
-    // cosine's [-1, 1] scale.
     use std::collections::HashMap;
     let mut fused: HashMap<String, (f32, ClipItem)> = HashMap::new();
-
-    for (rank, (_score, item)) in scored.iter().enumerate() {
-        let contribution = 1.0 / (RRF_K + rank as f32 + 1.0);
-        fused
-            .entry(item.id.clone())
-            .and_modify(|(s, _)| *s += contribution)
-            .or_insert((contribution, item.clone()));
-    }
-    for (rank, item) in fts_pool.iter().enumerate() {
-        let contribution = 1.0 / (RRF_K + rank as f32 + 1.0);
-        fused
-            .entry(item.id.clone())
-            .and_modify(|(s, _)| *s += contribution)
-            .or_insert((contribution, item.clone()));
+    for (item, noul) in candidates.into_iter().zip(nouls.into_iter()) {
+        fused.insert(item.id.clone(), (noul, item));
     }
 
-    // Soft category boost — replaces v4's hard SQL filter that excluded
-    // items whose `categorize.rs` label didn't match the user's intent
-    // word (e.g. "OTP code" wanted `code` but the OTP item is labelled
-    // `number`; "staging API URL" wanted `url` but `const API_URL = …;`
-    // is labelled `code`). Sized to ≈ one rank-1 RRF contribution so a
-    // category-matching item that lands mid-pool can climb over a strong
-    // off-category neighbour, but a clearly-better off-category match
-    // still wins.
-    const CAT_BOOST: f32 = 0.010;
+    // Re-lock for the remaining synchronous scoring (colour + sorting).
+    let conn = db.0.lock().map_err(|e| e.to_string())?;
+    let (from_ms, to_ms) = time_bounds.unwrap_or((i64::MIN, i64::MAX));
+
+    // Soft category boost — a category-matching item climbs over a
+    // similarly-scored off-category neighbour, but a clearly-better
+    // off-category match still wins.
+    const CAT_BOOST: f32 = 0.05;
     // An explicit colour request implies the `color` category even when the
     // user never typed the keyword, so fold it into the soft boost.
     let cat_want = category_filter.or(if color_intent.is_color { Some("color") } else { None });
@@ -594,16 +523,13 @@ pub async fn search_semantic(
     }
 
     // Colour-similarity boost. When the query resolved to a concrete colour,
-    // rank stored `color` clips by perceptual distance to it. This is scoped
-    // to colour items, so it can only reorder swatches — never promote
-    // unrelated text or code. The boost for a near-exact match clears the
-    // ceiling a non-colour item can reach from both pools combined
-    // (~2/(K+1) ≈ 0.033), so the colour the user actually copied surfaces;
-    // it then fades linearly to zero at COLOR_MAX_DIST, giving the "certain
-    // accuracy" gate — only genuinely-close swatches get promoted.
+    // rank stored `color` clips by perceptual distance to it. Scoped to
+    // colour items, so it can only reorder swatches — never promote
+    // unrelated text or code. It fades linearly to zero at COLOR_MAX_DIST,
+    // so only genuinely-close swatches get promoted.
     if let Some((tr, tg, tb)) = color_intent.target {
         const COLOR_MAX_DIST: f32 = 64.0;
-        const COLOR_BOOST: f32 = 0.06;
+        const COLOR_BOOST: f32 = 0.10;
         let mut stmt_color = conn
             .prepare(
                 "SELECT id, content, category, label, preview, source, pinned,
@@ -630,9 +556,9 @@ pub async fn search_semantic(
                 continue;
             }
             let boost = COLOR_BOOST * (1.0 - dist / COLOR_MAX_DIST);
-            // A clip beyond the vector/BM25 pools (the swatch the user wants
-            // but never described in words) still belongs here, so insert it
-            // if absent rather than only boosting in-pool hits.
+            // A clip beyond the BM25 shortlist (the swatch the user wants but
+            // never described in words) still belongs here, so insert it if
+            // absent rather than only boosting in-pool hits.
             fused
                 .entry(item.id.clone())
                 .and_modify(|(s, _)| *s += boost)
@@ -641,11 +567,9 @@ pub async fn search_semantic(
     }
 
     // Soft recency tiebreak — only when the user didn't already constrain
-    // recency via a date phrase. The coefficient stays well below the
-    // single-pool RRF rank-1 contribution (1/(K+1) ≈ 0.016) so it can
-    // *break* ties between similarly-relevant items but cannot promote
-    // an unrelated recent item over a relevant older one. Decays over
-    // ~2 weeks.
+    // recency via a date phrase. Sized to *break* ties between
+    // similarly-relevant items without promoting an unrelated recent item
+    // over a relevant older one. Decays over ~2 weeks.
     if time_bounds.is_none() {
         for (_, (score, item)) in fused.iter_mut() {
             let age_days = (item.minutes_ago.max(0) as f32) / (60.0 * 24.0);
@@ -654,7 +578,7 @@ pub async fn search_semantic(
     }
 
     let mut ranked: Vec<(f32, ClipItem)> = fused.into_values().collect();
-    // Pinned items win ties; otherwise sort strictly by fused score desc.
+    // Pinned items win ties; otherwise sort strictly by score desc.
     ranked.sort_by(|a, b| {
         let pin_cmp = b.1.pinned.cmp(&a.1.pinned);
         if pin_cmp != std::cmp::Ordering::Equal {
@@ -665,6 +589,38 @@ pub async fn search_semantic(
 
     let items = ranked.into_iter().take(limit).map(|(_, i)| i).collect();
     Ok(SearchResponse { items, time_window: time_dto, category: category_dto })
+}
+
+/// Upper bound on characters we send Jev per candidate, keeping token cost
+/// and latency predictable while preserving the gist of a long clip.
+const MAX_CAND_CHARS: usize = 500;
+
+/// Compose the plain text handed to Jev for a candidate clip. Jev reads
+/// natural language, so we lead with the AI label (high-signal summary, only
+/// when present), then the body, then the source app so queries like "the
+/// slack link" can hit on source even when the content is a bare URL.
+fn candidate_text(item: &ClipItem) -> String {
+    let mut parts: Vec<String> = Vec::with_capacity(4);
+    if item.label_generated && !item.label.is_empty() {
+        parts.push(item.label.clone());
+    }
+    let mut body: String = item.content.trim().chars().take(MAX_CAND_CHARS).collect();
+    // Colour enrichment: Jev sees the raw hex/rgb value, but a human-readable
+    // name is high signal for queries like "orange". Append the nearest named
+    // colours so a bare "#ff6b35" still matches a "brand orange" search.
+    if item.category == "color" {
+        let enriched = crate::color_names::enrich_color_text(&body);
+        if !enriched.is_empty() {
+            body = format!("{body} {enriched}");
+        }
+    }
+    if !body.is_empty() {
+        parts.push(body);
+    }
+    if !item.source.is_empty() {
+        parts.push(format!("(from {})", item.source));
+    }
+    parts.join("\n")
 }
 
 /// Newest items inside `[from_ms, to_ms]` — used when the query is purely
@@ -810,13 +766,6 @@ pub fn search_fts(
         .collect::<rusqlite::Result<Vec<_>>>()
         .map_err(map_err)?;
     Ok(rows)
-}
-
-/// Kick the embed queue to retry any failed or stalled backfill items.
-/// Callable from the frontend when the user clicks "Retry" on the backfill pill.
-#[tauri::command]
-pub fn retry_embed_backfill(app: AppHandle) {
-    crate::embed_queue::kick(&app);
 }
 
 pub fn spawn_sweeper(app: AppHandle) {
