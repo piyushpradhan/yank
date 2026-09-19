@@ -21,7 +21,7 @@
         "width": 720,
         "height": 520,
         "decorations": false,
-        "transparent": false,
+        "transparent": true,
         "shadow": false,
         "resizable": false,
         "alwaysOnTop": true,

@@ -12,7 +12,6 @@ import {
   PinButton,
   DeleteButton,
   RenameButton,
-  ActionSeparator,
 } from './ActionButtons';
 
 interface PreviewPaneProps {
@@ -125,8 +124,9 @@ export function PreviewPane({
       </Box>
       <Inline
         gap={1}
-        px={4}
+        px={3}
         py={2}
+        wrap
         style={{
           borderTop: '1px solid var(--border-subtle)',
           background: 'color-mix(in oklab, var(--bg-surface) 60%, transparent)',
@@ -137,11 +137,7 @@ export function PreviewPane({
           trailingKbd={<MdKeyboardReturn size={10} />}
         />
 
-        <ActionSeparator />
-
         <PinButton pinned={!!item.pinned} onClick={() => onPinItem ? onPinItem(item.id) : app.pinItem(item.id)} />
-
-        <ActionSeparator />
 
         <RenameButton onClick={() => setEditing(true)} />
 

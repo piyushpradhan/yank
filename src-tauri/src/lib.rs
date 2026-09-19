@@ -288,6 +288,33 @@ fn should_start_minimized(args: &[String]) -> bool {
     args.iter().any(|a| a == "--minimized")
 }
 
+/// Apply the translucency setting to the palette window.
+///
+/// The palette window is created `transparent: true` (transparency can't be
+/// toggled after window creation), so opacity is controlled here by setting the
+/// webview background colour — the exact knob WebKitGTK's damage-tracking bug
+/// keys on. When translucency is off (the default), an opaque background keeps
+/// WebKitGTK off the path that leaves ghost rows behind while scrolling
+/// (webkit#305758). When on, a transparent background lets the CSS frosted-glass
+/// surface blend with the desktop.
+#[cfg(target_os = "linux")]
+pub fn apply_translucency(app: &tauri::AppHandle, translucent: bool) {
+    use tauri::window::Color;
+    let bg = if translucent {
+        Color(0, 0, 0, 0)
+    } else {
+        // Never visible — the palette paints an opaque `var(--bg-surface)` over
+        // it — so the exact shade only matters as a pre-paint fill.
+        Color(18, 18, 18, 255)
+    };
+    if let Some(w) = app.get_webview_window("palette") {
+        let _ = w.set_background_color(Some(bg));
+    }
+}
+
+#[cfg(not(target_os = "linux"))]
+pub fn apply_translucency(_app: &tauri::AppHandle, _translucent: bool) {}
+
 pub fn build_shortcut(sc: &ShortcutConfig) -> Shortcut {
     // Legacy stores may have persisted bogus bitmasks from earlier builds
     // (e.g. `6` which is ALT_GRAPH|CAPS_LOCK). Detect anything that doesn't
@@ -393,6 +420,8 @@ pub fn run() {
             settings::set_theme,
             settings::get_minimized_on_start,
             settings::set_minimized_on_start,
+            settings::get_translucent,
+            settings::set_translucent,
             platform_info::platform_info,
         ])
         .setup(move |app| {
@@ -661,6 +690,11 @@ pub fn run() {
                     }
                 }
             }
+
+            // Apply the persisted translucency setting to the palette window's
+            // webview background before it first shows, so the default (opaque)
+            // state never enters WebKitGTK's ghosting-prone damage path.
+            apply_translucency(app.handle(), settings::translucent_enabled(app.handle()));
 
             // Cold-start with `--palette` should also open the palette,
             // so a Wayland user pressing their DE shortcut for the first

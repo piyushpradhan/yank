@@ -5,6 +5,7 @@ import { Box, Button, Card, IconButton, Inline, Kbd, Overline, Stack, Text } fro
 import { LuArrowUpRight, LuMoon, LuSun, LuX } from 'react-icons/lu';
 import { getKeyIcon } from '../lib/keyIcons';
 import type { Updater } from '../hooks/useUpdater';
+import { IS_LINUX } from '../lib/platform';
 import {
   DEFAULT_SHORTCUT,
   hasAnyModifier,
@@ -372,6 +373,27 @@ export function TweaksPanel({
           </Chip>
         </Row>
       </Section>
+
+      {IS_LINUX && (
+        <Section title="Translucent palette">
+          <Row label="Frosted glass">
+            <Chip
+              active={!!tweaks.translucent}
+              onClick={() => {
+                const next = !tweaks.translucent;
+                onChange({ ...tweaks, translucent: next });
+                void invoke('set_translucent', { translucent: next });
+              }}
+            >
+              {tweaks.translucent ? 'on' : 'off'}
+            </Chip>
+          </Row>
+          <Text size={11} tone="secondary" style={{ lineHeight: 1.5 }}>
+            Blur the desktop behind the palette. May leave ghost rows on some
+            WebKitGTK builds — off by default for reliability.
+          </Text>
+        </Section>
+      )}
 
       <Box px={4} py={3} style={{ background: 'color-mix(in oklab, var(--status-danger) 5%, transparent)' }}>
         <Overline as="div" size={9.5} tracking="wider" tone="danger" style={{ marginBottom: 8 }}>

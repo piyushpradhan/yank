@@ -19,6 +19,7 @@ const DEFAULT_TWEAKS: Tweaks = {
 
 export function PaletteWindow() {
   const [tweaks, setTweaks] = useState<Tweaks>(DEFAULT_TWEAKS);
+  const [translucent, setTranslucent] = useState(false);
   const app = useAppState();
   const { settings } = useSettings();
   const { setTheme } = useTheme();
@@ -44,6 +45,27 @@ export function PaletteWindow() {
         setTweaks((prev) => ({ ...prev, theme: theme as ThemeMode }));
       })
       .catch(() => {});
+  }, []);
+
+  // Translucency (Linux only): mirror the persisted setting onto <html> so the
+  // CSS can switch the palette surface between opaque and frosted-glass. The
+  // Rust side flips the webview background colour live on toggle.
+  useEffect(() => {
+    invoke<boolean>('get_translucent')
+      .then((on) => {
+        setTranslucent(on);
+        document.documentElement.setAttribute('data-translucent', on ? 'true' : 'false');
+      })
+      .catch(() => {
+        document.documentElement.setAttribute('data-translucent', 'false');
+      });
+    const unlisten = listen<boolean>('translucent-changed', (event) => {
+      setTranslucent(event.payload);
+      document.documentElement.setAttribute('data-translucent', event.payload ? 'true' : 'false');
+    });
+    return () => {
+      unlisten.then((f) => f()).catch(() => {});
+    };
   }, []);
 
   useEffect(() => {
@@ -73,6 +95,7 @@ export function PaletteWindow() {
         categoryMode={tweaks.categoryDisplay}
         app={app}
         onClose={close}
+        translucent={translucent}
         semanticAvailable={semanticAvailable}
         semanticOffMessage={semanticOffMessage}
         anthropicEnabled={anthropicEnabled}

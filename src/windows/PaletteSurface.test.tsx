@@ -7,15 +7,16 @@ import type { ClipItem, Theme } from '../lib/types';
 import { Palette } from './Palette';
 
 /**
- * The palette's frosted-glass surface is deliberately platform-dependent:
+ * The palette's frosted-glass surface is platform- and setting-dependent.
  * WebKitGTK leaves previously-painted rows on screen ("ghosts") when it
  * scrolls inside a translucent, backdrop-filtered layer, so Linux paints an
- * opaque surface instead (tauri-apps/tauri#14811, #14924).
+ * opaque surface by default and only opts into the frosted look when the user
+ * enables translucency (tauri-apps/tauri#14811, #14924, webkit#305758).
  *
- * Both platforms are asserted here on purpose. Testing only the Linux side
- * would pass just as happily if the blur vanished everywhere, or if jsdom
- * silently dropped the property — the macOS case is what keeps the Linux
- * assertion honest.
+ * Both the macOS and the Linux-opaque cases are asserted on purpose. Testing
+ * only the Linux side would pass just as happily if the blur vanished
+ * everywhere, or if jsdom silently dropped the property — the macOS case is
+ * what keeps the Linux assertion honest.
  */
 
 const mocks = vi.hoisted(() => ({
@@ -70,7 +71,7 @@ const app = {
 } as unknown as AppState;
 
 /** Inline style of the palette shell — the element carrying the surface. */
-function renderSurfaceStyle(): string {
+function renderSurfaceStyle(translucent = false): string {
   const { container } = render(
     <Palette
       t={theme}
@@ -78,6 +79,7 @@ function renderSurfaceStyle(): string {
       categoryMode="chip"
       app={app}
       onClose={vi.fn()}
+      translucent={translucent}
       semanticAvailable={false}
       semanticOffMessage={null}
       anthropicEnabled={false}
@@ -103,7 +105,7 @@ it('blurs the palette surface on platforms that composite transparency correctly
   expect(style).toContain('color-mix');
 });
 
-it('paints an opaque palette surface on Linux, with no backdrop-filter', () => {
+it('paints an opaque palette surface on Linux by default, with no backdrop-filter', () => {
   mocks.platform.IS_LINUX = true;
   const style = renderSurfaceStyle();
 
@@ -112,4 +114,12 @@ it('paints an opaque palette surface on Linux, with no backdrop-filter', () => {
   // A translucent background would keep WebKitGTK on the same broken
   // compositing path even with the blur gone.
   expect(style).not.toContain('color-mix');
+});
+
+it('blurs the palette surface on Linux when the user opts into translucency', () => {
+  mocks.platform.IS_LINUX = true;
+  const style = renderSurfaceStyle(true);
+
+  expect(style).toContain('backdrop-filter');
+  expect(style).toContain('color-mix');
 });

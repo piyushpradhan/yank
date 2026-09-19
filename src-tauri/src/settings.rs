@@ -273,3 +273,32 @@ pub fn set_minimized_on_start(app: AppHandle, minimized: bool) -> Result<(), Str
     store.set(MINIMIZED_ON_START_KEY, serde_json::json!(minimized));
     store.save().map_err(|e| e.to_string())
 }
+
+const TRANSLUCENT_KEY: &str = "translucent";
+
+/// Default is `false` — the palette is opaque on Linux unless the user opts
+/// into the frosted-glass look (which can ghost on affected WebKitGTK builds).
+pub fn translucent_enabled(app: &AppHandle) -> bool {
+    let Ok(store) = app.store(STORE_PATH) else {
+        return false;
+    };
+    store
+        .get(TRANSLUCENT_KEY)
+        .and_then(|v| v.as_bool())
+        .unwrap_or(false)
+}
+
+#[tauri::command]
+pub fn get_translucent(app: AppHandle) -> bool {
+    translucent_enabled(&app)
+}
+
+#[tauri::command]
+pub fn set_translucent(app: AppHandle, translucent: bool) -> Result<(), String> {
+    let store = app.store(STORE_PATH).map_err(|e| e.to_string())?;
+    store.set(TRANSLUCENT_KEY, serde_json::json!(translucent));
+    store.save().map_err(|e| e.to_string())?;
+    crate::apply_translucency(&app, translucent);
+    let _ = app.emit("translucent-changed", translucent);
+    Ok(())
+}

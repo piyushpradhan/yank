@@ -26,20 +26,21 @@ const linuxWindows = linuxConfig.app.windows as unknown as WindowConfig[];
 const linuxOverrides: Record<string, (w: WindowConfig) => WindowConfig> = {
   library: (w) => {
     // The library scrolls a list too, so it hits the same WebKitGTK ghosting
-    // class as the palette. It's the last transparent Linux surface — make it
-    // opaque and drop the Windows-only mica entry (a no-op on Linux that just
-    // confuses reviewers).
+    // class as the palette. It has no frosted-glass surface to opt into, so it
+    // stays opaque and drops the Windows-only mica entry (a no-op on Linux that
+    // just confuses reviewers).
     const next: WindowConfig = { ...w, transparent: false };
     delete next.windowEffects;
     return next;
   },
   palette: (w) => {
-    // WebKitGTK mis-computes scroll damage while painting into a translucent
-    // window and leaves previously-drawn rows on screen as ghosts, so the
-    // Linux palette is created opaque (tauri-apps/tauri#14811, #14924).
-    const next: WindowConfig = { ...w, transparent: false };
-    // hudWindow/acrylic are macOS/Windows effects that Linux never applies, so
-    // the key only ever described an effect this platform could not have.
+    // The palette is created `transparent: true` (transparency can't be toggled
+    // after window creation) so the opt-in "translucent" setting can work.
+    // Opacity is enforced at runtime instead: when the setting is off (default),
+    // the webview paints an opaque background so WebKitGTK never enters the
+    // damage-tracking path that leaves ghost rows while scrolling (tauri#14811,
+    // webkit#305758). Only the macOS/Windows window effects are dropped.
+    const next: WindowConfig = { ...w };
     delete next.windowEffects;
     return next;
   },
@@ -50,7 +51,7 @@ it('mirrors every base window into the Linux config, applying only the intended 
   expect(linuxWindows).toEqual(expected);
 });
 
-it('creates the palette window opaque on Linux and translucent everywhere else', () => {
-  expect(linuxWindows.find((w) => w.label === 'palette')?.transparent).toBe(false);
-  expect(baseWindows.find((w) => w.label === 'palette')?.transparent).toBe(true);
+it('creates the palette window transparent (opacity controlled at runtime) and the library opaque on Linux', () => {
+  expect(linuxWindows.find((w) => w.label === 'palette')?.transparent).toBe(true);
+  expect(linuxWindows.find((w) => w.label === 'library')?.transparent).toBe(false);
 });

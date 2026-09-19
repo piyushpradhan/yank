@@ -1,0 +1,2573 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="An interactive tour of Yank's Rust backend, grounded in the repository's real code."
+    />
+    <title>Yank Rust Field Guide</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --canvas: #f4f1ec;
+        --surface: #fbf9f6;
+        --surface-2: #ebe6df;
+        --ink: #211d19;
+        --ink-2: #655e57;
+        --ink-3: #8b8278;
+        --line: #d8d0c6;
+        --line-strong: #b8aea2;
+        --accent: #c64e1a;
+        --accent-strong: #9f3710;
+        --accent-soft: #f7ded0;
+        --code: #181512;
+        --code-ink: #eee6de;
+        --code-muted: #91877d;
+        --ok: #347359;
+        --radius: 16px;
+        --shadow: 0 24px 70px rgba(70, 49, 34, 0.12);
+        --sans: "Geist Sans", "Segoe UI Variable", "Avenir Next", system-ui, sans-serif;
+        --mono: "Geist Mono", "SFMono-Regular", "Cascadia Code", Consolas, monospace;
+      }
+
+      [data-theme="dark"] {
+        color-scheme: dark;
+        --canvas: #13110f;
+        --surface: #1b1815;
+        --surface-2: #24201c;
+        --ink: #f1eae3;
+        --ink-2: #b5aaa0;
+        --ink-3: #82786f;
+        --line: #37312c;
+        --line-strong: #51483f;
+        --accent: #e26c34;
+        --accent-strong: #f3844d;
+        --accent-soft: #3c2419;
+        --code: #0d0c0b;
+        --code-ink: #eee6de;
+        --code-muted: #776e66;
+        --ok: #74b895;
+        --shadow: 0 30px 90px rgba(0, 0, 0, 0.28);
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
+        scroll-padding-top: 92px;
+      }
+
+      body {
+        margin: 0;
+        min-width: 320px;
+        min-height: 100dvh;
+        overflow-x: hidden;
+        background: var(--canvas);
+        color: var(--ink);
+        font-family: var(--sans);
+        font-size: 16px;
+        line-height: 1.6;
+        text-rendering: optimizeLegibility;
+        -webkit-font-smoothing: antialiased;
+        transition:
+          background 220ms ease,
+          color 220ms ease;
+      }
+
+      button,
+      input {
+        color: inherit;
+        font: inherit;
+      }
+
+      button {
+        cursor: pointer;
+      }
+
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+
+      img {
+        display: block;
+        max-width: 100%;
+      }
+
+      ::selection {
+        background: var(--accent);
+        color: #fff7f0;
+      }
+
+      :focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 3px;
+      }
+
+      .page-progress {
+        position: fixed;
+        inset: 0 0 auto;
+        z-index: 20;
+        height: 3px;
+        background: transparent;
+      }
+
+      .page-progress span {
+        display: block;
+        width: 100%;
+        height: 100%;
+        background: var(--accent);
+        transform: scaleX(0);
+        transform-origin: left;
+      }
+
+      @supports (animation-timeline: scroll()) {
+        .page-progress span {
+          animation: page-progress linear;
+          animation-timeline: scroll(root);
+        }
+
+        @keyframes page-progress {
+          to {
+            transform: scaleX(1);
+          }
+        }
+      }
+
+      .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        border-bottom: 1px solid color-mix(in srgb, var(--line) 82%, transparent);
+        background: color-mix(in srgb, var(--canvas) 88%, transparent);
+        backdrop-filter: blur(18px);
+      }
+
+      .topbar-inner,
+      .wrap {
+        width: min(1180px, calc(100% - 40px));
+        margin-inline: auto;
+      }
+
+      .topbar-inner {
+        min-height: 72px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 24px;
+      }
+
+      .brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 11px;
+        min-width: max-content;
+        font-size: 14px;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+      }
+
+      .brand img {
+        width: 31px;
+        height: 31px;
+        border-radius: 50%;
+      }
+
+      .brand small {
+        color: var(--ink-3);
+        font-family: var(--mono);
+        font-size: 10px;
+        font-weight: 500;
+        letter-spacing: 0;
+      }
+
+      .topnav {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .topnav a,
+      .theme-toggle {
+        min-height: 38px;
+        border: 0;
+        border-radius: 10px;
+        background: transparent;
+        padding: 8px 11px;
+        color: var(--ink-2);
+        font-size: 13px;
+        font-weight: 600;
+        white-space: nowrap;
+        transition:
+          background 160ms ease,
+          color 160ms ease,
+          transform 160ms ease;
+      }
+
+      .topnav a:hover,
+      .theme-toggle:hover {
+        background: var(--surface-2);
+        color: var(--ink);
+      }
+
+      .topnav a:active,
+      .theme-toggle:active,
+      .primary-link:active,
+      .chapter-button:active,
+      .sample:active,
+      .run-button:active {
+        transform: translateY(1px);
+      }
+
+      .hero {
+        display: grid;
+        grid-template-columns: minmax(0, 0.88fr) minmax(480px, 1.12fr);
+        align-items: center;
+        gap: clamp(48px, 7vw, 96px);
+        min-height: calc(100dvh - 73px);
+        padding-block: 72px;
+      }
+
+      .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        min-height: 28px;
+        margin-bottom: 22px;
+        border: 1px solid color-mix(in srgb, var(--accent) 36%, var(--line));
+        border-radius: 999px;
+        background: var(--accent-soft);
+        padding: 4px 10px;
+        color: var(--accent-strong);
+        font-family: var(--mono);
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin: 0;
+      }
+
+      h1 {
+        max-width: 680px;
+        font-size: clamp(48px, 6.6vw, 84px);
+        font-weight: 720;
+        letter-spacing: -0.065em;
+        line-height: 0.96;
+        text-wrap: balance;
+      }
+
+      .hero-copy > p {
+        max-width: 520px;
+        margin-top: 26px;
+        color: var(--ink-2);
+        font-size: clamp(17px, 1.65vw, 20px);
+        line-height: 1.55;
+      }
+
+      .hero-actions {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 12px;
+        margin-top: 32px;
+      }
+
+      .primary-link,
+      .secondary-link {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 46px;
+        border-radius: 12px;
+        padding: 0 17px;
+        font-size: 14px;
+        font-weight: 700;
+        transition:
+          transform 160ms ease,
+          background 160ms ease,
+          border-color 160ms ease;
+      }
+
+      .primary-link {
+        background: var(--accent);
+        color: #fff7f0;
+        box-shadow: 0 12px 30px color-mix(in srgb, var(--accent) 24%, transparent);
+      }
+
+      .primary-link:hover {
+        background: var(--accent-strong);
+        transform: translateY(-1px);
+      }
+
+      .secondary-link {
+        border: 1px solid var(--line);
+        background: var(--surface);
+        color: var(--ink);
+      }
+
+      .secondary-link:hover {
+        border-color: var(--line-strong);
+      }
+
+      .hero-visual {
+        position: relative;
+      }
+
+      .map-window {
+        overflow: hidden;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: var(--surface);
+        box-shadow: var(--shadow);
+      }
+
+      .window-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        min-height: 48px;
+        border-bottom: 1px solid var(--line);
+        padding: 0 16px;
+        color: var(--ink-3);
+        font-family: var(--mono);
+        font-size: 11px;
+      }
+
+      .window-state {
+        color: var(--ok);
+      }
+
+      .system-map {
+        position: relative;
+        display: grid;
+        grid-template-columns: 1fr 44px 1fr;
+        gap: 12px 8px;
+        padding: 22px;
+      }
+
+      .map-node {
+        min-height: 86px;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: var(--canvas);
+        padding: 14px;
+        text-align: left;
+        transition:
+          border-color 180ms ease,
+          background 180ms ease,
+          transform 180ms ease;
+      }
+
+      .map-node:hover,
+      .map-node[aria-current="step"] {
+        border-color: var(--accent);
+        background: var(--accent-soft);
+        transform: translateY(-2px);
+      }
+
+      .map-node strong,
+      .flow-label {
+        display: block;
+        font-family: var(--mono);
+        font-size: 12px;
+        font-weight: 650;
+      }
+
+      .map-node span {
+        display: block;
+        margin-top: 6px;
+        color: var(--ink-2);
+        font-size: 12px;
+        line-height: 1.45;
+      }
+
+      .map-arrow {
+        display: grid;
+        place-items: center;
+        color: var(--accent);
+        font-family: var(--mono);
+        font-size: 20px;
+      }
+
+      .map-arrow.down {
+        grid-column: 3;
+        min-height: 24px;
+        transform: rotate(90deg);
+      }
+
+      .map-note {
+        grid-column: 1 / -1;
+        margin-top: 2px;
+        border-left: 2px solid var(--accent);
+        padding: 10px 12px;
+        color: var(--ink-2);
+        font-size: 12px;
+      }
+
+      .section {
+        padding-block: 112px;
+      }
+
+      .section + .section {
+        border-top: 1px solid var(--line);
+      }
+
+      .section-heading {
+        max-width: 720px;
+        margin-bottom: 46px;
+      }
+
+      .section-heading h2 {
+        font-size: clamp(34px, 4.7vw, 58px);
+        font-weight: 700;
+        letter-spacing: -0.052em;
+        line-height: 1;
+        text-wrap: balance;
+      }
+
+      .section-heading p {
+        max-width: 620px;
+        margin-top: 17px;
+        color: var(--ink-2);
+        font-size: 17px;
+      }
+
+      .tour-layout {
+        display: grid;
+        grid-template-columns: 220px minmax(0, 1fr);
+        align-items: start;
+        gap: 30px;
+      }
+
+      .chapter-nav {
+        position: sticky;
+        top: 96px;
+        display: grid;
+        gap: 5px;
+      }
+
+      .chapter-button {
+        display: grid;
+        grid-template-columns: 24px 1fr;
+        align-items: center;
+        gap: 8px;
+        width: 100%;
+        min-height: 48px;
+        border: 0;
+        border-radius: 11px;
+        background: transparent;
+        padding: 7px 10px;
+        color: var(--ink-2);
+        text-align: left;
+        transition:
+          background 160ms ease,
+          color 160ms ease,
+          transform 160ms ease;
+      }
+
+      .chapter-button:hover {
+        background: var(--surface-2);
+        color: var(--ink);
+      }
+
+      .chapter-button[aria-selected="true"] {
+        background: var(--accent-soft);
+        color: var(--accent-strong);
+      }
+
+      .chapter-index {
+        font-family: var(--mono);
+        font-size: 10px;
+        opacity: 0.7;
+      }
+
+      .chapter-label {
+        font-size: 13px;
+        font-weight: 650;
+      }
+
+      .lesson-shell {
+        min-width: 0;
+        overflow: hidden;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: var(--surface);
+        box-shadow: var(--shadow);
+      }
+
+      .lesson-pane {
+        display: grid;
+        grid-template-columns: minmax(250px, 0.72fr) minmax(0, 1.28fr);
+        min-height: 590px;
+      }
+
+      .lesson-pane[hidden] {
+        display: none;
+      }
+
+      .lesson-copy {
+        display: flex;
+        flex-direction: column;
+        padding: clamp(26px, 4vw, 44px);
+      }
+
+      .lesson-kicker,
+      .file-path,
+      .concept-tag,
+      .lab-label,
+      .trail-path {
+        font-family: var(--mono);
+        font-size: 11px;
+      }
+
+      .lesson-kicker {
+        color: var(--accent-strong);
+        font-weight: 650;
+      }
+
+      .lesson-copy h3 {
+        margin-top: 16px;
+        font-size: clamp(27px, 3vw, 38px);
+        font-weight: 700;
+        letter-spacing: -0.04em;
+        line-height: 1.05;
+      }
+
+      .lesson-copy > p {
+        margin-top: 18px;
+        color: var(--ink-2);
+      }
+
+      .concepts {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 7px;
+        margin-top: 24px;
+      }
+
+      .concept-tag {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--canvas);
+        padding: 5px 7px;
+        color: var(--ink-2);
+      }
+
+      .lesson-check {
+        margin-top: auto;
+        border-top: 1px solid var(--line);
+        padding-top: 22px;
+      }
+
+      .lesson-check strong {
+        display: block;
+        font-size: 13px;
+      }
+
+      .lesson-check p {
+        margin-top: 6px;
+        color: var(--ink-2);
+        font-size: 13px;
+      }
+
+      .code-panel {
+        min-width: 0;
+        overflow: hidden;
+        border-left: 1px solid var(--line);
+        background: var(--code);
+        color: var(--code-ink);
+      }
+
+      .code-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        min-height: 48px;
+        border-bottom: 1px solid #2d2824;
+        padding: 0 18px;
+      }
+
+      .file-path {
+        overflow: hidden;
+        color: #c6bbb1;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .code-kind {
+        color: var(--code-muted);
+        font-family: var(--mono);
+        font-size: 10px;
+      }
+
+      pre {
+        margin: 0;
+        overflow: auto;
+        padding: 18px 0 26px;
+        font-family: var(--mono);
+        font-size: 12px;
+        line-height: 1.68;
+        tab-size: 4;
+      }
+
+      .code-row {
+        display: grid;
+        grid-template-columns: 46px minmax(max-content, 1fr);
+        min-height: 20px;
+        padding-right: 20px;
+      }
+
+      .code-row::before {
+        content: attr(data-line);
+        padding-right: 13px;
+        color: var(--code-muted);
+        text-align: right;
+        user-select: none;
+      }
+
+      .code-row.is-focus {
+        background: color-mix(in srgb, var(--accent) 16%, transparent);
+      }
+
+      .code-row.is-focus::before {
+        color: var(--accent-strong);
+      }
+
+      .code-text {
+        white-space: pre;
+      }
+
+      .decoder {
+        display: grid;
+        grid-template-columns: minmax(240px, 0.72fr) minmax(0, 1.28fr);
+        overflow: hidden;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: var(--surface);
+      }
+
+      .decoder-tabs {
+        display: grid;
+        align-content: start;
+        border-right: 1px solid var(--line);
+        padding: 10px;
+      }
+
+      .decoder-tab {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 14px;
+        min-height: 55px;
+        border: 0;
+        border-radius: 10px;
+        background: transparent;
+        padding: 10px 12px;
+        color: var(--ink-2);
+        text-align: left;
+      }
+
+      .decoder-tab:hover {
+        background: var(--surface-2);
+      }
+
+      .decoder-tab[aria-selected="true"] {
+        background: var(--accent-soft);
+        color: var(--accent-strong);
+      }
+
+      .decoder-tab strong {
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+
+      .decoder-tab span {
+        align-self: center;
+        color: var(--ink-3);
+        font-size: 11px;
+      }
+
+      .decoder-content {
+        min-height: 440px;
+        padding: clamp(28px, 5vw, 56px);
+      }
+
+      .concept-panel[hidden] {
+        display: none;
+      }
+
+      .concept-panel h3 {
+        max-width: 570px;
+        font-size: clamp(28px, 3.4vw, 43px);
+        letter-spacing: -0.045em;
+        line-height: 1.04;
+      }
+
+      .concept-panel > p {
+        max-width: 640px;
+        margin-top: 18px;
+        color: var(--ink-2);
+      }
+
+      .inline-code {
+        margin-top: 28px;
+        overflow: auto;
+        border-radius: 12px;
+        background: var(--code);
+        padding: 20px;
+        color: var(--code-ink);
+        font-family: var(--mono);
+        font-size: 13px;
+        line-height: 1.7;
+        white-space: pre;
+      }
+
+      .plain-english {
+        margin-top: 22px;
+        border-left: 2px solid var(--accent);
+        padding-left: 16px;
+        color: var(--ink-2);
+        font-size: 14px;
+      }
+
+      .lab-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.07fr) minmax(310px, 0.93fr);
+        gap: 24px;
+      }
+
+      .lab,
+      .result-panel {
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: var(--surface);
+      }
+
+      .lab {
+        padding: clamp(24px, 4vw, 42px);
+      }
+
+      .lab-label {
+        display: block;
+        margin-bottom: 9px;
+        color: var(--ink-2);
+      }
+
+      .lab-input-row {
+        display: flex;
+        gap: 10px;
+      }
+
+      .lab input {
+        width: 100%;
+        min-height: 48px;
+        border: 1px solid var(--line-strong);
+        border-radius: 11px;
+        background: var(--canvas);
+        padding: 0 14px;
+        color: var(--ink);
+        outline: none;
+      }
+
+      .lab input:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 16%, transparent);
+      }
+
+      .run-button {
+        min-width: max-content;
+        min-height: 48px;
+        border: 0;
+        border-radius: 11px;
+        background: var(--accent);
+        padding: 0 16px;
+        color: #fff7f0;
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .sample-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 7px;
+        margin-top: 16px;
+      }
+
+      .sample {
+        min-height: 32px;
+        border: 1px solid var(--line);
+        border-radius: 9px;
+        background: transparent;
+        padding: 5px 9px;
+        color: var(--ink-2);
+        font-family: var(--mono);
+        font-size: 10px;
+      }
+
+      .sample:hover {
+        border-color: var(--line-strong);
+        color: var(--ink);
+      }
+
+      .lab-explainer {
+        margin-top: 28px;
+        color: var(--ink-2);
+        font-size: 13px;
+      }
+
+      .result-panel {
+        display: flex;
+        min-height: 330px;
+        flex-direction: column;
+        overflow: hidden;
+      }
+
+      .result-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        min-height: 56px;
+        border-bottom: 1px solid var(--line);
+        padding: 0 18px;
+      }
+
+      .result-head span {
+        color: var(--ink-2);
+        font-family: var(--mono);
+        font-size: 11px;
+      }
+
+      .category-output {
+        color: var(--accent-strong);
+        font-family: var(--mono);
+        font-size: 19px;
+        font-weight: 700;
+      }
+
+      .trace-list {
+        display: grid;
+        gap: 1px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .trace-list li {
+        display: grid;
+        grid-template-columns: 28px 1fr;
+        gap: 9px;
+        border-bottom: 1px solid var(--line);
+        padding: 13px 18px;
+        color: var(--ink-2);
+        font-size: 12px;
+      }
+
+      .trace-list li:last-child {
+        border-bottom: 0;
+      }
+
+      .trace-list code {
+        font-family: var(--mono);
+        color: var(--ink);
+      }
+
+      .trace-status {
+        color: var(--ink-3);
+        font-family: var(--mono);
+      }
+
+      .trace-status.hit {
+        color: var(--ok);
+      }
+
+      .search-trace {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 10px;
+        margin-top: 24px;
+      }
+
+      .search-stage {
+        min-height: 132px;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: var(--canvas);
+        padding: 14px;
+        opacity: 0.48;
+        transform: translateY(4px);
+        transition:
+          opacity 240ms ease,
+          transform 240ms ease,
+          border-color 240ms ease,
+          background 240ms ease;
+      }
+
+      .search-stage.active {
+        border-color: var(--accent);
+        background: var(--accent-soft);
+        opacity: 1;
+        transform: none;
+      }
+
+      .search-stage strong {
+        display: block;
+        font-family: var(--mono);
+        font-size: 11px;
+      }
+
+      .search-stage span {
+        display: block;
+        margin-top: 9px;
+        color: var(--ink-2);
+        font-size: 12px;
+        line-height: 1.4;
+        overflow-wrap: anywhere;
+      }
+
+      .formula {
+        margin-top: 26px;
+        border-left: 2px solid var(--accent);
+        padding: 4px 0 4px 16px;
+        color: var(--ink-2);
+        font-size: 14px;
+      }
+
+      .formula code {
+        color: var(--ink);
+        font-family: var(--mono);
+      }
+
+      .repo-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 0.86fr) minmax(0, 1.14fr);
+        gap: 24px;
+      }
+
+      .repo-tree,
+      .reading-trails {
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: var(--surface);
+        padding: clamp(24px, 4vw, 38px);
+      }
+
+      .repo-tree pre {
+        overflow: visible;
+        padding: 0;
+        color: var(--ink-2);
+        font-size: 13px;
+        line-height: 1.9;
+        white-space: pre-wrap;
+      }
+
+      .repo-tree mark {
+        border-radius: 4px;
+        background: var(--accent-soft);
+        color: var(--accent-strong);
+        padding: 1px 4px;
+      }
+
+      .reading-trails h3,
+      .repo-tree h3 {
+        margin-bottom: 22px;
+        font-size: 21px;
+        letter-spacing: -0.025em;
+      }
+
+      .trail-list {
+        display: grid;
+        gap: 10px;
+      }
+
+      .trail {
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 15px;
+        background: var(--canvas);
+      }
+
+      .trail strong {
+        display: block;
+        font-size: 14px;
+      }
+
+      .trail-path {
+        display: block;
+        margin-top: 6px;
+        color: var(--accent-strong);
+        overflow-wrap: anywhere;
+      }
+
+      .trail p {
+        margin-top: 6px;
+        color: var(--ink-2);
+        font-size: 12px;
+      }
+
+      .finish {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        align-items: end;
+        gap: 32px;
+        padding-block: 96px;
+      }
+
+      .finish h2 {
+        max-width: 780px;
+        font-size: clamp(36px, 5vw, 62px);
+        letter-spacing: -0.055em;
+        line-height: 0.98;
+      }
+
+      .finish p {
+        max-width: 650px;
+        margin-top: 18px;
+        color: var(--ink-2);
+      }
+
+      .finish-code {
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: var(--surface);
+        padding: 16px 18px;
+        color: var(--accent-strong);
+        font-family: var(--mono);
+        font-size: 12px;
+        white-space: nowrap;
+      }
+
+      .reveal {
+        opacity: 1;
+        transform: none;
+      }
+
+      .reveal.will-reveal {
+        opacity: 0;
+        transform: translateY(16px);
+        transition:
+          opacity 540ms cubic-bezier(0.16, 1, 0.3, 1),
+          transform 540ms cubic-bezier(0.16, 1, 0.3, 1);
+      }
+
+      .reveal.will-reveal.is-visible {
+        opacity: 1;
+        transform: none;
+      }
+
+      @media (max-width: 920px) {
+        .topnav a {
+          display: none;
+        }
+
+        .hero {
+          grid-template-columns: 1fr;
+          gap: 52px;
+          min-height: auto;
+        }
+
+        .hero-copy {
+          padding-top: 34px;
+        }
+
+        .tour-layout,
+        .decoder,
+        .lab-grid,
+        .repo-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .chapter-nav {
+          position: static;
+          grid-template-columns: repeat(3, 1fr);
+        }
+
+        .decoder-tabs {
+          grid-template-columns: repeat(2, 1fr);
+          border-right: 0;
+          border-bottom: 1px solid var(--line);
+        }
+
+        .lesson-pane {
+          grid-template-columns: 1fr;
+        }
+
+        .lesson-copy {
+          min-height: 400px;
+        }
+
+        .code-panel {
+          border-top: 1px solid var(--line);
+          border-left: 0;
+        }
+
+        .search-trace {
+          grid-template-columns: repeat(2, 1fr);
+        }
+
+        .search-stage:last-child {
+          grid-column: 1 / -1;
+        }
+      }
+
+      @media (max-width: 620px) {
+        .topbar-inner,
+        .wrap {
+          width: min(100% - 28px, 1180px);
+        }
+
+        .topbar-inner {
+          min-height: 64px;
+        }
+
+        .brand small {
+          display: none;
+        }
+
+        .hero {
+          padding-block: 54px 78px;
+        }
+
+        h1 {
+          font-size: clamp(44px, 15vw, 66px);
+        }
+
+        .system-map {
+          grid-template-columns: 1fr;
+          gap: 8px;
+          padding: 14px;
+        }
+
+        .map-arrow {
+          min-height: 24px;
+          transform: rotate(90deg);
+        }
+
+        .map-arrow.down,
+        .map-note {
+          grid-column: 1;
+        }
+
+        .section {
+          padding-block: 78px;
+        }
+
+        .chapter-nav {
+          display: flex;
+          overflow-x: auto;
+          padding-bottom: 4px;
+          scroll-snap-type: x mandatory;
+        }
+
+        .chapter-button {
+          min-width: 138px;
+          scroll-snap-align: start;
+        }
+
+        .lesson-copy {
+          min-height: 430px;
+        }
+
+        .decoder-tabs {
+          display: flex;
+          overflow-x: auto;
+          scroll-snap-type: x mandatory;
+        }
+
+        .decoder-tab {
+          min-width: 160px;
+          scroll-snap-align: start;
+        }
+
+        .decoder-content {
+          min-height: 500px;
+        }
+
+        .lab-input-row {
+          display: grid;
+        }
+
+        .search-trace {
+          grid-template-columns: 1fr;
+        }
+
+        .search-stage:last-child {
+          grid-column: auto;
+        }
+
+        .finish {
+          grid-template-columns: 1fr;
+          align-items: start;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          scroll-behavior: auto !important;
+          transition-duration: 0.01ms !important;
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+        }
+
+        .reveal {
+          opacity: 1;
+          transform: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page-progress" aria-hidden="true"><span></span></div>
+
+    <header class="topbar">
+      <div class="topbar-inner">
+        <a class="brand" href="#top" aria-label="Yank Rust Field Guide home">
+          <img src="brand/mark.svg" alt="" width="31" height="31" />
+          <span>Yank <small>/ Rust field guide</small></span>
+        </a>
+        <nav class="topnav" aria-label="Guide sections">
+          <a href="#tour">Trace a clip</a>
+          <a href="#decoder">Rust decoder</a>
+          <a href="#labs">Labs</a>
+          <a href="#map">Repo map</a>
+          <button class="theme-toggle" type="button" id="theme-toggle">Light theme</button>
+        </nav>
+      </div>
+    </header>
+
+    <main id="top">
+      <section class="hero wrap">
+        <div class="hero-copy">
+          <span class="eyebrow">Learn Rust inside a real app</span>
+          <h1>Follow one clip through Yank.</h1>
+          <p>
+            Read the repository as a running system. Each stop pairs real source code with the Rust
+            idea that makes it work.
+          </p>
+          <div class="hero-actions">
+            <a class="primary-link" href="#tour">Start the trace&nbsp; →</a>
+            <a class="secondary-link" href="#map">See the file map</a>
+          </div>
+        </div>
+
+        <div class="hero-visual reveal">
+          <div class="map-window">
+            <div class="window-bar">
+              <span>one clipboard event</span>
+              <span class="window-state">local process</span>
+            </div>
+            <div class="system-map" aria-label="Yank system flow">
+              <button class="map-node" type="button" data-open-chapter="watch">
+                <strong>OS clipboard</strong>
+                <span>arboard polls text and images every 500ms</span>
+              </button>
+              <span class="map-arrow" aria-hidden="true">→</span>
+              <button class="map-node" type="button" data-open-chapter="classify">
+                <strong>watcher.rs</strong>
+                <span>deduplicates, categorizes, then creates a preview</span>
+              </button>
+              <span class="map-arrow down" aria-hidden="true">→</span>
+              <button class="map-node" type="button" data-open-chapter="bridge">
+                <strong>React UI</strong>
+                <span>listens for clip-added and invokes Rust commands</span>
+              </button>
+              <span class="map-arrow" aria-hidden="true">←</span>
+              <button class="map-node" type="button" data-open-chapter="store">
+                <strong>SQLite + FTS5</strong>
+                <span>stores content, metadata, image bytes, and vectors</span>
+              </button>
+              <p class="map-note">
+                Tauri is the bridge. Rust owns native access and persistence; React owns interaction
+                and presentation.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="tour">
+        <div class="wrap">
+          <div class="section-heading reveal">
+            <h2>Trace the system, then learn the syntax.</h2>
+            <p>
+              Use the chapters in order once. After that, jump by concept whenever a Rust pattern
+              feels unfamiliar.
+            </p>
+          </div>
+
+          <div class="tour-layout reveal">
+            <nav class="chapter-nav" role="tablist" aria-label="Trace chapters">
+              <button
+                class="chapter-button"
+                id="tab-boot"
+                type="button"
+                role="tab"
+                aria-selected="true"
+                aria-controls="chapter-boot"
+                data-chapter="boot"
+              >
+                <span class="chapter-index">01</span>
+                <span class="chapter-label">Boot</span>
+              </button>
+              <button
+                class="chapter-button"
+                id="tab-watch"
+                type="button"
+                role="tab"
+                aria-selected="false"
+                aria-controls="chapter-watch"
+                data-chapter="watch"
+              >
+                <span class="chapter-index">02</span>
+                <span class="chapter-label">Watch</span>
+              </button>
+              <button
+                class="chapter-button"
+                id="tab-classify"
+                type="button"
+                role="tab"
+                aria-selected="false"
+                aria-controls="chapter-classify"
+                data-chapter="classify"
+              >
+                <span class="chapter-index">03</span>
+                <span class="chapter-label">Classify</span>
+              </button>
+              <button
+                class="chapter-button"
+                id="tab-store"
+                type="button"
+                role="tab"
+                aria-selected="false"
+                aria-controls="chapter-store"
+                data-chapter="store"
+              >
+                <span class="chapter-index">04</span>
+                <span class="chapter-label">Store</span>
+              </button>
+              <button
+                class="chapter-button"
+                id="tab-search"
+                type="button"
+                role="tab"
+                aria-selected="false"
+                aria-controls="chapter-search"
+                data-chapter="search"
+              >
+                <span class="chapter-index">05</span>
+                <span class="chapter-label">Search</span>
+              </button>
+              <button
+                class="chapter-button"
+                id="tab-bridge"
+                type="button"
+                role="tab"
+                aria-selected="false"
+                aria-controls="chapter-bridge"
+                data-chapter="bridge"
+              >
+                <span class="chapter-index">06</span>
+                <span class="chapter-label">Bridge</span>
+              </button>
+            </nav>
+
+            <div class="lesson-shell">
+              <article
+                class="lesson-pane"
+                id="chapter-boot"
+                role="tabpanel"
+                aria-labelledby="tab-boot"
+                data-pane="boot"
+              >
+                <div class="lesson-copy">
+                  <span class="lesson-kicker">Start at the composition root</span>
+                  <h3>The binary is tiny on purpose.</h3>
+                  <p>
+                    <code>main.rs</code> hands control to the library crate. <code>lib.rs</code>
+                    composes plugins, shared state, commands, and long-running workers in one place.
+                  </p>
+                  <div class="concepts" aria-label="Rust concepts">
+                    <span class="concept-tag">crate boundary</span>
+                    <span class="concept-tag">modules</span>
+                    <span class="concept-tag">builder pattern</span>
+                    <span class="concept-tag">managed state</span>
+                  </div>
+                  <div class="lesson-check">
+                    <strong>Reading checkpoint</strong>
+                    <p>
+                      If you want to know what exists at runtime, start at <code>run()</code>, not at
+                      a feature module.
+                    </p>
+                  </div>
+                </div>
+                <div class="code-panel">
+                  <div class="code-bar">
+                    <span class="file-path">src-tauri/src/lib.rs</span>
+                    <span class="code-kind">Rust, selected lines</span>
+                  </div>
+                  <pre data-start="293" data-focus="293,303,321,335,341,343,344"><code>        .invoke_handler(tauri::generate_handler![
+            commands::list_items,
+            commands::pin_item,
+            commands::delete_item,
+            commands::search_fts,
+            commands::search_semantic,
+            settings::get_settings,
+            settings::set_settings,
+        ])
+        .setup(move |app| {
+            let data_dir = app
+                .path()
+                .app_data_dir()
+                .expect("failed to resolve app_data_dir");
+            let db_path = data_dir.join("clips.db");
+            let conn = db::open(&db_path).expect("failed to open db");
+            let db = Arc::new(Db(Mutex::new(conn)));
+            app.manage(db.clone());
+
+            watcher::spawn(app.handle().clone());
+            commands::spawn_sweeper(app.handle().clone());
+            embed_queue::spawn(app.handle().clone());
+            label_queue::spawn(app.handle().clone());</code></pre>
+                </div>
+              </article>
+
+              <article
+                class="lesson-pane"
+                id="chapter-watch"
+                role="tabpanel"
+                aria-labelledby="tab-watch"
+                data-pane="watch"
+                hidden
+              >
+                <div class="lesson-copy">
+                  <span class="lesson-kicker">A background worker owns the clipboard</span>
+                  <h3><code>move</code> gives the thread what it needs.</h3>
+                  <p>
+                    The closure takes ownership of the app handle, then loops forever. Each pass
+                    sleeps, checks images first, and falls back to text.
+                  </p>
+                  <div class="concepts" aria-label="Rust concepts">
+                    <span class="concept-tag">move closure</span>
+                    <span class="concept-tag">ownership</span>
+                    <span class="concept-tag">Option&lt;T&gt;</span>
+                    <span class="concept-tag">match</span>
+                  </div>
+                  <div class="lesson-check">
+                    <strong>Why no async task here?</strong>
+                    <p>
+                      <code>arboard</code> is synchronous. A dedicated OS thread keeps blocking
+                      clipboard work away from the UI and async runtime.
+                    </p>
+                  </div>
+                </div>
+                <div class="code-panel">
+                  <div class="code-bar">
+                    <span class="file-path">src-tauri/src/watcher.rs</span>
+                    <span class="code-kind">Rust, selected lines</span>
+                  </div>
+                  <pre data-start="12" data-focus="13,21,22,23,24,37,44,47,49"><code>pub fn spawn(app: AppHandle) {
+    std::thread::spawn(move || {
+        let mut cb = match Clipboard::new() {
+            Ok(c) =&gt; c,
+            Err(err) =&gt; {
+                eprintln!("[watcher] clipboard init failed: {err}");
+                return;
+            }
+        };
+        let mut last_text: Option&lt;String&gt; = None;
+        let mut last_image_hash: Option&lt;u64&gt; = None;
+        loop {
+            std::thread::sleep(Duration::from_millis(500));
+
+            if let Ok(img) = cb.get_image() {
+                let hash = image_hash(&amp;img);
+                if last_image_hash != Some(hash) {
+                    last_image_hash = Some(hash);
+                    let source = active_window_title();
+                    insert_image_and_emit(&amp;app, &amp;img, source);
+                }
+                continue;
+            }
+
+            // Check for text
+            let text = match cb.get_text() {
+                Ok(t) =&gt; t,
+                Err(_) =&gt; continue,
+            };
+            if last_text.as_deref() == Some(text.as_str()) {
+                continue;
+            }
+            last_text = Some(text.clone());
+            insert_text_and_emit(&amp;app, &amp;text, active_window_title());
+        }
+    });
+}</code></pre>
+                </div>
+              </article>
+
+              <article
+                class="lesson-pane"
+                id="chapter-classify"
+                role="tabpanel"
+                aria-labelledby="tab-classify"
+                data-pane="classify"
+                hidden
+              >
+                <div class="lesson-copy">
+                  <span class="lesson-kicker">Cheap rules run before expensive AI</span>
+                  <h3>Early returns make the decision tree readable.</h3>
+                  <p>
+                    A borrowed <code>&amp;str</code> enters. A static category label leaves. Nothing
+                    is allocated for the result, and the first confident rule wins.
+                  </p>
+                  <div class="concepts" aria-label="Rust concepts">
+                    <span class="concept-tag">&amp;str borrowing</span>
+                    <span class="concept-tag">&amp;'static str</span>
+                    <span class="concept-tag">iterators</span>
+                    <span class="concept-tag">early return</span>
+                  </div>
+                  <div class="lesson-check">
+                    <strong>Order is product behavior</strong>
+                    <p>
+                      Number detection runs before phone detection, while color detection runs
+                      before both. Moving a branch can change user-visible categories.
+                    </p>
+                  </div>
+                </div>
+                <div class="code-panel">
+                  <div class="code-bar">
+                    <span class="file-path">src-tauri/src/categorize.rs</span>
+                    <span class="code-kind">Rust, selected lines</span>
+                  </div>
+                  <pre data-start="45" data-focus="45,46,52,53,59,68,71,72,81,88"><code>pub fn categorize(text: &amp;str) -&gt; &amp;'static str {
+    let trimmed = text.trim();
+    if trimmed.is_empty() {
+        return "text";
+    }
+    let single_line = !trimmed.contains('\n');
+
+    if single_line {
+        if RE_URL.is_match(trimmed) {
+            return "url";
+        }
+        if RE_EMAIL.is_match(trimmed) {
+            return "email";
+        }
+        if RE_HEX.is_match(trimmed)
+            || RE_RGB.is_match(trimmed)
+            || color_names::is_named_color(trimmed)
+        {
+            return "color";
+        }
+        if RE_NUMBER.is_match(trimmed) {
+            return "number";
+        }
+        if RE_PHONE.is_match(trimmed) {
+            let digits = trimmed.chars().filter(|c| c.is_ascii_digit()).count();
+            if digits &gt;= 7 &amp;&amp; digits &lt;= 15 {
+                return "phone";
+            }
+        }
+    }
+
+    let lines = trimmed.lines().count();
+    if lines &gt;= 3 &amp;&amp; RE_CODEY.is_match(trimmed) {
+        return "code";
+    }
+    "text"
+}</code></pre>
+                </div>
+              </article>
+
+              <article
+                class="lesson-pane"
+                id="chapter-store"
+                role="tabpanel"
+                aria-labelledby="tab-store"
+                data-pane="store"
+                hidden
+              >
+                <div class="lesson-copy">
+                  <span class="lesson-kicker">Shared state has one synchronized door</span>
+                  <h3><code>Arc&lt;Db&gt;</code> shares. <code>Mutex</code> protects.</h3>
+                  <p>
+                    Tauri commands and workers all need the same SQLite connection.
+                    <code>Arc</code> provides shared ownership; <code>Mutex</code> permits one
+                    connection user at a time.
+                  </p>
+                  <div class="concepts" aria-label="Rust concepts">
+                    <span class="concept-tag">Arc&lt;T&gt;</span>
+                    <span class="concept-tag">Mutex&lt;T&gt;</span>
+                    <span class="concept-tag">Result&lt;T, E&gt;</span>
+                    <span class="concept-tag">? operator</span>
+                  </div>
+                  <div class="lesson-check">
+                    <strong>The lock stays small</strong>
+                    <p>
+                      Yank releases the database guard before kicking background work. Long network
+                      or embedding work never happens while SQLite is locked.
+                    </p>
+                  </div>
+                </div>
+                <div class="code-panel">
+                  <div class="code-bar">
+                    <span class="file-path">src-tauri/src/watcher.rs</span>
+                    <span class="code-kind">Rust, selected lines</span>
+                  </div>
+                  <pre data-start="138" data-focus="141,142,143,148,157,175,176,177,178"><code>fn insert_text_and_emit(app: &amp;AppHandle, text: &amp;str, source: Option&lt;String&gt;) {
+    let category = categorize(text);
+    let preview = make_preview(text);
+    let db: Arc&lt;Db&gt; = app.state::&lt;Arc&lt;Db&gt;&gt;().inner().clone();
+    let id = {
+        let conn = db.0.lock().unwrap();
+
+        match crate::db::dedup_text(&amp;conn, text) {
+            Ok(Some(existing_id)) =&gt; {
+                let now = chrono::Utc::now().timestamp_millis();
+                let _ = conn.execute(
+                    "UPDATE items SET last_used_at = ?1 WHERE id = ?2",
+                    rusqlite::params![now, existing_id],
+                );
+                existing_id
+            }
+            Ok(None) =&gt; match crate::db::insert_item(
+                &amp;conn,
+                text,
+                category,
+                &amp;preview,
+                source.as_deref(),
+            ) {
+                Ok(id) =&gt; id,
+                Err(err) =&gt; {
+                    eprintln!("[watcher] insert failed: {err}");
+                    return;
+                }
+            },
+            Err(err) =&gt; {
+                eprintln!("[watcher] dedup check failed: {err}");
+                return;
+            }
+        }
+    };
+    let _ = app.emit("clip-added", id);
+    crate::label_queue::kick(app);
+    crate::embed_queue::kick(app);
+}</code></pre>
+                </div>
+              </article>
+
+              <article
+                class="lesson-pane"
+                id="chapter-search"
+                role="tabpanel"
+                aria-labelledby="tab-search"
+                data-pane="search"
+                hidden
+              >
+                <div class="lesson-copy">
+                  <span class="lesson-kicker">Search is a pipeline, not one algorithm</span>
+                  <h3>Parse intent before creating a vector.</h3>
+                  <p>
+                    Date and category phrases become structured filters. Only the semantic residue
+                    is embedded, then vector and BM25 candidates are fused.
+                  </p>
+                  <div class="concepts" aria-label="Rust concepts">
+                    <span class="concept-tag">async fn</span>
+                    <span class="concept-tag">Option::map</span>
+                    <span class="concept-tag">enum matching</span>
+                    <span class="concept-tag">borrowing</span>
+                  </div>
+                  <div class="lesson-check">
+                    <strong>Notice the lock boundary</strong>
+                    <p>
+                      Query embedding happens before the database mutex is acquired. That keeps a
+                      slow provider from blocking list, pin, or delete commands.
+                    </p>
+                  </div>
+                </div>
+                <div class="code-panel">
+                  <div class="code-bar">
+                    <span class="file-path">src-tauri/src/commands.rs</span>
+                    <span class="code-kind">Rust, selected lines</span>
+                  </div>
+                  <pre data-start="425" data-focus="429,430,435,443,444,445,460,470,471,485"><code>// Pull any date phrase out before embedding.
+let parsed = crate::query_time::parse(
+    chrono::Local::now(),
+    &amp;q_trimmed,
+);
+let time_dto = parsed.time.as_ref().map(|t| TimeWindowDto {
+    from_ms: t.from_ms,
+    to_ms: t.to_ms,
+    label: t.label.clone(),
+});
+let time_bounds = parsed.time.as_ref().map(|t| (t.from_ms, t.to_ms));
+
+// Pull category intent and filler verbs from the residue.
+let intent = crate::query_intent::parse(&amp;parsed.semantic);
+let semantic_q = intent.semantic.trim().to_string();
+let category_filter: Option&lt;&amp;str&gt; = intent.category;
+
+if semantic_q.is_empty() {
+    if time_bounds.is_some() || category_filter.is_some() {
+        let (from, to) = time_bounds.unwrap_or((i64::MIN, i64::MAX));
+        let conn = db.0.lock().map_err(|e| e.to_string())?;
+        let items = items_in_window(&amp;conn, from, to, category_filter, limit)?;
+        return Ok(SearchResponse { items, time_window: time_dto, category: category_dto });
+    }
+}
+
+// Embed outside the database lock.
+let q_vec = if matches!(cfg.provider, Provider::Local) {
+    local_embed::embed_local(
+        local.inner(),
+        local_embed::cache_dir(&amp;app),
+        &amp;cfg.local_model,
+        &amp;semantic_q,
+        EmbedTask::Query,
+    ).await?
+} else {
+    embed::embed(&amp;cfg, &amp;client, &amp;semantic_q, EmbedTask::Query).await?
+};</code></pre>
+                </div>
+              </article>
+
+              <article
+                class="lesson-pane"
+                id="chapter-bridge"
+                role="tabpanel"
+                aria-labelledby="tab-bridge"
+                data-pane="bridge"
+                hidden
+              >
+                <div class="lesson-copy">
+                  <span class="lesson-kicker">Tauri makes the type boundary explicit</span>
+                  <h3>A command is a narrow door into Rust.</h3>
+                  <p>
+                    React invokes a registered command by name. Tauri deserializes arguments,
+                    injects managed state, runs Rust, then serializes the <code>Result</code> back.
+                  </p>
+                  <div class="concepts" aria-label="Rust concepts">
+                    <span class="concept-tag">attribute macro</span>
+                    <span class="concept-tag">Serde</span>
+                    <span class="concept-tag">State&lt;'_, T&gt;</span>
+                    <span class="concept-tag">DTO</span>
+                  </div>
+                  <div class="lesson-check">
+                    <strong>Trace both sides</strong>
+                    <p>
+                      When a UI action fails, search the command string in TypeScript, then find the
+                      matching <code>#[tauri::command]</code> in Rust.
+                    </p>
+                  </div>
+                </div>
+                <div class="code-panel">
+                  <div class="code-bar">
+                    <span class="file-path">commands.rs ↔ useAppState.ts</span>
+                    <span class="code-kind">selected lines</span>
+                  </div>
+                  <pre data-start="130" data-focus="130,131,132,147,153,157"><code>#[tauri::command]
+pub fn list_items(db: State&lt;'_, Arc&lt;Db&gt;&gt;) -&gt; Result&lt;Vec&lt;ClipItem&gt;, String&gt; {
+    let conn = db.0.lock().map_err(|e| e.to_string())?;
+    let mut stmt = conn.prepare(
+        "SELECT id, content, category, label, preview, source,
+                pinned, deleted, deleted_at, last_used_at
+         FROM items
+         WHERE deleted = 0
+         ORDER BY pinned DESC, last_used_at DESC
+         LIMIT 500",
+    ).map_err(map_err)?;
+    let rows = stmt
+        .query_map([], row_to_item)
+        .map_err(map_err)?
+        .collect::&lt;rusqlite::Result&lt;Vec&lt;_&gt;&gt;&gt;()
+        .map_err(map_err)?;
+    Ok(rows)
+}
+
+// src/hooks/useAppState.ts
+async function fetchItems(): Promise&lt;ClipItem[]&gt; {
+  return await invoke&lt;ClipItem[]&gt;("list_items");
+}</code></pre>
+                </div>
+              </article>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="decoder">
+        <div class="wrap">
+          <div class="section-heading reveal">
+            <h2>Decode the Rust you keep seeing.</h2>
+            <p>
+              These patterns recur across Yank. Learn their job here, then return to the trace and
+              read the same lines with less friction.
+            </p>
+          </div>
+
+          <div class="decoder reveal">
+            <div class="decoder-tabs" role="tablist" aria-label="Rust concepts">
+              <button
+                class="decoder-tab"
+                id="concept-tab-borrow"
+                type="button"
+                role="tab"
+                aria-selected="true"
+                aria-controls="concept-borrow"
+                data-concept="borrow"
+              >
+                <strong>&amp;T</strong><span>borrow</span>
+              </button>
+              <button
+                class="decoder-tab"
+                id="concept-tab-option"
+                type="button"
+                role="tab"
+                aria-selected="false"
+                aria-controls="concept-option"
+                data-concept="option"
+              >
+                <strong>Option&lt;T&gt;</strong><span>maybe</span>
+              </button>
+              <button
+                class="decoder-tab"
+                id="concept-tab-result"
+                type="button"
+                role="tab"
+                aria-selected="false"
+                aria-controls="concept-result"
+                data-concept="result"
+              >
+                <strong>Result&lt;T, E&gt;</strong><span>fallible</span>
+              </button>
+              <button
+                class="decoder-tab"
+                id="concept-tab-shared"
+                type="button"
+                role="tab"
+                aria-selected="false"
+                aria-controls="concept-shared"
+                data-concept="shared"
+              >
+                <strong>Arc&lt;Mutex&lt;T&gt;&gt;</strong><span>shared</span>
+              </button>
+              <button
+                class="decoder-tab"
+                id="concept-tab-move"
+                type="button"
+                role="tab"
+                aria-selected="false"
+                aria-controls="concept-move"
+                data-concept="move"
+              >
+                <strong>move ||</strong><span>transfer</span>
+              </button>
+              <button
+                class="decoder-tab"
+                id="concept-tab-cfg"
+                type="button"
+                role="tab"
+                aria-selected="false"
+                aria-controls="concept-cfg"
+                data-concept="cfg"
+              >
+                <strong>#[cfg(...)]</strong><span>platform</span>
+              </button>
+            </div>
+
+            <div class="decoder-content">
+              <article
+                class="concept-panel"
+                id="concept-borrow"
+                role="tabpanel"
+                aria-labelledby="concept-tab-borrow"
+                data-concept-pane="borrow"
+              >
+                <h3>Borrow data without taking it.</h3>
+                <p>
+                  <code>&amp;T</code> gives temporary read access. The caller remains the owner, so
+                  the same value can be reused after the function returns.
+                </p>
+                <div class="inline-code">pub fn categorize(text: &amp;str) -&gt; &amp;'static str
+
+let category = categorize(text);
+let preview = make_preview(text);</div>
+                <p class="plain-english">
+                  Plain English: “Let me read this string. I will not keep it or destroy it.”
+                </p>
+              </article>
+
+              <article
+                class="concept-panel"
+                id="concept-option"
+                role="tabpanel"
+                aria-labelledby="concept-tab-option"
+                data-concept-pane="option"
+                hidden
+              >
+                <h3>Absence is part of the type.</h3>
+                <p>
+                  <code>Option&lt;T&gt;</code> is either <code>Some(value)</code> or
+                  <code>None</code>. Yank uses it for source titles, time windows, and values that
+                  may not exist.
+                </p>
+                <div class="inline-code">let mut last_text: Option&lt;String&gt; = None;
+
+if last_text.as_deref() == Some(text.as_str()) {
+    continue;
+}</div>
+                <p class="plain-english">
+                  Plain English: “There may be a previous clip. If there is, compare its string
+                  view.”
+                </p>
+              </article>
+
+              <article
+                class="concept-panel"
+                id="concept-result"
+                role="tabpanel"
+                aria-labelledby="concept-tab-result"
+                data-concept-pane="result"
+                hidden
+              >
+                <h3>Failure travels through normal control flow.</h3>
+                <p>
+                  <code>Result&lt;T, E&gt;</code> forces success and failure to be handled. The
+                  <code>?</code> operator returns early on error and unwraps the success value.
+                </p>
+                <div class="inline-code">pub fn open(path: &amp;Path) -&gt; rusqlite::Result&lt;Connection&gt; {
+    let conn = Connection::open(path)?;
+    migrate(&amp;conn)?;
+    Ok(conn)
+}</div>
+                <p class="plain-english">
+                  Plain English: “Open, then migrate. If either fails, stop and return that error.”
+                </p>
+              </article>
+
+              <article
+                class="concept-panel"
+                id="concept-shared"
+                role="tabpanel"
+                aria-labelledby="concept-tab-shared"
+                data-concept-pane="shared"
+                hidden
+              >
+                <h3>Share ownership, serialize access.</h3>
+                <p>
+                  <code>Arc</code> keeps shared data alive across threads.
+                  <code>Mutex</code> makes each user acquire a guard before touching SQLite.
+                </p>
+                <div class="inline-code">pub struct Db(pub Mutex&lt;Connection&gt;);
+
+let db = Arc::new(Db(Mutex::new(conn)));
+app.manage(db.clone());
+
+let conn = db.0.lock()?;</div>
+                <p class="plain-english">
+                  Plain English: “Many tasks may hold the database handle, but only one enters the
+                  connection at a time.”
+                </p>
+              </article>
+
+              <article
+                class="concept-panel"
+                id="concept-move"
+                role="tabpanel"
+                aria-labelledby="concept-tab-move"
+                data-concept-pane="move"
+                hidden
+              >
+                <h3>Move captured values into the new thread.</h3>
+                <p>
+                  A spawned thread can outlive its caller. <code>move</code> transfers the closure's
+                  captured values so their lifetime is no longer tied to the current stack frame.
+                </p>
+                <div class="inline-code">pub fn spawn(app: AppHandle) {
+    std::thread::spawn(move || {
+        // this thread now owns its AppHandle
+        insert_text_and_emit(&amp;app, &amp;text, source);
+    });
+}</div>
+                <p class="plain-english">
+                  Plain English: “Thread, take your own app handle. Do not borrow mine.”
+                </p>
+              </article>
+
+              <article
+                class="concept-panel"
+                id="concept-cfg"
+                role="tabpanel"
+                aria-labelledby="concept-tab-cfg"
+                data-concept-pane="cfg"
+                hidden
+              >
+                <h3>Compile only the code this platform needs.</h3>
+                <p>
+                  Conditional compilation removes irrelevant branches from the binary. Yank uses it
+                  for native window focus, paste keystrokes, and active-window metadata.
+                </p>
+                <div class="inline-code">#[cfg(target_os = "macos")]
+fn send_paste_keystroke() -&gt; Result&lt;(), String&gt; { ... }
+
+#[cfg(not(target_os = "macos"))]
+fn send_paste_keystroke() -&gt; Result&lt;(), String&gt; { ... }</div>
+                <p class="plain-english">
+                  Plain English: “Build exactly one implementation for the current operating
+                  system.”
+                </p>
+              </article>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="labs">
+        <div class="wrap">
+          <div class="section-heading reveal">
+            <h2>Make the branches move.</h2>
+            <p>
+              These browser labs mirror the order of Yank's Rust logic. They are learning aids; the
+              Rust source remains the authority.
+            </p>
+          </div>
+
+          <div class="lab-grid reveal">
+            <div class="lab">
+              <label class="lab-label" for="clip-input">Clipboard text</label>
+              <div class="lab-input-row">
+                <input
+                  id="clip-input"
+                  value="const answer = 42;"
+                  spellcheck="false"
+                  autocomplete="off"
+                />
+                <button class="run-button" id="categorize-run" type="button">Categorize</button>
+              </div>
+              <div class="sample-list" aria-label="Example clipboard values">
+                <button class="sample" type="button" data-sample="https://getyank.dev">URL</button>
+                <button class="sample" type="button" data-sample="hello@getyank.dev">Email</button>
+                <button class="sample" type="button" data-sample="#e26c34">Color</button>
+                <button class="sample" type="button" data-sample="+1 555 123 4567">Phone</button>
+                <button class="sample" type="button" data-sample="./src-tauri/src/lib.rs">Path</button>
+                <button class="sample" type="button" data-sample="const answer = 42;">Code</button>
+              </div>
+              <p class="lab-explainer">
+                Watch the first matching branch win. This is why the order in
+                <code>categorize.rs</code> is part of Yank's product behavior.
+              </p>
+            </div>
+
+            <aside class="result-panel" aria-live="polite">
+              <div class="result-head">
+                <span>categorize(&amp;str)</span>
+                <strong class="category-output" id="category-output">code</strong>
+              </div>
+              <ol class="trace-list" id="category-trace"></ol>
+            </aside>
+          </div>
+
+          <div class="lab reveal" style="margin-top: 24px">
+            <label class="lab-label" for="query-input">Natural-language query</label>
+            <div class="lab-input-row">
+              <input
+                id="query-input"
+                value="the Rust function I copied yesterday"
+                spellcheck="false"
+                autocomplete="off"
+              />
+              <button class="run-button" id="query-run" type="button">Trace query</button>
+            </div>
+            <div class="search-trace" id="search-trace" aria-live="polite">
+              <div class="search-stage">
+                <strong>raw query</strong>
+                <span data-stage-value="raw">the Rust function I copied yesterday</span>
+              </div>
+              <div class="search-stage">
+                <strong>time parser</strong>
+                <span data-stage-value="time">yesterday becomes a SQL window</span>
+              </div>
+              <div class="search-stage">
+                <strong>intent parser</strong>
+                <span data-stage-value="intent">remove “I copied” filler</span>
+              </div>
+              <div class="search-stage">
+                <strong>two pools</strong>
+                <span data-stage-value="pools">cosine vector + BM25 text</span>
+              </div>
+              <div class="search-stage">
+                <strong>RRF</strong>
+                <span data-stage-value="result">merge ranks, add small boosts</span>
+              </div>
+            </div>
+            <p class="formula">
+              Reciprocal Rank Fusion uses <code>1 / (60 + rank)</code> from each pool. An item found
+              by both gets two contributions without comparing incompatible raw score scales.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="map">
+        <div class="wrap">
+          <div class="section-heading reveal">
+            <h2>Use the repository like a map.</h2>
+            <p>
+              Do not read every file front to back. Pick a behavior, follow its boundary crossings,
+              and stop when the loop closes.
+            </p>
+          </div>
+
+          <div class="repo-grid reveal">
+            <div class="repo-tree">
+              <h3>The useful shape</h3>
+              <pre aria-label="Yank repository tree">yank/
+├── src/                         React + TypeScript
+│   ├── <mark>hooks/useAppState.ts</mark>   command and event bridge
+│   ├── windows/Library.tsx      main browsing surface
+│   ├── windows/Palette.tsx      quick paste surface
+│   └── lib/search.tsx           client fuzzy search
+│
+├── src-tauri/
+│   ├── <mark>src/lib.rs</mark>             composition root
+│   ├── src/watcher.rs          clipboard capture
+│   ├── src/categorize.rs       content heuristics
+│   ├── src/db.rs               schema and writes
+│   ├── <mark>src/commands.rs</mark>        frontend API + search
+│   ├── src/embed_queue.rs      background vectors
+│   └── Cargo.toml              Rust dependencies
+│
+└── landing/                    public website</pre>
+            </div>
+
+            <div class="reading-trails">
+              <h3>Five productive trails</h3>
+              <div class="trail-list">
+                <article class="trail">
+                  <strong>Clipboard capture</strong>
+                  <span class="trail-path">lib.rs → watcher.rs → categorize.rs → db.rs</span>
+                  <p>Learn threads, ownership, borrowing, enums, and synchronized state.</p>
+                </article>
+                <article class="trail">
+                  <strong>Natural-language search</strong>
+                  <span class="trail-path"
+                    >Library.tsx → useAppState.ts → commands.rs → query_time.rs</span
+                  >
+                  <p>Learn async commands, parsing, DTOs, iterators, and ranking.</p>
+                </article>
+                <article class="trail">
+                  <strong>Local embeddings</strong>
+                  <span class="trail-path"
+                    >embed_queue.rs → local_embed.rs → embed.rs → commands.rs</span
+                  >
+                  <p>Learn worker coordination, model configuration, byte conversion, and cosine.</p>
+                </article>
+                <article class="trail">
+                  <strong>Paste back</strong>
+                  <span class="trail-path">Palette.tsx → commands.rs → platform cfg blocks</span>
+                  <p>Learn FFI-shaped boundaries and conditional compilation.</p>
+                </article>
+                <article class="trail">
+                  <strong>Soft delete and undo</strong>
+                  <span class="trail-path">useAppState.ts → commands.rs → sweeper</span>
+                  <p>Learn command symmetry, timestamps, state refresh, and delayed cleanup.</p>
+                </article>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="finish wrap">
+        <div>
+          <h2>Your next Rust lesson is one small Yank change.</h2>
+          <p>
+            Start with a categorization rule or query parser test. Both give quick feedback and keep
+            the full frontend-to-Rust loop visible.
+          </p>
+        </div>
+        <div class="finish-code">cargo test categorize</div>
+      </section>
+    </main>
+
+    <script>
+      (function () {
+        "use strict";
+
+        var root = document.documentElement;
+        var reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        var themeButton = document.getElementById("theme-toggle");
+        var storage = {
+          get: function (key) {
+            try {
+              return localStorage.getItem(key);
+            } catch (_) {
+              return null;
+            }
+          },
+          set: function (key, value) {
+            try {
+              localStorage.setItem(key, value);
+            } catch (_) {
+              // The guide still works when opened from a browser that blocks file storage.
+            }
+          },
+        };
+        var savedTheme = storage.get("yank-rust-tour-theme");
+        var initialTheme =
+          savedTheme ||
+          (window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
+
+        function setTheme(theme) {
+          root.dataset.theme = theme;
+          themeButton.textContent = theme === "dark" ? "Light theme" : "Dark theme";
+          storage.set("yank-rust-tour-theme", theme);
+        }
+
+        setTheme(initialTheme);
+        themeButton.addEventListener("click", function () {
+          setTheme(root.dataset.theme === "dark" ? "light" : "dark");
+        });
+
+        document.querySelectorAll("pre[data-start]").forEach(function (pre) {
+          var code = pre.querySelector("code");
+          var start = Number(pre.dataset.start || 1);
+          var focus = new Set(
+            (pre.dataset.focus || "")
+              .split(",")
+              .filter(Boolean)
+              .map(Number),
+          );
+          var lines = code.textContent.replace(/^\n/, "").replace(/\n$/, "").split("\n");
+          code.textContent = "";
+          lines.forEach(function (line, index) {
+            var lineNumber = start + index;
+            var row = document.createElement("span");
+            var text = document.createElement("span");
+            row.className = "code-row" + (focus.has(lineNumber) ? " is-focus" : "");
+            row.dataset.line = String(lineNumber);
+            text.className = "code-text";
+            text.textContent = line || " ";
+            row.appendChild(text);
+            code.appendChild(row);
+          });
+        });
+
+        var chapterButtons = Array.from(document.querySelectorAll("[data-chapter]"));
+        var chapterPanes = Array.from(document.querySelectorAll("[data-pane]"));
+        var mapNodes = Array.from(document.querySelectorAll("[data-open-chapter]"));
+        var visited = new Set();
+
+        function openChapter(name, shouldFocus) {
+          chapterButtons.forEach(function (button) {
+            var active = button.dataset.chapter === name;
+            button.setAttribute("aria-selected", String(active));
+            button.tabIndex = active ? 0 : -1;
+            if (active && shouldFocus) button.focus();
+          });
+          chapterPanes.forEach(function (pane) {
+            pane.hidden = pane.dataset.pane !== name;
+          });
+          mapNodes.forEach(function (node) {
+            if (node.dataset.openChapter === name) {
+              node.setAttribute("aria-current", "step");
+            } else {
+              node.removeAttribute("aria-current");
+            }
+          });
+          visited.add(name);
+          storage.set("yank-rust-tour-visited", Array.from(visited).join(","));
+        }
+
+        (storage.get("yank-rust-tour-visited") || "")
+          .split(",")
+          .filter(Boolean)
+          .forEach(function (name) {
+            visited.add(name);
+          });
+
+        chapterButtons.forEach(function (button, index) {
+          button.addEventListener("click", function () {
+            openChapter(button.dataset.chapter, false);
+          });
+          button.addEventListener("keydown", function (event) {
+            if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
+            event.preventDefault();
+            var direction = event.key === "ArrowDown" ? 1 : -1;
+            var next = (index + direction + chapterButtons.length) % chapterButtons.length;
+            openChapter(chapterButtons[next].dataset.chapter, true);
+          });
+        });
+
+        mapNodes.forEach(function (node) {
+          node.addEventListener("click", function () {
+            openChapter(node.dataset.openChapter, false);
+            document.getElementById("tour").scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth" });
+          });
+        });
+
+        openChapter("boot", false);
+
+        var conceptTabs = Array.from(document.querySelectorAll("[data-concept]"));
+        var conceptPanes = Array.from(document.querySelectorAll("[data-concept-pane]"));
+
+        function openConcept(name, shouldFocus) {
+          conceptTabs.forEach(function (tab) {
+            var active = tab.dataset.concept === name;
+            tab.setAttribute("aria-selected", String(active));
+            tab.tabIndex = active ? 0 : -1;
+            if (active && shouldFocus) tab.focus();
+          });
+          conceptPanes.forEach(function (pane) {
+            pane.hidden = pane.dataset.conceptPane !== name;
+          });
+        }
+
+        conceptTabs.forEach(function (tab, index) {
+          tab.addEventListener("click", function () {
+            openConcept(tab.dataset.concept, false);
+          });
+          tab.addEventListener("keydown", function (event) {
+            if (event.key !== "ArrowRight" && event.key !== "ArrowLeft") return;
+            event.preventDefault();
+            var direction = event.key === "ArrowRight" ? 1 : -1;
+            var next = (index + direction + conceptTabs.length) % conceptTabs.length;
+            openConcept(conceptTabs[next].dataset.concept, true);
+          });
+        });
+
+        openConcept("borrow", false);
+
+        var namedColors = new Set([
+          "red",
+          "blue",
+          "green",
+          "black",
+          "white",
+          "navy",
+          "teal",
+          "orange",
+          "purple",
+          "yellow",
+          "pink",
+          "gray",
+          "grey",
+          "indigo",
+          "violet",
+          "rebeccapurple",
+        ]);
+
+        var categoryChecks = [
+          {
+            label: "single-line URL",
+            pattern: "RE_URL",
+            test: function (value) {
+              return /^https?:\/\/[^\s]+$/.test(value);
+            },
+            result: "url",
+          },
+          {
+            label: "email address",
+            pattern: "RE_EMAIL",
+            test: function (value) {
+              return /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/.test(value);
+            },
+            result: "email",
+          },
+          {
+            label: "color value or name",
+            pattern: "RE_HEX | RE_RGB | named",
+            test: function (value) {
+              return (
+                /^(?:#?[0-9a-fA-F]{6}|#?[0-9a-fA-F]{8}|#[0-9a-fA-F]{3})$/.test(value) ||
+                /^(rgb|rgba|hsl|hsla|oklch|oklab)\(/.test(value) ||
+                namedColors.has(value.toLowerCase())
+              );
+            },
+            result: "color",
+          },
+          {
+            label: "file path",
+            pattern: "RE_PATH_WIN | RE_PATH_UNIX",
+            test: function (value) {
+              return /^[A-Za-z]:[\\/]/.test(value) || /^(\/|~\/|\.\/|\.\.\/)[^\s]/.test(value);
+            },
+            result: "path",
+          },
+          {
+            label: "plain number",
+            pattern: "RE_NUMBER",
+            test: function (value) {
+              return /^-?\d+(\.\d+)?$/.test(value);
+            },
+            result: "number",
+          },
+          {
+            label: "phone with 7 to 15 digits",
+            pattern: "RE_PHONE",
+            test: function (value) {
+              return (
+                /^[+]?[\d\s\-().]{7,}$/.test(value) &&
+                (value.match(/\d/g) || []).length >= 7 &&
+                (value.match(/\d/g) || []).length <= 15
+              );
+            },
+            result: "phone",
+          },
+          {
+            label: "code-like tokens",
+            pattern: "RE_CODEY",
+            test: function (value) {
+              var codey = /(;|=>|fn |def |const |function |import |export |use |SELECT |<[a-zA-Z])/;
+              var lines = value.split("\n").length;
+              return (lines >= 3 && codey.test(value)) || (lines === 1 && codey.test(value) && value.length < 400);
+            },
+            result: "code",
+          },
+        ];
+
+        var clipInput = document.getElementById("clip-input");
+        var categoryOutput = document.getElementById("category-output");
+        var categoryTrace = document.getElementById("category-trace");
+
+        function runCategorize() {
+          var value = clipInput.value.trim();
+          var winner = value ? null : "text";
+          categoryTrace.textContent = "";
+
+          categoryChecks.forEach(function (check) {
+            var hit = winner === null && check.test(value);
+            if (hit) winner = check.result;
+            var item = document.createElement("li");
+            var status = document.createElement("span");
+            var copy = document.createElement("span");
+            status.className = "trace-status" + (hit ? " hit" : "");
+            status.textContent = hit ? "hit" : "skip";
+            copy.innerHTML = "<code>" + check.pattern + "</code><br>" + check.label;
+            item.append(status, copy);
+            categoryTrace.appendChild(item);
+          });
+
+          categoryOutput.textContent = winner || "text";
+        }
+
+        document.getElementById("categorize-run").addEventListener("click", runCategorize);
+        clipInput.addEventListener("keydown", function (event) {
+          if (event.key === "Enter") runCategorize();
+        });
+        document.querySelectorAll("[data-sample]").forEach(function (button) {
+          button.addEventListener("click", function () {
+            clipInput.value = button.dataset.sample;
+            runCategorize();
+          });
+        });
+        runCategorize();
+
+        var queryInput = document.getElementById("query-input");
+        var queryButton = document.getElementById("query-run");
+        var searchStages = Array.from(document.querySelectorAll(".search-stage"));
+        var stageTimers = [];
+
+        function parseQuery(query) {
+          var residue = query;
+          var time = "no time window";
+          var timeMatch = residue.match(/\b(yesterday|today|last week|this week|past week|\d+\s+days?\s+ago)\b/i);
+          if (timeMatch) {
+            time = '"' + timeMatch[0] + '" becomes created_at bounds';
+            residue = (residue.slice(0, timeMatch.index) + " " + residue.slice(timeMatch.index + timeMatch[0].length))
+              .replace(/\s+/g, " ")
+              .trim();
+          }
+
+          var category = "no category filter";
+          var categoryMatch = residue.match(/\b(phone numbers?|phones?|emails?|colors?|colours?|urls?|links?|code snippets?|code|paths?|files?|addresses?|numbers?|screenshots?|images?)\b/i);
+          if (categoryMatch) {
+            category = '"' + categoryMatch[0] + '" becomes a category signal';
+            residue = (residue.slice(0, categoryMatch.index) + " " + residue.slice(categoryMatch.index + categoryMatch[0].length))
+              .replace(/\s+/g, " ")
+              .trim();
+          }
+
+          residue = residue
+            .replace(/\b(?:that\s+)?(?:the\s+ones?\s+)?i\s+(?:copied|yanked|saved|had|wrote|made|took|wanted|needed|kept|grabbed)\b/gi, " ")
+            .replace(/\s+/g, " ")
+            .trim();
+
+          return { residue: residue || "(empty)", time: time, category: category };
+        }
+
+        function setStageValue(name, value) {
+          document.querySelector('[data-stage-value="' + name + '"]').textContent = value;
+        }
+
+        function runQueryTrace() {
+          stageTimers.forEach(clearTimeout);
+          stageTimers = [];
+          var query = queryInput.value.trim();
+          var parsed = parseQuery(query);
+          setStageValue("raw", query || "(empty query)");
+          setStageValue("time", parsed.time);
+          setStageValue("intent", parsed.category + '; residue: "' + parsed.residue + '"');
+          setStageValue("pools", "embed residue, then collect cosine + BM25 candidates");
+          setStageValue("result", "fuse ranks, category boost, recency tiebreak");
+          searchStages.forEach(function (stage) {
+            stage.classList.remove("active");
+          });
+          searchStages.forEach(function (stage, index) {
+            var timer = setTimeout(
+              function () {
+                stage.classList.add("active");
+              },
+              reduceMotion ? 0 : index * 180,
+            );
+            stageTimers.push(timer);
+          });
+        }
+
+        queryButton.addEventListener("click", runQueryTrace);
+        queryInput.addEventListener("keydown", function (event) {
+          if (event.key === "Enter") runQueryTrace();
+        });
+        runQueryTrace();
+
+        var reveals = document.querySelectorAll(".reveal");
+        if (reduceMotion || !("IntersectionObserver" in window)) {
+          reveals.forEach(function (item) {
+            item.classList.add("is-visible");
+          });
+        } else {
+          var observer = new IntersectionObserver(
+            function (entries) {
+              entries.forEach(function (entry) {
+                if (entry.isIntersecting) {
+                  entry.target.classList.add("is-visible");
+                  observer.unobserve(entry.target);
+                }
+              });
+            },
+            { threshold: 0.14 },
+          );
+          reveals.forEach(function (item) {
+            item.classList.add("will-reveal");
+            observer.observe(item);
+          });
+        }
+
+        console.assert(runCategorize !== undefined, "categorize lab is wired");
+        console.assert(parseQuery("links I copied yesterday").residue === "(empty)", "query parser order");
+      })();
+    </script>
+  </body>
+</html>

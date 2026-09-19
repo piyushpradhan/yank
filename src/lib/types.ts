@@ -52,6 +52,7 @@ export interface Tweaks {
   paletteShortcut?: string;
   autostart?: boolean;
   minimizedOnStart?: boolean;
+  translucent?: boolean;
 }
 
 export interface PlatformInfo {

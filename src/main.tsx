@@ -27,6 +27,10 @@ const isPalette = params.get('window') === 'palette';
 
 if (isPalette) {
   document.documentElement.setAttribute('data-window', 'palette');
+  // Optimistic default: opaque (the safe, non-ghosting state on Linux). The
+  // palette window corrects this to 'true' once the persisted translucency
+  // setting loads.
+  document.documentElement.setAttribute('data-translucent', 'false');
 }
 
 // Exposed to CSS so platform-specific rendering workarounds can be expressed

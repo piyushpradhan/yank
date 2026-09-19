@@ -21,7 +21,7 @@ import { getKeyIcon } from '../lib/keyIcons';
 import { CategoryChip } from '../components/Primitives';
 import { ItemBody } from '../components/Primitives';
 import { ImagePreview } from '../components/ImagePreview';
-import { CopyButton, PinButton, DeleteButton, ActionSeparator } from '../components/ActionButtons';
+import { CopyButton, PinButton, DeleteButton } from '../components/ActionButtons';
 import { MdKeyboardBackspace, MdKeyboardCommandKey, MdKeyboardReturn } from 'react-icons/md';
 import { IS_LINUX } from '../lib/platform';
 
@@ -198,6 +198,9 @@ interface PaletteProps {
   /** Whether Anthropic-backed AI labeling is configured. When false,
    *  `!labelGenerated` is the final state, not a pending one. */
   anthropicEnabled: boolean;
+  /** Linux only: whether the frosted-glass (translucent) surface is enabled.
+   *  When false, the palette paints an opaque surface. */
+  translucent?: boolean;
   initialQuery?: string;
   initialMode?: SearchMode;
   initialSelected?: number;
@@ -212,6 +215,7 @@ export function Palette({
   semanticAvailable,
   semanticOffMessage,
   anthropicEnabled,
+  translucent = false,
   initialQuery = '',
   initialMode = 'fuzzy',
   initialSelected = 0,
@@ -469,14 +473,15 @@ export function Palette({
     }
   };
 
-  // The frosted-glass surface is macOS/Windows only. On Linux, WebKitGTK
+  // The frosted-glass surface is macOS/Windows only, plus Linux when the user
+  // opts in. On Linux with translucency off (the default), WebKitGTK
   // mis-computes scroll damage inside a translucent, backdrop-filtered layer
   // and leaves previously-painted rows on screen as the list scrolls
-  // (tauri-apps/tauri#14811, tauri-apps/tauri#14924). Both halves of the effect
-  // feed that bug, so Linux drops the blur and paints an opaque surface; the
-  // window is created with `transparent: false` there (tauri.linux.conf.json),
-  // leaving nothing for translucency to blend against anyway.
-  const surface: CSSProperties = IS_LINUX
+  // (tauri-apps/tauri#14811, tauri-apps/tauri#14924, webkit#305758). Both halves
+  // of the effect feed that bug, so Linux paints an opaque surface by default;
+  // the window itself is still `transparent: true` but the Rust side sets an
+  // opaque webview background, leaving nothing for translucency to blend against.
+  const surface: CSSProperties = IS_LINUX && !translucent
     ? { background: 'var(--bg-surface)' }
     : {
         background: `color-mix(in oklab, var(--bg-surface) ${t.dark ? 35 : 78}%, transparent)`,
@@ -816,8 +821,9 @@ export function Palette({
               </Box>
               <Inline
                 gap={1}
-                px={4}
+                px={2}
                 py={2}
+                wrap
                 style={{
                   borderTop: '1px solid var(--border-subtle)',
                   background: 'color-mix(in oklab, var(--bg-surface) 60%, transparent)',
@@ -834,28 +840,23 @@ export function Palette({
                 />
 
                 {selectedItem.category !== 'image' && (
-                  <>
-                    <ActionSeparator />
-                    <Button
-                      size="sm"
-                      variant={editingId === selectedItem.id ? 'primary' : 'secondary'}
-                      leadingIcon={<LuPencil size={13} />}
-                      onClick={() => {
-                        if (editingId === selectedItem.id) {
-                          setDraft(selectedItem.content);
-                          setEditingId(null);
-                        } else {
-                          setDraft(selectedItem.content);
-                          setEditingId(selectedItem.id);
-                        }
-                      }}
-                    >
-                      {editingId === selectedItem.id ? 'Cancel edit' : 'Edit'}
-                    </Button>
-                  </>
+                  <Button
+                    size="sm"
+                    variant={editingId === selectedItem.id ? 'primary' : 'secondary'}
+                    leadingIcon={<LuPencil size={13} />}
+                    onClick={() => {
+                      if (editingId === selectedItem.id) {
+                        setDraft(selectedItem.content);
+                        setEditingId(null);
+                      } else {
+                        setDraft(selectedItem.content);
+                        setEditingId(selectedItem.id);
+                      }
+                    }}
+                  >
+                    {editingId === selectedItem.id ? 'Cancel edit' : 'Edit'}
+                  </Button>
                 )}
-
-                <ActionSeparator />
 
                 <PinButton
                   pinned={!!selectedItem.pinned}
@@ -864,8 +865,6 @@ export function Palette({
                     app.pinItem(selectedItem.id);
                   }}
                 />
-
-                <ActionSeparator />
 
                 <DeleteButton
                   onClick={() => {
