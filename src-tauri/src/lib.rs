@@ -3,11 +3,10 @@ mod color_intent;
 mod color_names;
 mod commands;
 pub mod db;
-pub mod embed;
-mod embed_queue;
+mod embed;
+pub mod jev;
 mod label;
 mod label_queue;
-pub mod local_embed;
 mod platform_info;
 pub mod query_intent;
 pub mod query_time;
@@ -399,7 +398,6 @@ pub fn run() {
             commands::restore_item,
             commands::update_label,
             commands::clear_history,
-            commands::retry_embed_backfill,
             commands::search_fts,
             commands::search_semantic,
             commands::strip_time,
@@ -442,11 +440,9 @@ pub fn run() {
 
             let settings_state = settings::init(app.handle());
             app.manage(settings::SettingsState(settings_state));
-            app.manage(local_embed::LocalState::new());
 
             watcher::spawn(app.handle().clone());
             commands::spawn_sweeper(app.handle().clone());
-            embed_queue::spawn(app.handle().clone());
             label_queue::spawn(app.handle().clone());
 
             let sc = get_loaded_shortcut(app.handle());

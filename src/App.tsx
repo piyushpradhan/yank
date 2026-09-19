@@ -103,7 +103,6 @@ function App() {
           aiActive={settings.provider !== 'disabled'}
           onOpenAI={() => setAiOpen(true)}
           onToggleTweaks={() => setTweaksOpen((v) => !v)}
-          backfill={app.backfill}
         />
         <Box grow={1} style={{ minHeight: 0, position: 'relative' }}>
           <Library

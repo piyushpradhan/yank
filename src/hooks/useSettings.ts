@@ -1,25 +1,19 @@
 import { useCallback, useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 
-export type EmbedProvider = "local" | "disabled" | "openai" | "ollama";
+export type EmbedProvider = "jev" | "disabled";
 
 export interface EmbedSettings {
   provider: EmbedProvider;
-  local_model: string;
-  openai_api_key: string;
-  openai_model: string;
-  ollama_url: string;
-  ollama_model: string;
+  typesafe_model: string;
+  typesafe_api_key: string;
   anthropic_api_key: string;
 }
 
 const DEFAULT: EmbedSettings = {
-  provider: "local",
-  local_model: "bge-small-en-v1.5",
-  openai_api_key: "",
-  openai_model: "text-embedding-3-small",
-  ollama_url: "http://localhost:11434",
-  ollama_model: "nomic-embed-text",
+  provider: "jev",
+  typesafe_model: "jev-latest",
+  typesafe_api_key: "",
   anthropic_api_key: "",
 };
 
@@ -30,12 +24,8 @@ export function isSemanticAvailable(s: EmbedSettings): boolean {
   switch (s.provider) {
     case "disabled":
       return false;
-    case "local":
-      return true;
-    case "openai":
-      return s.openai_api_key.trim().length > 0;
-    case "ollama":
-      return s.ollama_url.trim().length > 0;
+    case "jev":
+      return s.typesafe_api_key.trim().length > 0;
   }
 }
 

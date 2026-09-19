@@ -1,9 +1,9 @@
 use std::sync::{Arc, RwLock};
 use std::time::Duration;
-use tauri::{AppHandle, Emitter, Manager, State};
+use tauri::{AppHandle, Emitter, State};
 use tauri_plugin_store::StoreExt;
 
-use crate::embed::{embed, EmbedConfig, EmbedTask, Provider};
+use crate::embed::{EmbedConfig, Provider};
 
 pub struct SettingsState(pub Arc<RwLock<EmbedConfig>>);
 
@@ -43,65 +43,36 @@ pub fn set_settings(
     state: State<'_, SettingsState>,
 ) -> Result<(), String> {
     let prev = state.0.read().unwrap().clone();
-    let model_changed = prev.model_id() != cfg.model_id();
     let anthropic_key_gained =
         prev.anthropic_api_key.trim().is_empty() && !cfg.anthropic_api_key.trim().is_empty();
 
     *state.0.write().unwrap() = cfg.clone();
     persist(&app, &cfg)?;
 
-    if model_changed {
-        // Drop the loaded fastembed instance so the next embed reloads
-        // for the new model (or different provider entirely).
-        if let Some(local) = app.try_state::<crate::local_embed::LocalState>() {
-            local.invalidate();
-        }
-        let db = app.state::<Arc<crate::db::Db>>().inner().clone();
-        let conn = db.0.lock().map_err(|e| e.to_string())?;
-        conn.execute(
-            "UPDATE items SET embedding = NULL, embedding_model = NULL",
-            [],
-        )
-        .map_err(|e| e.to_string())?;
-        let pending: i64 = conn
-            .query_row("SELECT COUNT(*) FROM items WHERE deleted = 0", [], |r| {
-                r.get(0)
-            })
-            .unwrap_or(0);
-        let _ = app.emit("embed-backfill-started", pending);
-    }
-
-    crate::embed_queue::kick(&app);
+    // Re-ranking is stateless — nothing to invalidate when the provider or
+    // key changes. Only the label queue needs a nudge when a key appears.
     if anthropic_key_gained {
         crate::label_queue::kick(&app);
     }
     Ok(())
 }
 
-/// Probe a candidate `EmbedConfig` to verify the user can reach the provider
-/// they picked. Used by the AI settings modal so configuration errors and
-/// network failures surface upfront instead of only at search time.
-///
-/// `Disabled` — semantic search is intentionally off; reported as such.
-/// `Local`    — bundled model; skipped (would download/load on first call).
-/// `Openai`/`Ollama` — short live embed against the configured endpoint.
+/// Probe a candidate `EmbedConfig` to verify the user can reach Jev. Used by
+/// the AI settings modal so configuration errors and network failures surface
+/// upfront instead of only at search time.
 #[tauri::command]
 pub async fn test_embed_provider(cfg: EmbedConfig) -> Result<(), String> {
     match cfg.provider {
         Provider::Disabled => Err("Semantic search is turned off.".into()),
-        Provider::Local => Ok(()),
-        Provider::Openai | Provider::Ollama => {
-            if matches!(cfg.provider, Provider::Openai) && cfg.openai_api_key.trim().is_empty() {
-                return Err("OpenAI API key is required.".into());
-            }
-            if matches!(cfg.provider, Provider::Ollama) && cfg.ollama_url.trim().is_empty() {
-                return Err("Ollama URL is required.".into());
+        Provider::Jev => {
+            if cfg.typesafe_api_key.trim().is_empty() {
+                return Err("TypeSafe API key is required.".into());
             }
             let client = reqwest::Client::builder()
                 .timeout(Duration::from_secs(8))
                 .build()
                 .map_err(|e| format!("http client: {e}"))?;
-            embed(&cfg, &client, "ping", EmbedTask::Query).await.map(|_| ())
+            crate::jev::ping(&client, &cfg.typesafe_api_key, &cfg.typesafe_model).await
         }
     }
 }

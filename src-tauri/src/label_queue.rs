@@ -1,5 +1,5 @@
 //! Background worker that generates one-line intent labels for newly-captured
-//! clips via Anthropic Claude Haiku. Mirrors the shape of `embed_queue.rs`.
+//! clips via Anthropic Claude Haiku.
 //!
 //! Lifecycle:
 //! 1. `spawn()` is called once at startup from `lib.rs` → owns an mpsc channel.
@@ -105,11 +105,6 @@ pub fn spawn(app: AppHandle) {
                             continue;
                         }
                         let _ = handle.emit("clip-labeled", id);
-                        // Re-embed now that the label is available — the
-                        // document text that feeds embeddings includes the
-                        // label, so a fresh label can change retrieval
-                        // quality noticeably.
-                        crate::embed_queue::kick(&handle);
                     }
                     Ok(_) => {
                         eprintln!("[label] empty label for id={id}; skipping");
@@ -167,11 +162,8 @@ fn load_pending(app: &AppHandle, limit: i64) -> Vec<(i64, String, String)> {
 fn store_label(app: &AppHandle, id: i64, label: &str) -> Result<(), String> {
     let db = app.state::<Arc<Db>>().inner().clone();
     let conn = db.0.lock().map_err(|e| e.to_string())?;
-    // Clearing embedding_model marks the item for re-embedding on the next
-    // queue tick — the label is part of the embedded text, so a fresh
-    // label should retrigger vectorisation.
     conn.execute(
-        "UPDATE items SET label = ?1, embedding_model = NULL WHERE id = ?2",
+        "UPDATE items SET label = ?1 WHERE id = ?2",
         params![label, id],
     )
     .map_err(|e| e.to_string())?;

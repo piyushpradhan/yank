@@ -175,7 +175,6 @@ fn insert_text_and_emit(app: &AppHandle, text: &str, source: Option<String>) {
     };
     let _ = app.emit("clip-added", id);
     crate::label_queue::kick(app);
-    crate::embed_queue::kick(app);
 }
 
 fn insert_image_and_emit(app: &AppHandle, img: &ImageData, source: Option<String>) {

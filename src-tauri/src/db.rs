@@ -68,16 +68,9 @@ fn migrate(conn: &Connection) -> rusqlite::Result<()> {
     }
 
     if version < 2 {
-        // Embedding storage: raw f32 LE bytes + identifier so we can re-embed on provider change.
-        let has_embedding = conn
-            .prepare("SELECT 1 FROM pragma_table_info('items') WHERE name='embedding'")?
-            .exists([])?;
-        if !has_embedding {
-            conn.execute_batch(
-                "ALTER TABLE items ADD COLUMN embedding BLOB;
-                 ALTER TABLE items ADD COLUMN embedding_model TEXT;",
-            )?;
-        }
+        // Previously held embedding BLOB columns (dropped when semantic search
+        // moved to Jev re-ranking). Bump the version only so existing DBs skip
+        // the now-unused columns; fresh DBs never create them.
         conn.execute_batch("PRAGMA user_version = 2;")?;
     }
 
