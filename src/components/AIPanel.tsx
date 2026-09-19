@@ -10,7 +10,6 @@ import {
   Input,
   Modal,
   Overline,
-  Select,
   Stack,
   Text,
 } from 'ember-design-system';
@@ -23,26 +22,11 @@ interface AIPanelProps {
 }
 
 const PROVIDERS: { id: EmbedProvider; label: string }[] = [
-  { id: 'local', label: 'Local (default)' },
-  { id: 'openai', label: 'OpenAI' },
-  { id: 'ollama', label: 'Ollama' },
+  { id: 'jev', label: 'TypeSafe (Jev)' },
   { id: 'disabled', label: 'Off' },
 ];
 
-const LOCAL_MODELS: { id: string; label: string; note: string }[] = [
-  {
-    id: 'bge-small-en-v1.5',
-    label: 'BGE Small EN v1.5',
-    note: 'Best quality. ~130 MB download on first use.',
-  },
-  {
-    id: 'all-minilm-l6-v2',
-    label: 'All-MiniLM-L6-v2',
-    note: 'Smallest, fastest. ~90 MB download on first use.',
-  },
-];
-
-type ErrorField = 'openai_key' | 'ollama_url' | 'connection';
+type ErrorField = 'jev_key' | 'connection';
 type TestState =
   | { kind: 'idle' }
   | { kind: 'running' }
@@ -66,7 +50,7 @@ function SectionHeading({ children }: { children: React.ReactNode }) {
 }
 
 function needsRemoteProbe(p: EmbedProvider): boolean {
-  return p === 'openai' || p === 'ollama';
+  return p === 'jev';
 }
 
 function toErrorMessage(err: unknown): string {
@@ -89,11 +73,8 @@ export function AIPanel({ settings, onChange, onClose }: AIPanelProps) {
   };
 
   const validateConfig = (): { field: ErrorField; msg: string } | null => {
-    if (local.provider === 'openai' && !local.openai_api_key.trim()) {
-      return { field: 'openai_key', msg: 'OpenAI API key is required.' };
-    }
-    if (local.provider === 'ollama' && !local.ollama_url.trim()) {
-      return { field: 'ollama_url', msg: 'Ollama URL is required.' };
+    if (local.provider === 'jev' && !local.typesafe_api_key.trim()) {
+      return { field: 'jev_key', msg: 'TypeSafe API key is required.' };
     }
     return null;
   };
@@ -137,7 +118,7 @@ export function AIPanel({ settings, onChange, onClose }: AIPanelProps) {
         setTest({ kind: 'err', msg: res.msg });
         setError({
           field: 'connection',
-          msg: `Could not reach ${local.provider === 'openai' ? 'OpenAI' : 'Ollama'}: ${res.msg}`,
+          msg: `Could not reach TypeSafe: ${res.msg}`,
         });
         return;
       }
@@ -150,16 +131,13 @@ export function AIPanel({ settings, onChange, onClose }: AIPanelProps) {
 
   const embedStatus = summariseEmbedStatus(local, test);
   const labelsOn = local.anthropic_api_key.trim().length > 0;
-  const localNote =
-    LOCAL_MODELS.find((m) => m.id === local.local_model)?.note ??
-    'Runs entirely on your machine via ONNX.';
 
   return (
     <Modal
       open
       onClose={onClose}
       title="AI features"
-      description="Two independent AI features: local-by-default embeddings for search, plus optional Claude Haiku for one-line intent labels."
+      description="Semantic search via TypeSafe's Jev model, plus optional Claude Haiku for one-line intent labels."
       size="md"
       footer={
         <>
@@ -193,8 +171,8 @@ export function AIPanel({ settings, onChange, onClose }: AIPanelProps) {
                 Semantic search is turned off.
               </Text>
               <Text size={11.5} tone="secondary" leading="snug">
-                The palette will use fuzzy matching only. Pick Local, OpenAI, or Ollama to turn
-                semantic search back on.
+                The palette will use fuzzy matching only. Pick TypeSafe to turn semantic search
+                back on.
               </Text>
             </Stack>
           </Box>
@@ -218,67 +196,24 @@ export function AIPanel({ settings, onChange, onClose }: AIPanelProps) {
             </Inline>
           </FormField>
 
-          {local.provider === 'local' && (
-            <FormField
-              label={<FieldLabel>Embedding model</FieldLabel>}
-              hint={`${localNote} The first embedding may take a few seconds while the model downloads.`}
-            >
-              <Select
-                value={local.local_model}
-                onChange={(v) => set('local_model', v)}
-                options={LOCAL_MODELS.map((m) => ({ value: m.id, label: m.label }))}
-                aria-label="Embedding model"
-              />
-            </FormField>
-          )}
-
-          {local.provider === 'openai' && (
+          {local.provider === 'jev' && (
             <>
               <FormField
-                label={<FieldLabel>OpenAI API key</FieldLabel>}
-                error={error?.field === 'openai_key' ? error.msg : undefined}
+                label={<FieldLabel>TypeSafe API key</FieldLabel>}
+                error={error?.field === 'jev_key' ? error.msg : undefined}
+                hint="Search queries and matching clip contents are sent to TypeSafe to re-rank results."
               >
                 <Input
                   type="password"
-                  value={local.openai_api_key}
-                  onChange={(e) => set('openai_api_key', e.target.value)}
-                  placeholder="sk-…"
+                  value={local.typesafe_api_key}
+                  onChange={(e) => set('typesafe_api_key', e.target.value)}
+                  placeholder="ts-…"
                 />
               </FormField>
               <FormField label={<FieldLabel>Model</FieldLabel>}>
                 <Input
-                  value={local.openai_model}
-                  onChange={(e) => set('openai_model', e.target.value)}
-                />
-              </FormField>
-            </>
-          )}
-
-          {local.provider === 'ollama' && (
-            <>
-              <FormField
-                label={<FieldLabel>Ollama URL</FieldLabel>}
-                error={error?.field === 'ollama_url' ? error.msg : undefined}
-              >
-                <Input
-                  value={local.ollama_url}
-                  onChange={(e) => set('ollama_url', e.target.value)}
-                />
-              </FormField>
-              <FormField
-                label={<FieldLabel>Embedding model</FieldLabel>}
-                hint={
-                  <>
-                    Install an embedding model first:{' '}
-                    <Text as="code" family="mono" size={10.5} tone="secondary">
-                      ollama pull {local.ollama_model}
-                    </Text>
-                  </>
-                }
-              >
-                <Input
-                  value={local.ollama_model}
-                  onChange={(e) => set('ollama_model', e.target.value)}
+                  value={local.typesafe_model}
+                  onChange={(e) => set('typesafe_model', e.target.value)}
                 />
               </FormField>
             </>
@@ -369,26 +304,11 @@ function summariseEmbedStatus(
   if (s.provider === 'disabled') {
     return { kind: 'off', text: 'Off — fuzzy search only.' };
   }
-  if (s.provider === 'local') {
-    return {
-      kind: 'ok',
-      text: `Local — ${s.local_model} (offline after first download)`,
-    };
-  }
-  if (s.provider === 'openai') {
-    if (!s.openai_api_key.trim()) {
-      return { kind: 'warn', text: 'OpenAI selected but no API key yet.' };
-    }
-    if (test.kind === 'err') {
-      return { kind: 'err', text: `OpenAI unreachable — ${test.msg}` };
-    }
-    return { kind: 'ok', text: `OpenAI — ${s.openai_model}` };
-  }
-  if (!s.ollama_url.trim()) {
-    return { kind: 'warn', text: 'Ollama selected but no URL yet.' };
+  if (!s.typesafe_api_key.trim()) {
+    return { kind: 'warn', text: 'TypeSafe selected but no API key yet.' };
   }
   if (test.kind === 'err') {
-    return { kind: 'err', text: `Ollama unreachable — ${test.msg}` };
+    return { kind: 'err', text: `TypeSafe unreachable — ${test.msg}` };
   }
-  return { kind: 'ok', text: `Ollama — ${s.ollama_model} at ${s.ollama_url}` };
+  return { kind: 'ok', text: `TypeSafe — ${s.typesafe_model}` };
 }

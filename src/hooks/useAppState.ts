@@ -6,17 +6,10 @@ import { truncate } from "../lib/time";
 import type { ClipItem, SemanticSearchResponse, Toast, ToastKind } from "../lib/types";
 import { evictImageUrl } from "./useImageUrl";
 
-export interface BackfillState {
-  remaining: number;
-  total: number;
-  /** True when the backfill has stalled (30s with no progress / network error). */
-  stalled: boolean;
-}
-
-/// Runtime health of the configured embedding provider. `'ok'` is the resting
-/// state; we only flip to `'error'` after `semanticSearch` actually fails, and
-/// reset to `'ok'` when the user updates settings (since the failure may have
-/// been provoked by the now-stale config).
+/// Runtime health of the configured semantic-search provider. `'ok'` is the
+/// resting state; we only flip to `'error'` after `semanticSearch` actually
+/// fails, and reset to `'ok'` when the user updates settings (since the
+/// failure may have been provoked by the now-stale config).
 export interface ProviderHealth {
   status: 'ok' | 'error';
   error: string | null;
@@ -25,7 +18,6 @@ export interface ProviderHealth {
 export interface AppState {
   items: ClipItem[];
   toast: Toast | null;
-  backfill: BackfillState | null;
   paletteOpen: boolean;
   setPaletteOpen: (v: boolean) => void;
   libraryOpen: boolean;
@@ -56,16 +48,12 @@ async function fetchItems(): Promise<ClipItem[]> {
 export function useAppState(): AppState {
   const [items, setItems] = useState<ClipItem[]>([]);
   const [toast, setToast] = useState<Toast | null>(null);
-  const [backfill, setBackfill] = useState<BackfillState | null>(null);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [libraryOpen, setLibraryOpen] = useState(true);
   const [providerHealth, setProviderHealth] = useState<ProviderHealth>({
     status: 'ok',
     error: null,
   });
-  const backfillRemaining = useRef(0);
-  const backfillTotal = useRef(0);
-  const backfillTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const itemsRef = useRef<ClipItem[]>([]);
   itemsRef.current = items;
 
@@ -80,49 +68,6 @@ export function useAppState(): AppState {
       listen("clip-added", () => void refresh()),
       listen("clip-swept", () => void refresh()),
       listen("clip-labeled", () => void refresh()),
-      listen<number>("embed-backfill-started", (ev) => {
-        const total = ev.payload;
-        backfillRemaining.current = total;
-        backfillTotal.current = total;
-        setBackfill({ remaining: total, total, stalled: false });
-        if (backfillTimer.current) clearTimeout(backfillTimer.current);
-        backfillTimer.current = setTimeout(() => {
-          if (backfillRemaining.current > 0) {
-            setBackfill({
-              remaining: backfillRemaining.current,
-              total: backfillTotal.current,
-              stalled: true,
-            });
-          } else {
-            setBackfill(null);
-          }
-        }, 30000);
-      }),
-      listen<number>("clip-embedded", () => {
-        backfillRemaining.current = Math.max(0, backfillRemaining.current - 1);
-        setBackfill({
-          remaining: backfillRemaining.current,
-          total: backfillTotal.current,
-          stalled: false,
-        });
-        if (backfillTimer.current) clearTimeout(backfillTimer.current);
-        if (backfillRemaining.current === 0) {
-          backfillTimer.current = setTimeout(() => setBackfill(null), 3000);
-        } else {
-          // Reset stall timer on each progress event so a slow but live backfill stays visible.
-          backfillTimer.current = setTimeout(() => {
-            if (backfillRemaining.current > 0) {
-              setBackfill({
-                remaining: backfillRemaining.current,
-                total: backfillTotal.current,
-                stalled: true,
-              });
-            } else {
-              setBackfill(null);
-            }
-          }, 30000);
-        }
-      }),
     ]);
     return () => {
       unlisten.then((fns) => fns.forEach((f) => f())).catch(() => {});
@@ -258,7 +203,6 @@ export function useAppState(): AppState {
   return {
     items: useMemo(() => items.filter((i) => !i.deleted), [items]),
     toast,
-    backfill,
     paletteOpen,
     setPaletteOpen,
     libraryOpen,
