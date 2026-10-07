@@ -7,7 +7,7 @@ import { Palette } from './Palette';
 import { useAppState } from '../hooks/useAppState';
 import { isSemanticAvailable, useSettings } from '../hooks/useSettings';
 import { buildTheme } from '../lib/theme';
-import type { ThemeMode, Tweaks } from '../lib/types';
+import type { SearchMode, ThemeMode, Tweaks } from '../lib/types';
 
 const DEFAULT_TWEAKS: Tweaks = {
   theme: 'dark',
@@ -20,6 +20,7 @@ const DEFAULT_TWEAKS: Tweaks = {
 export function PaletteWindow() {
   const [tweaks, setTweaks] = useState<Tweaks>(DEFAULT_TWEAKS);
   const [translucent, setTranslucent] = useState(false);
+  const [semanticDefault, setSemanticDefault] = useState(false);
   const app = useAppState();
   const { settings } = useSettings();
   const { setTheme } = useTheme();
@@ -36,6 +37,9 @@ export function PaletteWindow() {
       ? `Semantic search is unavailable — ${app.providerHealth.error ?? 'provider error'}.`
       : null;
   const anthropicEnabled = settings.anthropic_api_key.trim().length > 0;
+  // Only honour the "start in semantic" preference while semantic is actually
+  // configured — otherwise every open would land on the "unavailable" state.
+  const initialMode: SearchMode = semanticDefault && semanticAvailable ? 'semantic' : 'fuzzy';
 
   const t = useMemo(() => buildTheme(tweaks.theme, tweaks.density), [tweaks.theme, tweaks.density]);
 
@@ -62,6 +66,18 @@ export function PaletteWindow() {
     const unlisten = listen<boolean>('translucent-changed', (event) => {
       setTranslucent(event.payload);
       document.documentElement.setAttribute('data-translucent', event.payload ? 'true' : 'false');
+    });
+    return () => {
+      unlisten.then((f) => f()).catch(() => {});
+    };
+  }, []);
+
+  useEffect(() => {
+    invoke<boolean>('get_palette_semantic_default')
+      .then(setSemanticDefault)
+      .catch(() => {});
+    const unlisten = listen<boolean>('palette-semantic-default-changed', (event) => {
+      setSemanticDefault(event.payload);
     });
     return () => {
       unlisten.then((f) => f()).catch(() => {});
@@ -99,6 +115,7 @@ export function PaletteWindow() {
         semanticAvailable={semanticAvailable}
         semanticOffMessage={semanticOffMessage}
         anthropicEnabled={anthropicEnabled}
+        initialMode={initialMode}
       />
     </Box>
   );

@@ -288,6 +288,12 @@ export function Palette({
     };
   }, [initialMode, initialQuery, initialSelected]);
 
+  // `initialMode` can change after mount (the preference loads async, or the
+  // user flips it in Tweaks) — follow it so the very first open is correct too.
+  useEffect(() => {
+    setMode(initialMode);
+  }, [initialMode]);
+
   // One-shot toast per mount whenever the user is in semantic mode but the
   // feature is off, misconfigured, or the provider has errored — saves them
   // from staring at empty results wondering why.

@@ -68,6 +68,9 @@ function App() {
     void invoke<boolean>('get_translucent')
       .then((translucent) => setTweaks((prev) => ({ ...prev, translucent })))
       .catch(() => {});
+    void invoke<boolean>('get_palette_semantic_default')
+      .then((on) => setTweaks((prev) => ({ ...prev, paletteSemanticDefault: on })))
+      .catch(() => {});
     void invoke<ShortcutConfig>('get_shortcut')
       .then((sc) => setShortcut(sc))
       .catch(() => setShortcut(DEFAULT_SHORTCUT));
