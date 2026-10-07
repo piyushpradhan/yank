@@ -53,6 +53,7 @@ export interface Tweaks {
   autostart?: boolean;
   minimizedOnStart?: boolean;
   translucent?: boolean;
+  paletteSemanticDefault?: boolean;
 }
 
 export interface PlatformInfo {

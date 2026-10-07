@@ -422,6 +422,8 @@ pub fn run() {
             settings::set_minimized_on_start,
             settings::get_translucent,
             settings::set_translucent,
+            settings::get_palette_semantic_default,
+            settings::set_palette_semantic_default,
             platform_info::platform_info,
         ])
         .setup(move |app| {

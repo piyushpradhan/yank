@@ -302,3 +302,29 @@ pub fn set_translucent(app: AppHandle, translucent: bool) -> Result<(), String> 
     let _ = app.emit("translucent-changed", translucent);
     Ok(())
 }
+
+const PALETTE_SEMANTIC_DEFAULT_KEY: &str = "paletteSemanticDefault";
+
+/// Default is `false` — the palette opens in fuzzy mode unless the user opts
+/// into describing what they want by default (issue #59).
+#[tauri::command]
+pub fn get_palette_semantic_default(app: AppHandle) -> bool {
+    let Ok(store) = app.store(STORE_PATH) else {
+        return false;
+    };
+    store
+        .get(PALETTE_SEMANTIC_DEFAULT_KEY)
+        .and_then(|v| v.as_bool())
+        .unwrap_or(false)
+}
+
+#[tauri::command]
+pub fn set_palette_semantic_default(app: AppHandle, enabled: bool) -> Result<(), String> {
+    let store = app.store(STORE_PATH).map_err(|e| e.to_string())?;
+    store.set(PALETTE_SEMANTIC_DEFAULT_KEY, serde_json::json!(enabled));
+    store.save().map_err(|e| e.to_string())?;
+    // The palette is a separate, long-lived window — tell it so the next open
+    // picks up the new default without a restart.
+    let _ = app.emit("palette-semantic-default-changed", enabled);
+    Ok(())
+}

@@ -339,6 +339,18 @@ export function TweaksPanel({
         <Row label="Open palette">
           <ShortcutRecorder value={shortcut} onChange={onShortcutChange} />
         </Row>
+        <Row label="Start in semantic">
+          <Chip
+            active={!!tweaks.paletteSemanticDefault}
+            onClick={() => {
+              const next = !tweaks.paletteSemanticDefault;
+              onChange({ ...tweaks, paletteSemanticDefault: next });
+              void invoke('set_palette_semantic_default', { enabled: next });
+            }}
+          >
+            {tweaks.paletteSemanticDefault ? 'on' : 'off'}
+          </Chip>
+        </Row>
         {wayland && (
           <Text size={11} tone="secondary" style={{ lineHeight: 1.5 }}>
             Wayland: global shortcuts aren't supported by your compositor. Bind a keyboard
