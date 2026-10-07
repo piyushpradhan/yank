@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { openUrl } from '@tauri-apps/plugin-opener';
-import { Box, Button, Card, IconButton, Inline, Kbd, Overline, Stack, Text } from 'ember-design-system';
+import { Box, Button, Card, IconButton, Inline, Kbd, Overline, Stack, Switch, Text } from 'ember-design-system';
 import { LuArrowUpRight, LuMoon, LuSun, LuX } from 'react-icons/lu';
 import { getKeyIcon } from '../lib/keyIcons';
 import type { Updater } from '../hooks/useUpdater';
@@ -32,8 +32,11 @@ const PREVIEWS: PreviewMode[] = ['split', 'inline'];
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <Box px={4} py={3} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-      <Overline as="div" size={9.5} tracking="wider" style={{ marginBottom: 10 }}>
+    <Box
+      px={4}
+      style={{ paddingBlock: 10, borderBottom: '1px solid var(--border-subtle)' }}
+    >
+      <Overline as="div" size={9.5} tracking="wider" style={{ marginBottom: 8 }}>
         {title}
       </Overline>
       <Stack gap={2}>{children}</Stack>
@@ -51,6 +54,44 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
         {children}
       </Inline>
     </Inline>
+  );
+}
+
+/** Label + design-system Switch. The whole row is the hit target; the label
+ * brightens while on so state reads at a glance (colour eases, no layout shift). */
+function ToggleRow({
+  label,
+  checked,
+  onChange,
+}: {
+  label: string;
+  checked: boolean;
+  onChange: (next: boolean) => void;
+}) {
+  return (
+    <Box
+      as="label"
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: 12,
+        minHeight: 24,
+        cursor: 'pointer',
+        color: checked ? 'var(--text-primary)' : 'var(--text-secondary)',
+        transition: 'color 150ms var(--easing-standard)',
+      }}
+    >
+      <Text size={12} style={{ color: 'inherit' }}>
+        {label}
+      </Text>
+      <Switch
+        switchSize="sm"
+        checked={checked}
+        onChange={(e) => onChange(e.currentTarget.checked)}
+        aria-label={label}
+      />
+    </Box>
   );
 }
 
@@ -325,32 +366,25 @@ export function TweaksPanel({
             </Chip>
           ))}
         </Row>
-        <Row label="Show labels">
-          <Chip active={tweaks.showLabels} onClick={() => set('showLabels', true)}>
-            on
-          </Chip>
-          <Chip active={!tweaks.showLabels} onClick={() => set('showLabels', false)}>
-            off
-          </Chip>
-        </Row>
+        <ToggleRow
+          label="Show labels"
+          checked={tweaks.showLabels}
+          onChange={(next) => set('showLabels', next)}
+        />
       </Section>
 
       <Section title="Global shortcut">
         <Row label="Open palette">
           <ShortcutRecorder value={shortcut} onChange={onShortcutChange} />
         </Row>
-        <Row label="Start in semantic">
-          <Chip
-            active={!!tweaks.paletteSemanticDefault}
-            onClick={() => {
-              const next = !tweaks.paletteSemanticDefault;
-              onChange({ ...tweaks, paletteSemanticDefault: next });
-              void invoke('set_palette_semantic_default', { enabled: next });
-            }}
-          >
-            {tweaks.paletteSemanticDefault ? 'on' : 'off'}
-          </Chip>
-        </Row>
+        <ToggleRow
+          label="Start in semantic"
+          checked={!!tweaks.paletteSemanticDefault}
+          onChange={(next) => {
+            onChange({ ...tweaks, paletteSemanticDefault: next });
+            void invoke('set_palette_semantic_default', { enabled: next });
+          }}
+        />
         {wayland && (
           <Text size={11} tone="secondary" style={{ lineHeight: 1.5 }}>
             Wayland: global shortcuts aren't supported by your compositor. Bind a keyboard
@@ -360,46 +394,34 @@ export function TweaksPanel({
       </Section>
 
       <Section title="System">
-        <Row label="Launch at login">
-          <Chip
-            active={!!tweaks.autostart}
-            onClick={() => {
-              const next = !tweaks.autostart;
-              onChange({ ...tweaks, autostart: next });
-              void invoke('set_autostart', { enabled: next });
-            }}
-          >
-            {tweaks.autostart ? 'on' : 'off'}
-          </Chip>
-        </Row>
-        <Row label="Start minimized">
-          <Chip
-            active={!!tweaks.minimizedOnStart}
-            onClick={() => {
-              const next = !tweaks.minimizedOnStart;
-              onChange({ ...tweaks, minimizedOnStart: next });
-              void invoke('set_minimized_on_start', { minimized: next });
-            }}
-          >
-            {tweaks.minimizedOnStart ? 'on' : 'off'}
-          </Chip>
-        </Row>
+        <ToggleRow
+          label="Launch at login"
+          checked={!!tweaks.autostart}
+          onChange={(next) => {
+            onChange({ ...tweaks, autostart: next });
+            void invoke('set_autostart', { enabled: next });
+          }}
+        />
+        <ToggleRow
+          label="Start minimized"
+          checked={!!tweaks.minimizedOnStart}
+          onChange={(next) => {
+            onChange({ ...tweaks, minimizedOnStart: next });
+            void invoke('set_minimized_on_start', { minimized: next });
+          }}
+        />
       </Section>
 
       {IS_LINUX && (
         <Section title="Translucent palette">
-          <Row label="Frosted glass">
-            <Chip
-              active={!!tweaks.translucent}
-              onClick={() => {
-                const next = !tweaks.translucent;
-                onChange({ ...tweaks, translucent: next });
-                void invoke('set_translucent', { translucent: next });
-              }}
-            >
-              {tweaks.translucent ? 'on' : 'off'}
-            </Chip>
-          </Row>
+          <ToggleRow
+          label="Frosted glass"
+          checked={!!tweaks.translucent}
+          onChange={(next) => {
+            onChange({ ...tweaks, translucent: next });
+            void invoke('set_translucent', { translucent: next });
+          }}
+        />
           <Text size={11} tone="secondary" style={{ lineHeight: 1.5 }}>
             Blur the desktop behind the palette. May leave ghost rows on some
             WebKitGTK builds — off by default for reliability.

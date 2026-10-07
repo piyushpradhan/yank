@@ -472,6 +472,12 @@ export function Library({
 }: LibraryProps) {
   const [query, setQuery] = useState(initialQuery);
   const [mode, setMode] = useState<SearchMode>(initialMode);
+
+  // The "start in semantic" preference loads async (and can be flipped in
+  // Tweaks), so follow `initialMode` after mount instead of only reading it once.
+  useEffect(() => {
+    setMode(initialMode);
+  }, [initialMode]);
   const [filter, setFilter] = useState<Filter>(initialFilter);
   const [selectedIdx, setSelectedIdx] = useState<number>(() => {
     if (!initialSelectedId) return 0;
