@@ -1,0 +1,68 @@
+{
+  "_note": "Python bench (bench.py / exp.py / sweep_*.py) on dataset.json, 553 queries (time/category-only queries excluded). Latencies measured on an Apple M5 while other jobs ran; treat as relative.",
+  "embedders": [
+    {"model": "potion-retrieval-32M (static)", "p1": 0.550, "r50": 0.837, "ms": 0.1, "size_mb": 128},
+    {"model": "all-MiniLM-L6-v2", "p1": 0.653, "r50": 0.926, "ms": 1.1, "size_mb": 90},
+    {"model": "bge-small-en-v1.5 (Yank before Jev)", "p1": 0.671, "r50": 0.868, "ms": 3.6, "size_mb": 133},
+    {"model": "snowflake-arctic-embed-xs", "p1": 0.646, "r50": 0.808, "ms": 1.2, "size_mb": 90},
+    {"model": "snowflake-arctic-embed-s", "p1": 0.638, "r50": 0.854, "ms": 3.0, "size_mb": 130},
+    {"model": "jina-embeddings-v2-small-en", "p1": 0.626, "r50": 0.859, "ms": 1.2, "size_mb": 120},
+    {"model": "bge-base-en-v1.5", "p1": 0.716, "r50": 0.919, "ms": 23.4, "size_mb": 440},
+    {"model": "snowflake-arctic-embed-m", "p1": 0.716, "r50": 0.890, "ms": 12.0, "size_mb": 440},
+    {"model": "nomic-embed-text-v1.5", "p1": 0.671, "r50": 0.866, "ms": 21.5, "size_mb": 550},
+    {"model": "gte-base", "p1": 0.700, "r50": 0.908, "ms": 22.6, "size_mb": 440},
+    {"model": "mxbai-embed-large-v1", "p1": 0.723, "r50": 0.911, "ms": 32.2, "size_mb": 1340},
+    {"model": "bge-large-en-v1.5", "p1": 0.732, "r50": 0.911, "ms": 214.0, "size_mb": 1340},
+    {"model": "Qwen3-Embedding-0.6B", "p1": 0.761, "r50": 0.948, "ms": 432.1, "size_mb": 1200},
+    {"model": "EmbeddingGemma-300M fp32", "p1": 0.801, "r50": 0.984, "ms": 17.8, "size_mb": 1235},
+    {"model": "EmbeddingGemma-300M int8", "p1": 0.797, "r50": 0.980, "ms": null, "size_mb": 309},
+    {"model": "EmbeddingGemma-300M 4-bit (shipped)", "p1": 0.796, "r50": 0.978, "ms": 16.0, "size_mb": 197, "chosen": true},
+    {"model": "EmbeddingGemma 4-bit, 256-d truncation", "p1": 0.759, "r50": 0.967, "ms": null, "size_mb": 197}
+  ],
+  "doc_text": [
+    {"variant": "label + body", "p1": 0.796},
+    {"variant": "body only", "p1": 0.790},
+    {"variant": "title: label | body", "p1": 0.797},
+    {"variant": "label + body + (from app)", "p1": 0.817},
+    {"variant": "[category] label + body", "p1": 0.814},
+    {"variant": "[category] label + body + (from app) (shipped)", "p1": 0.828, "chosen": true},
+    {"variant": "label + body, 2000 chars", "p1": 0.796}
+  ],
+  "first_stage_fusion_gemma": [
+    {"variant": "cosine only", "p1": 0.796, "r50": 0.978},
+    {"variant": "cosine + 0.02 BM25 (shipped)", "p1": 0.792, "r50": 0.980, "chosen": true},
+    {"variant": "cosine + 0.1 BM25", "p1": 0.778, "r50": 0.978},
+    {"variant": "cosine + 0.3 BM25", "p1": 0.644, "r50": 0.978},
+    {"variant": "RRF(cosine, BM25)", "p1": 0.604, "r50": 0.969}
+  ],
+  "rerankers_bge_pool30": [
+    {"reranker": "none (bge-small cosine)", "p1": 0.671},
+    {"reranker": "ms-marco-MiniLM cross-encoder (blend 0.6)", "p1": 0.658},
+    {"reranker": "bge-reranker-base cross-encoder (blend 0.6)", "p1": 0.685},
+    {"reranker": "jina-reranker-v1-turbo (blend 0.6)", "p1": 0.653},
+    {"reranker": "Laya noul, item-as-state (blend 0.6)", "p1": 0.703},
+    {"reranker": "Laya noul, query+item state (blend 0.8)", "p1": 0.711},
+    {"reranker": "Jev noul, all candidates in one state (Yank today)", "p1": 0.750},
+    {"reranker": "Jev noul, candidate inline per question", "p1": 0.834},
+    {"reranker": "Jev Choice over the pool", "p1": 0.839}
+  ],
+  "rerankers_gemma": [
+    {"reranker": "none (Gemma cosine)", "k": null, "p1": 0.792},
+    {"reranker": "Jev Choice", "k": 10, "p1": 0.924},
+    {"reranker": "Jev Choice", "k": 20, "p1": 0.937},
+    {"reranker": "Jev noul inline", "k": 30, "p1": 0.944},
+    {"reranker": "Jev Choice", "k": 30, "p1": 0.951},
+    {"reranker": "Jev Choice (shipped)", "k": 50, "p1": 0.957, "chosen": true},
+    {"reranker": "Laya alone", "k": 20, "p1": 0.600},
+    {"reranker": "Laya blend 0.7", "k": 20, "p1": 0.826},
+    {"reranker": "Laya blend 0.5 (shipped)", "k": 20, "p1": 0.830, "chosen": true},
+    {"reranker": "Laya blend 0.3", "k": 20, "p1": 0.819}
+  ],
+  "jev_cost": [
+    {"shape": "Choice k=10", "p50_ms": 399, "tokens": 644},
+    {"shape": "Choice k=20", "p50_ms": 420, "tokens": 972},
+    {"shape": "Choice k=30", "p50_ms": 396, "tokens": 1362},
+    {"shape": "Choice k=50", "p50_ms": 403, "tokens": 1960},
+    {"shape": "Noul x30 shared state", "p50_ms": 648, "tokens": 4430}
+  ]
+}

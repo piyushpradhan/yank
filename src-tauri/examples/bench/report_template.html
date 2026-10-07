@@ -1,0 +1,268 @@
+<title>Yank Search Benchmark</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column (~72ch) with wide data blocks; ember accent marks the shipped pipeline only. */
+:root {
+  --ground: #faf8f6;
+  --surface: #ffffff;
+  --ink: #1f1a17;
+  --muted: #6b625c;
+  --rule: #e7e1dc;
+  --ember: #c94f17;
+  --ember-soft: #fbe9df;
+  --slate: #8d97a3;
+  --slate-soft: #eef0f3;
+  --good: #17784a;
+  --bad: #b3372b;
+  --display: "Bricolage Grotesque", "Avenir Next", system-ui, sans-serif;
+  --body: "IBM Plex Sans", -apple-system, "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --ground: #161311; --surface: #1f1b18; --ink: #efe8e2; --muted: #a49a92; --rule: #342d28;
+    --ember: #f07a3f; --ember-soft: #3a2418; --slate: #7d8894; --slate-soft: #262a2f; --good: #4cc38a; --bad: #f07167;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ground: #161311; --surface: #1f1b18; --ink: #efe8e2; --muted: #a49a92; --rule: #342d28;
+  --ember: #f07a3f; --ember-soft: #3a2418; --slate: #7d8894; --slate-soft: #262a2f; --good: #4cc38a; --bad: #f07167;
+}
+* { box-sizing: border-box; }
+body { background: var(--ground); color: var(--ink); font: 15.5px/1.6 var(--body); margin: 0; }
+.wrap { max-width: 960px; margin: 0 auto; padding-inline: 20px; padding-block: 48px 80px; display: grid; gap: 56px; }
+header { display: grid; gap: 14px; }
+.eyebrow { font: 500 12px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+h1 { font: 700 clamp(34px, 5vw, 52px)/1.05 var(--display); letter-spacing: -0.02em; margin: 0; text-wrap: balance; }
+h2 { font: 600 24px/1.2 var(--display); letter-spacing: -0.01em; margin: 0; text-wrap: balance; }
+h3 { font: 600 15px/1.3 var(--body); margin: 0; }
+p { margin: 0; max-width: 72ch; }
+.lede { font-size: 18px; color: var(--ink); max-width: 64ch; }
+.muted { color: var(--muted); }
+section { display: grid; gap: 18px; }
+code, .mono { font-family: var(--mono); font-size: 0.9em; }
+code { background: var(--slate-soft); padding: 1px 5px; border-radius: 4px; }
+
+.verdict { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); border-radius: 10px; overflow: hidden; }
+.stat { background: var(--surface); padding: 18px 20px; display: grid; gap: 6px; align-content: start; }
+.stat .k { font: 500 11.5px/1.2 var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.stat .v { font: 700 30px/1 var(--display); font-variant-numeric: tabular-nums; }
+.stat .v small { font: 500 14px var(--mono); color: var(--muted); }
+.stat .d { font-size: 13px; color: var(--muted); }
+.up { color: var(--good); }
+
+.pipeline { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; counter-reset: step; }
+.stage { background: var(--surface); border: 1px solid var(--rule); border-radius: 8px; padding: 14px; display: grid; gap: 6px; align-content: start; }
+.stage .n { font: 500 11px/1 var(--mono); color: var(--muted); letter-spacing: .06em; text-transform: uppercase; }
+.stage.opt { border-style: dashed; }
+.stage.hot { border-color: var(--ember); background: var(--ember-soft); }
+.stage p { font-size: 13.5px; color: var(--muted); }
+
+.table-wrap { overflow-x: auto; border: 1px solid var(--rule); border-radius: 10px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { padding: 9px 14px; text-align: left; border-bottom: 1px solid var(--rule); vertical-align: middle; white-space: nowrap; }
+tr:last-child td { border-bottom: 0; }
+th { font: 500 11.5px/1.2 var(--mono); letter-spacing: .05em; text-transform: uppercase; color: var(--muted); background: var(--ground); }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; font-family: var(--mono); font-size: 13.5px; }
+td.wrapcell { white-space: normal; min-width: 220px; }
+tr.shipped td { background: var(--ember-soft); }
+tr.shipped td:first-child { font-weight: 600; }
+.tag { display: inline-block; font: 500 10.5px/1 var(--mono); letter-spacing: .05em; text-transform: uppercase; padding: 3px 6px; border-radius: 4px; margin-left: 6px; vertical-align: 1px; }
+.tag.ship { background: var(--ember); color: #fff; }
+.tag.base { background: var(--slate-soft); color: var(--muted); }
+.bar { display: inline-block; height: 8px; border-radius: 2px; background: var(--slate); vertical-align: middle; margin-right: 8px; }
+tr.shipped .bar, .bar.hot { background: var(--ember); }
+
+.chart { background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; padding: 16px 16px 8px; overflow-x: auto; }
+.chart svg { display: block; width: 100%; min-width: 560px; height: auto; }
+.chart text { fill: var(--muted); font: 12px var(--mono); }
+.chart .lbl { fill: var(--ink); font: 13px var(--body); }
+.chart .val { fill: var(--ink); font: 500 12px var(--mono); }
+.chart .grid { stroke: var(--rule); stroke-width: 1; }
+.legend { display: flex; flex-wrap: wrap; gap: 16px; font-size: 13px; color: var(--muted); padding: 4px 4px 10px; }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }
+
+.examples { display: grid; gap: 10px; }
+.ex { background: var(--surface); border: 1px solid var(--rule); border-radius: 8px; padding: 12px 14px; display: grid; grid-template-columns: 1fr auto; gap: 4px 16px; align-items: center; }
+.ex .q { font-weight: 600; }
+.ex .t { font: 13px var(--mono); color: var(--muted); grid-column: 1; overflow-wrap: anywhere; }
+.ex .r { grid-row: 1 / span 2; grid-column: 2; font: 500 13px var(--mono); text-align: right; white-space: nowrap; }
+.ex .r b { color: var(--good); font-weight: 600; }
+.ex .r s { color: var(--bad); text-decoration: none; }
+
+ul.plain { margin: 0; padding-left: 20px; display: grid; gap: 8px; max-width: 72ch; }
+.note { font-size: 13.5px; color: var(--muted); }
+.two { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; }
+@media (max-width: 480px) { .wrap { padding-block: 32px 56px; gap: 44px; } .stat .v { font-size: 26px; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow" id="meta">Yank · semantic search</div>
+    <h1>Yank Search Benchmark</h1>
+    <p class="lede" id="lede"></p>
+  </header>
+
+  <div class="verdict" id="verdict"></div>
+
+  <section>
+    <h2>How search works now</h2>
+    <p>The old pipeline asked Jev to re-rank a keyword (BM25) shortlist. When you describe a clip in different words than it contains, BM25 never puts it on the shortlist, so no re-ranker can find it. The new pipeline finds candidates by meaning first, on your machine, and only then asks a judge model to pick.</p>
+    <div class="pipeline">
+      <div class="stage"><span class="n">Parse</span><h3>Date and type words</h3><p>"yesterday" becomes a date filter, "links" a soft category boost. Unchanged.</p></div>
+      <div class="stage hot"><span class="n">Stage 1 · on device</span><h3>EmbeddingGemma</h3><p>Every clip is embedded once (4-bit, ~200&nbsp;MB). A search scores all clips by cosine, plus a small keyword nudge.</p></div>
+      <div class="stage opt"><span class="n">Stage 2 · optional</span><h3>Jev or Laya picks</h3><p>The top matches go out as one Choice question. Jev (cloud) decides the order; Laya (local MLX) is blended 50/50 with stage 1.</p></div>
+      <div class="stage"><span class="n">Fallback</span><h3>Never blocks</h3><p>Model still downloading, or re-ranker down: you get stage-1 or keyword results instead of an error.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Top-1 accuracy by pipeline</h2>
+    <p class="muted">Share of queries where the clip you meant is the first result. Same 1,845 clips and 559 queries for every row, run through the app's own Rust search code.</p>
+    <div class="chart"><div class="legend" id="kindLegend"></div><svg id="chartKinds" role="img" aria-label="Top-1 accuracy by pipeline and query style"></svg></div>
+    <div class="table-wrap"><table id="tblMain"></table></div>
+  </section>
+
+  <section>
+    <h2>Why the old pipeline couldn't get there</h2>
+    <p>A re-ranker can only promote what the first stage hands it. For paraphrased queries, BM25's top 50 held the right clip in few cases; EmbeddingGemma's top 50 almost always holds it.</p>
+    <div class="table-wrap"><table id="tblRecall"></table></div>
+  </section>
+
+  <section>
+    <h2>Examples</h2>
+    <p class="muted">Rank of the intended clip. Before = BM25 shortlist re-ranked by Jev. After = EmbeddingGemma + Jev Choice.</p>
+    <div class="examples" id="examples"></div>
+  </section>
+
+  <section>
+    <h2>Choosing the on-device model</h2>
+    <p>Fourteen local embedding models on the same corpus (full-corpus cosine, no re-ranker). EmbeddingGemma wins on accuracy and recall at a query cost of ~16&nbsp;ms; its 4-bit build loses almost nothing against full precision at a sixth of the size.</p>
+    <div class="table-wrap"><table id="tblModels"></table></div>
+    <div class="two">
+      <div class="table-wrap"><table id="tblDoc"></table></div>
+      <div class="table-wrap"><table id="tblFusion"></table></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Choosing the re-rank question</h2>
+    <p>Same shortlist, different ways of asking. One Choice over the whole shortlist matched per-item questions on accuracy with a third of the tokens. Local cross-encoders trained on web search barely helped. Laya alone is a weak judge of clipboard relevance. Blended 50/50 with the embedding score it helps, fully offline: +3.8 points in this exploration, +1.6 in the final app pipeline, where the stronger document text had already closed part of the gap.</p>
+    <div class="two">
+      <div class="table-wrap"><table id="tblRrBge"></table></div>
+      <div class="table-wrap"><table id="tblRrGemma"></table></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Speed and cost</h2>
+    <div class="table-wrap"><table id="tblCost"></table></div>
+    <p class="note" id="costNote"></p>
+  </section>
+
+  <section>
+    <h2>Method and limits</h2>
+    <ul class="plain" id="method"></ul>
+  </section>
+</div>
+
+<script>
+const DATA = /*DATA*/null;
+const S = DATA.summary;
+const NAMES = { bm25: "BM25 keywords only", before: "Before: BM25 → Jev", local: "After: EmbeddingGemma", laya: "After: + Laya (local)", jev: "After: + Jev" };
+const ORDER = ["bm25", "before", "local", "laya", "jev"].filter(k => S[k]);
+const pct = x => (x * 100).toFixed(1) + "%";
+const f3 = x => x.toFixed(3);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+document.getElementById("meta").textContent = `Yank · semantic search · ${DATA.date}`;
+const b = S.before.metrics.all, a = S.jev.metrics.all, l = S.local.metrics.all;
+document.getElementById("lede").textContent =
+  `On ${DATA.n_items.toLocaleString()} clips and ${DATA.n_queries} labelled queries, the new pipeline puts the right clip first ${pct(a.p1)} of the time with Jev, versus ${pct(b.p1)} before. With no network and no key it reaches ${pct(l.p1)}.`;
+
+const stat = (k, v, d) => `<div class="stat"><span class="k">${k}</span><span class="v">${v}</span><span class="d">${d}</span></div>`;
+document.getElementById("verdict").innerHTML =
+  stat("Top-1, before", pct(b.p1), "BM25 shortlist → Jev") +
+  stat("Top-1, after + Jev", `<span class="up">${pct(a.p1)}</span>`, `+${((a.p1 - b.p1) * 100).toFixed(1)} pts`) +
+  stat("Top-1, on-device only", pct(l.p1), `${S.laya ? "Laya blend: " + pct(S.laya.metrics.all.p1) : "no key, no network"}`) +
+  stat("Paraphrased queries", `${pct(S.before.metrics.para.p1)} <small>→</small> ${pct(S.jev.metrics.para.p1)}`, "describe it, don't quote it");
+
+// ---- grouped bar chart: P@1 by kind -------------------------------------------------
+(() => {
+  const kinds = [["all", "All"], ["para", "Paraphrase"], ["kw", "Keyword"], ["short", "Short"], ["vague", "Vague"]];
+  const color = { bm25: "var(--slate-soft)", before: "var(--slate)", local: "#e9a37f", laya: "#dd7a47", jev: "var(--ember)" };
+  const W = 880, H = 300, L = 44, B = 40, T = 12, gw = (W - L - 10) / kinds.length, bw = Math.min(26, (gw - 18) / ORDER.length);
+  const y = v => T + (H - T - B) * (1 - v);
+  let s = `<svg viewBox="0 0 ${W} ${H}">`;
+  for (const t of [0, .25, .5, .75, 1]) s += `<line class="grid" x1="${L}" x2="${W - 10}" y1="${y(t)}" y2="${y(t)}"/><text x="${L - 8}" y="${y(t) + 4}" text-anchor="end">${t * 100}%</text>`;
+  kinds.forEach(([k, name], gi) => {
+    const x0 = L + gi * gw + (gw - bw * ORDER.length) / 2;
+    ORDER.forEach((st, i) => {
+      const m = S[st].metrics[k]; if (!m) return;
+      const x = x0 + i * bw, top = y(m.p1);
+      s += `<rect x="${x + 1}" y="${top}" width="${bw - 2}" height="${y(0) - top}" fill="${color[st]}" stroke="${st === 'bm25' ? 'var(--slate)' : 'none'}" stroke-width="1"><title>${NAMES[st]} · ${name}: ${pct(m.p1)}</title></rect>`;
+    });
+    s += `<text class="lbl" x="${L + gi * gw + gw / 2}" y="${H - 14}" text-anchor="middle">${name} (${S.jev.metrics[k].n})</text>`;
+  });
+  document.getElementById("chartKinds").outerHTML = s + "</svg>";
+  document.getElementById("kindLegend").innerHTML = ORDER.map(k => `<span><i style="background:${color[k]};${k === 'bm25' ? 'outline:1px solid var(--slate)' : ''}"></i>${NAMES[k]}</span>`).join("");
+})();
+
+// ---- main table -----------------------------------------------------------------------
+(() => {
+  let h = `<tr><th>Pipeline</th><th class="num">Top-1</th><th class="num">MRR</th><th class="num">In top 5</th><th class="num">In top 10</th><th class="num">Paraphrase top-1</th><th class="num">Orig. 56 top-1</th><th class="num">p50 latency</th></tr>`;
+  for (const k of ORDER) {
+    const m = S[k].metrics, ship = k === "jev" || k === "local" || k === "laya";
+    h += `<tr class="${k === 'jev' ? 'shipped' : ''}"><td>${NAMES[k]}${k === 'before' ? '<span class="tag base">old default</span>' : ''}${k === 'local' ? '<span class="tag ship">new default</span>' : ''}</td>
+      <td class="num">${pct(m.all.p1)}</td><td class="num">${f3(m.all.mrr)}</td><td class="num">${pct(m.all.r5)}</td><td class="num">${pct(m.all.r10)}</td>
+      <td class="num">${pct(m.para.p1)}</td><td class="num">${pct(m.orig56.p1)}</td><td class="num">${Math.round(S[k].p50_ms)} ms</td></tr>`;
+  }
+  document.getElementById("tblMain").innerHTML = h;
+})();
+
+// ---- recall ceiling -------------------------------------------------------------------
+(() => {
+  const R = DATA.recall;
+  let h = `<tr><th>First stage</th><th class="num">Right clip in top 50 · all</th><th class="num">· paraphrase</th><th class="num">· keyword</th></tr>`;
+  for (const r of R) h += `<tr class="${r.shipped ? 'shipped' : ''}"><td>${esc(r.name)}</td><td class="num">${pct(r.all)}</td><td class="num">${pct(r.para)}</td><td class="num">${pct(r.kw)}</td></tr>`;
+  document.getElementById("tblRecall").innerHTML = h;
+})();
+
+// ---- examples ---------------------------------------------------------------------------
+document.getElementById("examples").innerHTML = DATA.examples.map(e =>
+  `<div class="ex"><span class="q">“${esc(e.q)}”</span><span class="t">${esc(e.target)}</span>
+   <span class="r">before <s>${e.before ?? "not found"}</s> → after <b>${e.after ?? "—"}</b></span></div>`).join("");
+
+// ---- experiment tables ------------------------------------------------------------------
+const E = DATA.experiments;
+const barTable = (id, head, rows, key, fmt, extra = () => "", max = 1) => {
+  let h = `<tr>${head.map((x, i) => `<th class="${i ? 'num' : ''}">${x}</th>`).join("")}</tr>`;
+  for (const r of rows) h += `<tr class="${r.chosen ? 'shipped' : ''}"><td class="wrapcell">${esc(r.model || r.variant || r.reranker)}${r.chosen ? '<span class="tag ship">shipped</span>' : ''}</td><td class="num"><span class="bar" style="width:${Math.round(r[key] / max * 90)}px"></span>${fmt(r[key])}</td>${extra(r)}</tr>`;
+  document.getElementById(id).innerHTML = h;
+};
+barTable("tblModels", ["Local embedding model", "Top-1", "Top 50 recall", "Query ms", "Download"],
+  [...E.embedders].sort((x, y) => y.p1 - x.p1), "p1", f3,
+  r => `<td class="num">${pct(r.r50)}</td><td class="num">${r.ms == null ? "—" : r.ms.toFixed(1)}</td><td class="num">${r.size_mb} MB</td>`);
+barTable("tblDoc", ["What gets embedded", "Top-1"], E.doc_text, "p1", f3);
+barTable("tblFusion", ["Stage-1 score", "Top-1", "Top 50"], E.first_stage_fusion_gemma, "p1", f3, r => `<td class="num">${pct(r.r50)}</td>`);
+barTable("tblRrBge", ["Re-ranker on a bge-small top 30", "Top-1"], E.rerankers_bge_pool30, "p1", f3);
+barTable("tblRrGemma", ["Re-ranker on the Gemma pool", "Top-1", "Pool"], E.rerankers_gemma, "p1", f3, r => `<td class="num">${r.k ?? "—"}</td>`);
+
+// ---- cost -----------------------------------------------------------------------------
+(() => {
+  let h = `<tr><th>Pipeline</th><th class="num">p50</th><th class="num">p90</th><th class="num">Tokens / search</th><th class="num">$ / 1,000 searches</th><th>Leaves your machine</th></tr>`;
+  const tok = { before: 7453, jev: 1960 }, leaves = { bm25: "nothing", before: "query + 50 clips", local: "nothing", laya: "nothing", jev: "query + top 50 clips" };
+  for (const k of ORDER) {
+    const t = tok[k];
+    h += `<tr class="${k === 'jev' ? 'shipped' : ''}"><td>${NAMES[k]}</td><td class="num">${Math.round(S[k].p50_ms)} ms</td><td class="num">${Math.round(S[k].p90_ms)} ms</td><td class="num">${t ? "~" + t.toLocaleString() : "0"}</td><td class="num">${t ? "$" + (t * 0.042 / 1e6 * 1000).toFixed(3) : "$0"}</td><td>${leaves[k]}</td></tr>`;
+  }
+  document.getElementById("tblCost").innerHTML = h;
+  document.getElementById("costNote").textContent = DATA.cost_note;
+})();
+
+document.getElementById("method").innerHTML = DATA.method.map(m => `<li>${m}</li>`).join("");
+</script>

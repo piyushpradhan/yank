@@ -1,0 +1,5102 @@
+{
+  "embed_ms_per_clip": 11.971580555555555,
+  "n_items": 1845,
+  "n_queries": 559,
+  "rows": [
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 259.40000000000003,
+        "rank": 1
+      },
+      "orig56": true,
+      "q": "mom's birthday"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 264.862916,
+        "rank": 1
+      },
+      "orig56": true,
+      "q": "WiFi password"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 230.648375,
+        "rank": 1
+      },
+      "orig56": true,
+      "q": "garage door code"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 261.133125,
+        "rank": 1
+      },
+      "orig56": true,
+      "q": "grocery list"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 254.805958,
+        "rank": 1
+      },
+      "orig56": true,
+      "q": "license plate"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 231.595792,
+        "rank": 1
+      },
+      "orig56": true,
+      "q": "chase routing number"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 243.595959,
+        "rank": 3
+      },
+      "orig56": true,
+      "q": "stripe webhook"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 234.67670800000002,
+        "rank": 1
+      },
+      "orig56": true,
+      "q": "useEffect cleanup"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 276.050458,
+        "rank": 1
+      },
+      "orig56": true,
+      "q": "shakshuka recipe"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 261.339834,
+        "rank": 1
+      },
+      "orig56": true,
+      "q": "passport expiration"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 751.604916,
+        "rank": 1
+      },
+      "orig56": true,
+      "q": "air fryer salmon"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 315.074708,
+        "rank": 1
+      },
+      "orig56": true,
+      "q": "where my father receives his mail"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 238.142416,
+        "rank": 1
+      },
+      "orig56": true,
+      "q": "the contact digits for my aunt"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 271.971625,
+        "rank": null
+      },
+      "orig56": true,
+      "q": "the personal inbox handle I saved"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 281.39945900000004,
+        "rank": 1
+      },
+      "orig56": true,
+      "q": "how nana makes those crunchy cocoa treats"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 297.596042,
+        "rank": 2
+      },
+      "orig56": true,
+      "q": "what to buy my sibling for the holidays"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 259.4255,
+        "rank": 1
+      },
+      "orig56": true,
+      "q": "the teenager who minds the little one"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 294.897334,
+        "rank": 1
+      },
+      "orig56": true,
+      "q": "the furry pet's next checkup"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 248.521208,
+        "rank": 1
+      },
+      "orig56": true,
+      "q": "my partner's blood classification"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 256.19154199999997,
+        "rank": 1
+      },
+      "orig56": true,
+      "q": "where we're dining on our special date"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 438.68595799999997,
+        "rank": 1
+      },
+      "orig56": true,
+      "q": "when to collect the children from class"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 260.414791,
+        "rank": 1
+      },
+      "orig56": true,
+      "q": "the little one's physician's phone"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 251.468083,
+        "rank": 1
+      },
+      "orig56": true,
+      "q": "my homeowner's protection reference"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 284.950417,
+        "rank": 1
+      },
+      "orig56": true,
+      "q": "the warehouse club's account card"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 252.351708,
+        "rank": 1
+      },
+      "orig56": true,
+      "q": "where the little one's bash is being held"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 257.60675,
+        "rank": 1
+      },
+      "orig56": true,
+      "q": "the gathering of readers that happens fortnightly"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 260.55116699999996,
+        "rank": 1
+      },
+      "orig56": true,
+      "q": "my next teeth cleaning appointment"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 471.944792,
+        "rank": 15
+      },
+      "orig56": true,
+      "q": "the digits that unlock my storage box"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 247.60137500000002,
+        "rank": 29
+      },
+      "orig56": true,
+      "q": "the code for my public lending account"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 251.87520800000001,
+        "rank": 1
+      },
+      "orig56": true,
+      "q": "when my rental agreement runs out"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 411.517625,
+        "rank": 4
+      },
+      "orig56": true,
+      "q": "who to ring if something goes wrong"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 288.65875,
+        "rank": 1
+      },
+      "orig56": true,
+      "q": "the plane I'm taking to the west coast"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 280.815,
+        "rank": 1
+      },
+      "orig56": true,
+      "q": "the lodging I booked in the big apple"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 278.165375,
+        "rank": 1
+      },
+      "orig56": true,
+      "q": "the vehicle I'm hiring at the airport"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 276.25075,
+        "rank": 1
+      },
+      "orig56": true,
+      "q": "swap american money for european money"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 447.201542,
+        "rank": 1
+      },
+      "orig56": true,
+      "q": "the flat I rented in portugal's capital"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 329.343958,
+        "rank": 1
+      },
+      "orig56": true,
+      "q": "my expedited screening identification"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 279.526916,
+        "rank": 1
+      },
+      "orig56": true,
+      "q": "my consulate meeting overseas"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 264.375333,
+        "rank": 3
+      },
+      "orig56": true,
+      "q": "my seat details for the cross-country hop"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 261.271792,
+        "rank": 1
+      },
+      "orig56": true,
+      "q": "the coverage I bought for my trip"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 407.130042,
+        "rank": 1
+      },
+      "orig56": true,
+      "q": "landmarks to see in that japanese city"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 278.828209,
+        "rank": 1
+      },
+      "orig56": true,
+      "q": "the big online retailer's purchase reference"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 271.05591699999997,
+        "rank": 2
+      },
+      "orig56": true,
+      "q": "where my parcel is in transit"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 275.597916,
+        "rank": 1
+      },
+      "orig56": true,
+      "q": "the gadgets I'm hoping to receive"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 263.0985,
+        "rank": 1
+      },
+      "orig56": true,
+      "q": "the countertop appliance I want to buy"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 254.515333,
+        "rank": 1
+      },
+      "orig56": true,
+      "q": "the promo for cheaper clothes"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 258.537916,
+        "rank": 1
+      },
+      "orig56": true,
+      "q": "the handcrafted invites for the ceremony"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 273.450375,
+        "rank": 1
+      },
+      "orig56": true,
+      "q": "the spectacles I picked from that eyewear site"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 254.78154200000003,
+        "rank": 1
+      },
+      "orig56": true,
+      "q": "the big-screen television I purchased"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 277.080625,
+        "rank": 1
+      },
+      "orig56": true,
+      "q": "how long I can send electronics back"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 262.13199999999995,
+        "rank": 1
+      },
+      "orig56": true,
+      "q": "that sweet rice dessert they restock weekly"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 264.13458299999996,
+        "rank": 2
+      },
+      "orig56": true,
+      "q": "the money I have at the outdoor shop"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 595.100291,
+        "rank": 1
+      },
+      "orig56": true,
+      "q": "the bathroom mat I ordered from abroad"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 253.779417,
+        "rank": 1
+      },
+      "orig56": true,
+      "q": "how to translate footwear sizes"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 271.021583,
+        "rank": 1
+      },
+      "orig56": true,
+      "q": "the free-stuff neighborhood pickup"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 372.905,
+        "rank": 1
+      },
+      "orig56": true,
+      "q": "the music plan I'm cutting off"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 243.834125,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "dad's mailing address"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 321.243708,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "chocolate chip cookie recipe"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 345.20095899999995,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "anniversary dinner reservation"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 320.322041,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "flight to LAX"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 283.52279200000004,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "Marriott reservation in NYC"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 288.348167,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "Lisbon airbnb"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 300.423125,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "USD to EUR conversion rate"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 395.427583,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "amazon order number"
+    },
+    {
+      "kind": "short",
+      "laya": {
+        "ms": 354.76070799999997,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "fedex tracking"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 260.899541,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "KitchenAid mixer price"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 278.266875,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "warby parker glasses link"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 256.40675,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "J Crew discount code"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 282.666,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "paypal transaction id"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 274.037125,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "mortgage rate locked"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 255.04325,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "how much is rent"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 259.77975,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "Phoebe Bridgers tickets"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 309.248709,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "Severance season 2 release date"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 2075.1075,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "Acquired podcast TSMC"
+    },
+    {
+      "kind": "short",
+      "laya": {
+        "ms": 290.239292,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "Netflix queue"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 268.037333,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "photosynthesis equation"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 281.77925,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "marcus aurelius quote"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 279.276708,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "Je ne sais quoi meaning"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 294.929083,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "cup to ml conversion"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 273.286,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "monstera plant care"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 485.323625,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "atorvastatin prescription"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 292.646625,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "annual physical results"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 1345.15825,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "primary care doctor phone"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 2135.1705,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "marketing brief deadline"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 268.64420900000005,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "salesforce account id"
+    },
+    {
+      "kind": "short",
+      "laya": {
+        "ms": 298.163917,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "expense report"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 269.26904099999996,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "interactive git rebase"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 271.171416,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "kubernetes deployment restart"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 379.572292,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "auth middleware Python"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 338.54400000000004,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "the staging API URL"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 247.12404099999998,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "brand color hex"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 278.49449999999996,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "the phone number I had for the babysitter"
+    },
+    {
+      "kind": "vague",
+      "laya": {
+        "ms": 275.68425,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "that recipe I saved"
+    },
+    {
+      "kind": "time",
+      "laya": {
+        "ms": 197.059667,
+        "rank": 4
+      },
+      "orig56": false,
+      "q": "the link I copied yesterday"
+    },
+    {
+      "kind": "time",
+      "laya": {
+        "ms": 450.887666,
+        "rank": 2
+      },
+      "orig56": false,
+      "q": "what did I save yesterday"
+    },
+    {
+      "kind": "time",
+      "laya": {
+        "ms": 224.998125,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "OTP code today"
+    },
+    {
+      "kind": "cat",
+      "laya": {
+        "ms": 42.19025,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "addresses"
+    },
+    {
+      "kind": "cat",
+      "laya": {
+        "ms": 2.312083,
+        "rank": 11
+      },
+      "orig56": false,
+      "q": "phone numbers"
+    },
+    {
+      "kind": "cat",
+      "laya": {
+        "ms": 1.319958,
+        "rank": 2
+      },
+      "orig56": false,
+      "q": "emails"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 302.155709,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "how much cash is in checking"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 1346.3681250000002,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "my retirement plan payroll split"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 283.10895800000003,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "the handle to send sarah money"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 252.952083,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "when taxes must be submitted"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 378.13025,
+        "rank": 4
+      },
+      "orig56": false,
+      "q": "my crypto receiving string"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 299.273916,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "that long movie from the indie studio"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 258.657125,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "the book about teens and phones"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 274.34220799999997,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "films to watch later list"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 358.026292,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "pc games I'd like to buy"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 273.466333,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "the science guy who builds gadgets on youtube"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 301.80183300000004,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "the fifth taste"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 293.060041,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "my med school entrance exam result"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 303.70354100000003,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "online machine learning class"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 261.452375,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "the spanish word for making the most of it"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 418.975292,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "the congress trade power clause"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 303.945292,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "fahrenheit to celsius for baking"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 260.999875,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "furnace air filter dimensions"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 306.212333,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "pour over brewing proportions"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 290.329167,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "feeding the bread culture"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 403.794834,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "when to poke holes in the grass"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 291.847875,
+        "rank": 2
+      },
+      "orig56": false,
+      "q": "the swedish shelf build"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 286.079417,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "immunotherapy injection days"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 282.610667,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "where my meds get filled"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 251.85237500000002,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "my counseling sessions"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 295.782542,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "the head pain diary"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 284.945916,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "influenza vaccine"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 594.710583,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "deals in the funnel this quarter"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 289.043208,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "meeting with janet about performance"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 292.671666,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "purchase order for the supplier"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 264.595083,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "retention goal for next quarter"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 291.716917,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "when the announcement can go public"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 265.224291,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "visiting the pharma customer"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 266.502542,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "note to brian about the executive job"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 652.29475,
+        "rank": null
+      },
+      "orig56": false,
+      "q": "query for new users this week"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 875.1023749999999,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "spin up containers locally"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 264.457208,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "the hooks issue on github"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 261.698708,
+        "rank": 2
+      },
+      "orig56": false,
+      "q": "my clipboard app repository"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 358.04249999999996,
+        "rank": 3
+      },
+      "orig56": false,
+      "q": "the component library design file"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 402.351209,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "auth token for postman"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 267.957125,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "google headquarters location"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 273.488583,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "rickroll video"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 305.877208,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "code freeze reminder"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 272.581709,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "force push safely"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 340.379541,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "overwrite remote branch without clobbering teammates"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 263.8575,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "git stash with message"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 573.228833,
+        "rank": 3
+      },
+      "orig56": false,
+      "q": "shelve my unfinished changes to one folder"
+    },
+    {
+      "kind": "short",
+      "laya": {
+        "ms": 256.07775,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "cherry pick"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 354.579167,
+        "rank": 25
+      },
+      "orig56": false,
+      "q": "apply a single commit from another branch"
+    },
+    {
+      "kind": "short",
+      "laya": {
+        "ms": 286.423333,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "bisect"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 306.71570799999995,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "binary search for the commit that broke things"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 267.63675,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "git log graph"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 257.457,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "pretty tree view of all branches history"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 300.103,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "undo last commit keep changes"
+    },
+    {
+      "kind": "short",
+      "laya": {
+        "ms": 263.93424999999996,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "reset soft"
+    },
+    {
+      "kind": "short",
+      "laya": {
+        "ms": 291.344583,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "worktree add"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 263.480708,
+        "rank": 13
+      },
+      "orig56": false,
+      "q": "second checkout of the repo in a sibling folder"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 546.078416,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "make pull rebase by default"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 261.06858300000005,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "stop merge commits when syncing"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 337.459291,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "open draft pull request from cli"
+    },
+    {
+      "kind": "short",
+      "laya": {
+        "ms": 281.443625,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "gh pr create"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 991.06575,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "watch ci run"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 308.13070799999997,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "follow the github actions job until it finishes"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 277.343583,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "delete all node_modules folders"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 290.702,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "reclaim disk from js dependency dirs"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 535.320916,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "what is using port 3000"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 289.256375,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "which process is listening on the dev server socket"
+    },
+    {
+      "kind": "vague",
+      "laya": {
+        "ms": 261.728833,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "kill vite port"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 275.124459,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "terminate whatever holds 5173"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 273.61704100000003,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "biggest folders disk usage"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 277.21774999999997,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "which directories eat the most space"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 457.185791,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "rsync deploy landing"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 278.03670800000003,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "copy the built site to the server"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 286.760209,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "ssh tunnel postgres"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 409.370125,
+        "rank": 2
+      },
+      "orig56": false,
+      "q": "port forward the database through the jump host"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 296.689333,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "generate random secret"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 318.768541,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "make a strong random key string"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 282.420791,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "remove quarantine attribute"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 299.449458,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "fix app is damaged gatekeeper"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 300.61004099999997,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "ad hoc codesign"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 291.444042,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "re-sign the mac app without a developer id"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 290.02795799999996,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "restart postgres brew"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 295.518833,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "bounce the local database service"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 424.41429200000005,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "tarball backup"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 1283.0277919999999,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "compress the money documents folder"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 291.190042,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "convert video to gif"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 283.18175,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "turn the screen recording into an animated image"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 254.568375,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "shadcn add dialog"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 354.19191700000005,
+        "rank": 31
+      },
+      "orig56": false,
+      "q": "install the modal component from the ui kit"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 288.59554199999997,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "universal mac build"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 321.115875,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "compile the desktop app for both intel and apple silicon"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 324.922083,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "debug logging rust"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 1320.239042,
+        "rank": 2
+      },
+      "orig56": false,
+      "q": "run the app with verbose tracing output"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 384.93004199999996,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "clippy deny warnings"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 298.55562499999996,
+        "rank": 17
+      },
+      "orig56": false,
+      "q": "strict lint the rust crate"
+    },
+    {
+      "kind": "short",
+      "laya": {
+        "ms": 280.658417,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "prisma migration"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 273.312333,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "create a schema change for invoice state"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 334.56404200000003,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "docker prune everything"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 277.450833,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "wipe all unused containers and images"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 269.448541,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "psql into docker container"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 268.14408299999997,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "open a database shell inside the container"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 291.70104200000003,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "tail worker logs k8s"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 286.44725,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "stream recent output of the background job pods"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 419.948,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "unhealthy pods"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 312.936583,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "which pods are not up across namespaces"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 274.507,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "terraform plan prod"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 1309.643584,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "preview infrastructure changes for production"
+    },
+    {
+      "kind": "short",
+      "laya": {
+        "ms": 277.356916,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "s3 sync"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 325.543833,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "upload static site to the bucket"
+    },
+    {
+      "kind": "short",
+      "laya": {
+        "ms": 308.87550000000005,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "aws sso login"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 300.03412499999996,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "authenticate to the cloud account for production"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 297.64716699999997,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "latest release tag curl"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 304.50483299999996,
+        "rank": 5
+      },
+      "orig56": false,
+      "q": "fetch the newest version number of the repo"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 282.589875,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "simple http server python"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 279.592917,
+        "rank": 4
+      },
+      "orig56": false,
+      "q": "serve this folder over the web quickly"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 374.847125,
+        "rank": 24
+      },
+      "orig56": false,
+      "q": "who owns dns port"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 326.74550000000005,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "dock autohide delay"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 540.111584,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "make the mac taskbar pop up instantly"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 293.022625,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "debounce search input react"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 317.909375,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "delay firing the query until typing pauses"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 341.532208,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "sleep in javascript"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 314.41533300000003,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "wait half a second async"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 273.33637500000003,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "next route handler GET"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 311.483167,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "minimal api endpoint returning ok"
+    },
+    {
+      "kind": "short",
+      "laya": {
+        "ms": 301.19454099999996,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "useReducer"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 298.67224999999996,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "react hook for action based state"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 337.01820799999996,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "open external links in new tab"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 309.450583,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "make outbound anchors launch separately"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 352.489625,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "copy to clipboard js"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 324.11675,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "put text on the pasteboard from the browser"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 305.535125,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "abort fetch"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 334.56295800000004,
+        "rank": null
+      },
+      "orig56": false,
+      "q": "cancel an in flight network request"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 270.46166700000003,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "zod schema email"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 293.439083,
+        "rank": 4
+      },
+      "orig56": false,
+      "q": "validation for adult user with mail"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 269.706,
+        "rank": 5
+      },
+      "orig56": false,
+      "q": "tauri command signature"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 572.2219170000001,
+        "rank": 49
+      },
+      "orig56": false,
+      "q": "rust function exposed to the frontend"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 1973.3957090000001,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "rust regex case insensitive"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 343.922334,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "pattern matcher for dashed digits in rust"
+    },
+    {
+      "kind": "short",
+      "laya": {
+        "ms": 302.487417,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "tokio spawn"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 338.67325,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "run a background task on the async runtime"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 288.392584,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "impl From error conversion"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 299.518042,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "map the sqlite failure into my error type"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 292.636958,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "create index concurrently"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 355.367458,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "speed up order lookups by customer without locking"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 310.194334,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "events per day sql"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 292.053375,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "daily count of activity rows"
+    },
+    {
+      "kind": "short",
+      "laya": {
+        "ms": 265.94825,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "explain analyze"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 289.686708,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "why is the late bills query slow"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 298.921416,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "upgrade paying users to pro sql"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 298.13870799999995,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "bump everyone who paid onto the premium tier"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 288.972125,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "sqlite wal mode"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 345.825041,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "write ahead logging for the embedded db"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 291.647542,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "read json file python"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 692.848125,
+        "rank": 13
+      },
+      "orig56": false,
+      "q": "load a config from disk in python"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 299.73425,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "pandas groupby sum top 10"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 279.518875,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "top nations by sales in the dataframe"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 351.075625,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "create python venv"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 307.337084,
+        "rank": 9
+      },
+      "orig56": false,
+      "q": "isolated environment for dependencies"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 317.171584,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "tenacity retry decorator"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 301.498708,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "try again with growing backoff three times"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 342.625875,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "go http handler"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 349.827292,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "golang web request method"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 307.59,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "nginx reverse proxy"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 286.2595,
+        "rank": 4
+      },
+      "orig56": false,
+      "q": "forward web traffic to the node app"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 322.106042,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "dockerfile node alpine"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 320.79116600000003,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "container image recipe for the js app"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 300.286041,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "github actions release on tag"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 3309.2732499999997,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "ci workflow that publishes when I tag a version"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 270.148292,
+        "rank": null
+      },
+      "orig56": false,
+      "q": "tsconfig path alias"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 354.899083,
+        "rank": 43
+      },
+      "orig56": false,
+      "q": "import shortcut for the source folder"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 274.62691700000005,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "responsive css grid auto fill"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 336.465333,
+        "rank": 2
+      },
+      "orig56": false,
+      "q": "cards that wrap to fit the screen width"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 295.168,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "dark mode media query"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 270.960625,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "night theme css variables"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 290.390542,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "frosted glass css"
+    },
+    {
+      "kind": "short",
+      "laya": {
+        "ms": 289.473667,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "backdrop blur"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 268.591042,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "css easing curve"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 265.87041700000003,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "snappy animation timing"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 545.6594580000001,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "vite config port"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 479.230875,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "bundler settings for the dev server"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 271.809084,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "stripe test key"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 283.572041,
+        "rank": 2
+      },
+      "orig56": false,
+      "q": "payments sandbox secret"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 525.457292,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "openai api key env"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 324.318,
+        "rank": 2
+      },
+      "orig56": false,
+      "q": "the llm provider credential variable"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 301.301084,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "local database url"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 296.05150000000003,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "dev postgres connection string"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 292.794375,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "redis connection url"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 303.340708,
+        "rank": 3
+      },
+      "orig56": false,
+      "q": "hosted cache server credentials"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 429.52983300000005,
+        "rank": null
+      },
+      "orig56": false,
+      "q": "github personal access token"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 322.461958,
+        "rank": null
+      },
+      "orig56": false,
+      "q": "token for the code host api"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 272.583542,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "tauri bundle config docs"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 309.854084,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "desktop framework packaging settings reference"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 2078.7855,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "tauri updater plugin"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 320.029458,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "auto update docs for the desktop app"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 301.156834,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "rusqlite connection docs"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 310.522875,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "rust sqlite api reference"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 281.21375,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "fts5 bm25"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 380.029708,
+        "rank": 2
+      },
+      "orig56": false,
+      "q": "full text ranking function documentation"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 3385.155,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "nspasteboard docs"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 315.977625,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "apple clipboard api reference"
+    },
+    {
+      "kind": "short",
+      "laya": {
+        "ms": 275.014292,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "useSyncExternalStore"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 449.39625,
+        "rank": 3
+      },
+      "orig56": false,
+      "q": "hook for subscribing to outside state"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 1111.306167,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "tailwind theme customize"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 259.504125,
+        "rank": null
+      },
+      "orig56": false,
+      "q": "utility css framework design tokens"
+    },
+    {
+      "kind": "vague",
+      "laya": {
+        "ms": 262.192625,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "tauri issue about the window"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 2107.397625,
+        "rank": 14
+      },
+      "orig56": false,
+      "q": "desktop framework bug report"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 299.94404099999997,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "yank pull request 57"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 281.024583,
+        "rank": 10
+      },
+      "orig56": false,
+      "q": "my latest PR on the clipboard app"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 421.88820799999996,
+        "rank": 2
+      },
+      "orig56": false,
+      "q": "yank ci run"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 285.358542,
+        "rank": null
+      },
+      "orig56": false,
+      "q": "the failing build on my clipboard project"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 274.24312499999996,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "vercel deployments"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 268.774,
+        "rank": 4
+      },
+      "orig56": false,
+      "q": "hosting dashboard for the marketing site"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 276.23062500000003,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "stripe webhook dashboard"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 318.246042,
+        "rank": 3
+      },
+      "orig56": false,
+      "q": "payments event endpoint settings"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 346.858875,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "google cloud credentials"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 339.986,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "oauth client keys console"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 375.848792,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "datadog apm api service"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 3746.119916,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "performance monitoring for the backend"
+    },
+    {
+      "kind": "short",
+      "laya": {
+        "ms": 304.882208,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "sentry issue"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 284.125209,
+        "rank": 33
+      },
+      "orig56": false,
+      "q": "crash report from error tracking"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 297.711333,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "linear ticket palette freeze"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 3251.135792,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "bug about the quick picker hanging with big pictures"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 2395.152666,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "notion roadmap"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 291.35458400000005,
+        "rank": 3
+      },
+      "orig56": false,
+      "q": "planning doc for next quarter"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 277.521583,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "hacker news thread"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 432.905417,
+        "rank": null
+      },
+      "orig56": false,
+      "q": "that orange site discussion"
+    },
+    {
+      "kind": "short",
+      "laya": {
+        "ms": 412.14795799999996,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "arxiv paper"
+    },
+    {
+      "kind": "vague",
+      "laya": {
+        "ms": 352.11845800000003,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "the colbert late interaction retrieval paper"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 307.49625000000003,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "bge small model card"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 326.642875,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "the tiny embedding model page"
+    },
+    {
+      "kind": "short",
+      "laya": {
+        "ms": 445.26624999999996,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "laya mlx"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 431.188667,
+        "rank": 7
+      },
+      "orig56": false,
+      "q": "apple silicon typed decision model weights"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 327.10974999999996,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "typesafe rerank cookbook"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 339.885834,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "jev reranking guide"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 356.11925,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "fastembed crate"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 418.492084,
+        "rank": null
+      },
+      "orig56": false,
+      "q": "rust library for local vectors"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 360.573958,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "can i use has selector"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 479.32683399999996,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "browser support for the parent css pseudo class"
+    },
+    {
+      "kind": "short",
+      "laya": {
+        "ms": 390.140625,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "regex101"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 488.599625,
+        "rank": 12
+      },
+      "orig56": false,
+      "q": "the pattern tester link"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 369.04783299999997,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "excalidraw diagram"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 354.037166,
+        "rank": 4
+      },
+      "orig56": false,
+      "q": "the whiteboard sketch of the system"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 301.45883299999997,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "onboarding prototype figma"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 310.3075,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "clickable first run design"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 292.989,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "google meet link"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 151.10429200000002,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "video call url for today's sync"
+    },
+    {
+      "kind": "short",
+      "laya": {
+        "ms": 314.90583300000003,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "zoom link"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 532.540542,
+        "rank": 2
+      },
+      "orig56": false,
+      "q": "the conference call join url"
+    },
+    {
+      "kind": "short",
+      "laya": {
+        "ms": 1912.426,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "calendly link"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 280.844125,
+        "rank": 2
+      },
+      "orig56": false,
+      "q": "my booking page for half hour chats"
+    },
+    {
+      "kind": "vague",
+      "laya": {
+        "ms": 285.109708,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "youtube video on transformers"
+    },
+    {
+      "kind": "vague",
+      "laya": {
+        "ms": 260.78725000000003,
+        "rank": 3
+      },
+      "orig56": false,
+      "q": "that neural network explainer video"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 299.809417,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "reddit rust async drop"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 2656.7200409999996,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "forum post about asynchronous destructors"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 258.971042,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "mock fetch jest stackoverflow"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 364.84925000000004,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "faking network calls in unit tests answer"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 281.104042,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "intersection observer mdn"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 319.463292,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "detect when element scrolls into view docs"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 364.126666,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "postgres json functions"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 396.114958,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "database docs for jsonb operators"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 1151.1000840000002,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "inter font"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 406.98125,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "the ui typeface download page"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 371.545125,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "lucide clipboard icon"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 397.02020799999997,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "svg glyph for copy action"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 333.031375,
+        "rank": 2
+      },
+      "orig56": false,
+      "q": "product hunt launch"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 326.278208,
+        "rank": 15
+      },
+      "orig56": false,
+      "q": "where I launched the clipboard app publicly"
+    },
+    {
+      "kind": "vague",
+      "laya": {
+        "ms": 301.931083,
+        "rank": 6
+      },
+      "orig56": false,
+      "q": "my tweet"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 303.63,
+        "rank": 5
+      },
+      "orig56": false,
+      "q": "the post I made on x"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 462.970791,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "jyoti linkedin"
+    },
+    {
+      "kind": "vague",
+      "laya": {
+        "ms": 361.373959,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "my manager's professional profile"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 439.914167,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "yank database file"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 388.191667,
+        "rank": 12
+      },
+      "orig56": false,
+      "q": "where the clipboard history is stored on disk"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 342.38770800000003,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "yank log file"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 353.00395899999995,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "where the app writes its diagnostics"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 310.065125,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "nginx site config"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 458.714958,
+        "rank": 5
+      },
+      "orig56": false,
+      "q": "web server virtual host file for the marketing page"
+    },
+    {
+      "kind": "short",
+      "laya": {
+        "ms": 362.32041599999997,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "ssh config"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 436.43516700000004,
+        "rank": 9
+      },
+      "orig56": false,
+      "q": "the file with my server host aliases"
+    },
+    {
+      "kind": "short",
+      "laya": {
+        "ms": 392.411208,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "ghostty config"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 1061.6553339999998,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "terminal emulator settings file"
+    },
+    {
+      "kind": "short",
+      "laya": {
+        "ms": 244.66712500000003,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "commands.rs"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 306.957292,
+        "rank": 16
+      },
+      "orig56": false,
+      "q": "rust file with the frontend handlers"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 297.170708,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "quick palette component"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 300.249875,
+        "rank": 20
+      },
+      "orig56": false,
+      "q": "the floating picker ui file"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 300.453125,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "invoice pdf downloads"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 341.719875,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "the bill document I downloaded"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 467.296042,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "screenshot on desktop"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 409.4465,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "screen capture image file from the 21st"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 371.226125,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "my standup update"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 379.83074999999997,
+        "rank": 14
+      },
+      "orig56": false,
+      "q": "what I told the team this morning"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 339.504541,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "message to jyo reschedule 1:1"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 343.135458,
+        "rank": 5
+      },
+      "orig56": false,
+      "q": "asking my manager to move our weekly chat"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 501.62720800000005,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "incident latency spike"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 615.863584,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "the outage where requests got slow after a release"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 391.5725,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "retro action items"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 382.776041,
+        "rank": null
+      },
+      "orig56": false,
+      "q": "follow ups from the post mortem"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 395.246416,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "offer letter salary"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 459.57516599999997,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "compensation details for the new job"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 421.816708,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "interview schedule"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 413.034667,
+        "rank": 3
+      },
+      "orig56": false,
+      "q": "the order of my onsite conversations"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 382.093792,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "holiday leave dates"
+    },
+    {
+      "kind": "short",
+      "laya": {
+        "ms": 3257.060375,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "pto request"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 883.195583,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "review comment about ranking fusion"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 354.589875,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "reviewer asked me to split out the scoring merge"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 502.121917,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "design critique notes palette"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 279.348291,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "feedback on the picker's spacing"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 362.381458,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "customer testimonial"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 283.217125,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "user quote about not uninstalling"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 3256.9002920000003,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "q3 metrics weekly actives"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 2965.712167,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "how many people used the app each week last quarter"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 290.692375,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "board update runway"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 352.916708,
+        "rank": 8
+      },
+      "orig56": false,
+      "q": "how long our cash lasts"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 317.65495799999997,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "pricing tiers"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 293.897375,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "how much the paid plan costs"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 304.186791,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "changelog 0.7.62"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 349.424417,
+        "rank": 2
+      },
+      "orig56": false,
+      "q": "what shipped in the last version"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 1637.868458,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "support reply reset instructions"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 534.483917,
+        "rank": 11
+      },
+      "orig56": false,
+      "q": "how I told a user to wipe their data"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 444.943791,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "bug report lena"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 547.072792,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "someone said big pictures lock up the picker on older macs"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 427.6495,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "typesafe meeting notes"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 391.93275,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "what the jev folks told me about cost"
+    },
+    {
+      "kind": "short",
+      "laya": {
+        "ms": 355.15225,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "launch checklist"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 360.005166,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "things to do before going public"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 349.764291,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "blog outline embeddings"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 386.577209,
+        "rank": 2
+      },
+      "orig56": false,
+      "q": "draft plan for my writing on search by meaning"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 596.695833,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "tweet draft semantic search"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 429.369,
+        "rank": null
+      },
+      "orig56": false,
+      "q": "announcement post I wrote for x"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 508.90725000000003,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "neha flight arrival"
+    },
+    {
+      "kind": "vague",
+      "laya": {
+        "ms": 435.347584,
+        "rank": 2
+      },
+      "orig56": false,
+      "q": "when my sister's plane gets in"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 529.527125,
+        "rank": 4
+      },
+      "orig56": false,
+      "q": "pickup at the airport terminal time"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 394.912,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "where I parked"
+    },
+    {
+      "kind": "short",
+      "laya": {
+        "ms": 399.974125,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "parking spot"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 379.781625,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "car service honda"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 374.48975,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "when the vehicle needs maintenance"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 462.535125,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "plumber number"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 488.57475,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "the guy who repaired the leaky faucet"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 384.85029199999997,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "landlord email"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 467.487917,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "how to reach the apartment owner"
+    },
+    {
+      "kind": "short",
+      "laya": {
+        "ms": 450.491792,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "electrician quote"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 421.2625,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "estimate for fixing the breaker box"
+    },
+    {
+      "kind": "short",
+      "laya": {
+        "ms": 362.53362500000003,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "wedding rsvp"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 348.497542,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "arjun's marriage invite reply deadline"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 487.27020799999997,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "wedding gift registry"
+    },
+    {
+      "kind": "short",
+      "laya": {
+        "ms": 2072.4881659999996,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "le creuset"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 281.665,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "dad's medication list"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 302.19654099999997,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "what pills my father takes"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 333.132833,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "mom's new number"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 333.711209,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "my mother's updated mobile"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 516.279917,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "riya's address"
+    },
+    {
+      "kind": "vague",
+      "laya": {
+        "ms": 487.61533299999996,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "where my cousin lives in mumbai"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 539.9958750000001,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "my home address"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 572.186208,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "where I live"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 411.97854099999995,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "office address"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 584.0794999999999,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "where work is located"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 469.638375,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "kid shoe size"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 556.473791,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "what size sneakers my child wears"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 390.362708,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "soccer practice time"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 373.28229200000004,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "when the football training is this weekend"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 341.10258300000004,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "building entry code"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 1871.9943329999999,
+        "rank": 9
+      },
+      "orig56": false,
+      "q": "front door keypad number"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 272.729041,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "bike lock combo"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 278.424417,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "the numbers for my cycle padlock"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 292.330125,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "office guest wifi"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 324.736167,
+        "rank": 2
+      },
+      "orig56": false,
+      "q": "internet login for visitors at work"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 324.06870799999996,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "netflix login"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 755.998875,
+        "rank": 3
+      },
+      "orig56": false,
+      "q": "streaming account credentials"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 391.161166,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "birthdays list"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 476.9665,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "when my cousins and sister were born"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 454.79716599999995,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "flight to mumbai pnr"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 412.76304200000004,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "booking reference for the trip home to india"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 397.973916,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "tokyo hotel confirmation"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 704.549667,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "where I'm staying in japan's capital"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 417.474708,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "jr pass voucher"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 438.62,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "japan rail ticket code"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 613.179833,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "global entry interview"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 553.5450830000001,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "appointment for trusted traveler at the airport"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 420.99616699999996,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "uber receipt airport"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 459.85483300000004,
+        "rank": 2
+      },
+      "orig56": false,
+      "q": "ride home cost from the terminal"
+    },
+    {
+      "kind": "short",
+      "laya": {
+        "ms": 337.756459,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "packing list"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 1051.101709,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "things to bring on the trip"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 402.06275000000005,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "tahoe cabin lockbox"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 2553.583292,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "key box digits for the mountain rental"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 352.167542,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "sausalito ferry time"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 377.06045900000004,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "boat across the bay departure"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 344.474375,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "applecare number"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 383.444875,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "warranty for my laptop"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 592.338667,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "macbook serial"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 780.1410410000001,
+        "rank": 2
+      },
+      "orig56": false,
+      "q": "my computer's hardware id"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 548.292125,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "ups return label"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 388.665209,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "the shipping code for sending the item back"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 351.77587500000004,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "ikea delivery"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 375.55424999999997,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "when the furniture is arriving"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 625.388292,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "standing desk price"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 375.014042,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "adjustable height table I want"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 358.911208,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "mechanical keyboard"
+    },
+    {
+      "kind": "short",
+      "laya": {
+        "ms": 384.10916699999996,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "keychron"
+    },
+    {
+      "kind": "short",
+      "laya": {
+        "ms": 457.274708,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "monitor arm"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 450.000542,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "mount to hold my display"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 406.93741700000004,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "venmo arjun dinner"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 491.088,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "money my friend paid back for the meal"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 373.427417,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "splitwise owe neha"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 361.41012500000005,
+        "rank": 2
+      },
+      "orig56": false,
+      "q": "how much I need to pay my sister back for the trip"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 482.605542,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "credit card statement date"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 411.0335,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "when my card billing cycle ends"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 530.9705,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "hsa balance"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 436.623584,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "health savings account money"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 385.52312500000005,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "estimated tax payment confirmation"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 518.298625,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "quarterly payment to the irs"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 356.675583,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "ein number"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 346.098125,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "tax id for my company"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 446.216583,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "iban berlin client"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 612.628792,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "international bank account for the german customer"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 460.199666,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "invoice amount hours"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 457.09499999999997,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "how much I billed for contract work"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 376.70516599999996,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "gym membership cost"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 363.373375,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "fitness club monthly fee"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 371.923917,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "eye prescription"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 381.51941700000003,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "my glasses lens numbers"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 435.835584,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "blood test results cholesterol"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 367.039,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "lab numbers from the checkup"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 571.39925,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "physio exercises"
+    },
+    {
+      "kind": "vague",
+      "laya": {
+        "ms": 510.824292,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "rehab routine for my back"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 515.257666,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "running plan"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 457.732958,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "weekly jogging schedule"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 1090.751875,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "meal prep curry"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 361.296042,
+        "rank": 2
+      },
+      "orig56": false,
+      "q": "food I cooked for the week"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 580.729667,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "dal recipe"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 574.47725,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "how to make lentil soup with tempering"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 688.500334,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "pancake recipe"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 559.238958,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "fluffy breakfast griddle cakes"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 449.464375,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "therapy homework"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 394.620334,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "gratitude exercise my counselor gave"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 402.009417,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "big o cheat sheet"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 468.030958,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "time complexity of common data structures"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 389.88945800000005,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "two pointers template"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 845.939917,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "pattern for sorted pair sum problems"
+    },
+    {
+      "kind": "short",
+      "laya": {
+        "ms": 360.66008300000004,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "dijkstra"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 430.102916,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "shortest path with a priority queue"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 564.375541,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "daijoubu meaning"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 540.5710419999999,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "japanese word for i'm fine"
+    },
+    {
+      "kind": "short",
+      "laya": {
+        "ms": 453.503292,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "jugaad"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 437.8705,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "indian word for a hacky workaround"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 374.458959,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "paul graham quote"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 367.289875,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "startup advice to build what users desire"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 346.509959,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "app idea slack snooze"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 350.897042,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "side project to silence chat pings while concentrating"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 486.21275,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "idea auto expire passwords"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 457.81679199999996,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "feature so sensitive copies disappear"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 389.61675,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "deep work notes"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 510.73929200000003,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "takeaways from cal newport's focus book"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 501.90458400000006,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "lex fridman dario"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 446.93341599999997,
+        "rank": 3
+      },
+      "orig56": false,
+      "q": "long interview with the anthropic ceo"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 407.45916700000004,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "italian game opening"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 508.858625,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "the bishop to c4 chess start"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 377.822041,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "wonderwall chords"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 394.130291,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "oasis song fingering on guitar"
+    },
+    {
+      "kind": "kw",
+      "laya": {
+        "ms": 361.64904199999995,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "motorcycle chain lube"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 556.425917,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "how often to oil the bike drive"
+    },
+    {
+      "kind": "short",
+      "laya": {
+        "ms": 394.20775000000003,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "tire pressure"
+    },
+    {
+      "kind": "para",
+      "laya": {
+        "ms": 381.840333,
+        "rank": 1
+      },
+      "orig56": false,
+      "q": "how much air in the wheels"
+    }
+  ],
+  "summary": {
+    "laya": {
+      "metrics": {
+        "all": {
+          "mrr": 0.8779786702112976,
+          "n": 559.0,
+          "p1": 0.8389982110912343,
+          "r10": 0.9427549194991055,
+          "r5": 0.9302325581395349
+        },
+        "cat": {
+          "mrr": 0.5303030303030303,
+          "n": 3.0,
+          "p1": 0.3333333333333333,
+          "r10": 0.6666666666666666,
+          "r5": 0.6666666666666666
+        },
+        "kw": {
+          "mrr": 0.9795107033639143,
+          "n": 218.0,
+          "p1": 0.9724770642201835,
+          "r10": 0.9908256880733946,
+          "r5": 0.9908256880733946
+        },
+        "orig56": {
+          "mrr": 0.8842467159277504,
+          "n": 56.0,
+          "p1": 0.8392857142857143,
+          "r10": 0.9464285714285714,
+          "r5": 0.9464285714285714
+        },
+        "para": {
+          "mrr": 0.7941318265640187,
+          "n": 287.0,
+          "p1": 0.7317073170731707,
+          "r10": 0.8989547038327527,
+          "r5": 0.8780487804878049
+        },
+        "short": {
+          "mrr": 1.0,
+          "n": 37.0,
+          "p1": 1.0,
+          "r10": 1.0,
+          "r5": 1.0
+        },
+        "time": {
+          "mrr": 0.5833333333333334,
+          "n": 3.0,
+          "p1": 0.3333333333333333,
+          "r10": 1.0,
+          "r5": 1.0
+        },
+        "vague": {
+          "mrr": 0.8181818181818182,
+          "n": 11.0,
+          "p1": 0.7272727272727273,
+          "r10": 1.0,
+          "r5": 0.9090909090909091
+        }
+      },
+      "p50_ms": 333.031375,
+      "p90_ms": 559.238958
+    }
+  }
+}

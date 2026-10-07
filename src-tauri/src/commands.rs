@@ -354,15 +354,16 @@ pub fn update_label(
 ) -> Result<(), String> {
     let conn = db.0.lock().map_err(|e| e.to_string())?;
     let id_num: i64 = id.parse().map_err(map_err)?;
-    // Re-ranking reads the label at query time, so no cache to invalidate —
-    // the edited label flows into the next search automatically.
+    // The label is part of the embedded text: clear the model tag so the
+    // embed queue re-embeds this clip.
     conn.execute(
-        "UPDATE items SET label = ?1 WHERE id = ?2",
+        "UPDATE items SET label = ?1, embedding_model = NULL WHERE id = ?2",
         params![label, id_num],
     )
     .map_err(map_err)?;
     drop(conn);
     let _ = app;
+    crate::embed_queue::kick();
     Ok(())
 }
 
@@ -428,15 +429,39 @@ pub async fn search_semantic(
     if !cfg.is_active() {
         return Err("semantic search not configured".into());
     }
+    search(db.inner().clone(), &cfg, &query, limit.unwrap_or(20)).await
+}
+
+/// BM25 weight in the first-stage score. Small: dense cosine carries the
+/// meaning; this nudges exact keyword/ID hits and covers clips the embed
+/// queue hasn't reached yet. Larger weights hurt paraphrase queries (eval).
+const BM25_W: f32 = 0.02;
+/// Soft category boost ("the tracking number" prefers `number` clips).
+const CAT_BOOST: f32 = 0.02;
+
+/// The search pipeline behind `search_semantic`, callable without Tauri
+/// state so the eval harness exercises exactly this code.
+///
+/// 1. Parse out a date phrase (SQL window) and category keyword (soft boost).
+/// 2. Stage 1, local: cosine of the query embedding against every clip's
+///    stored vector, plus small BM25 / category / colour / recency nudges.
+/// 3. Stage 2, optional: the top `Reranker::pool` go to the configured
+///    re-ranker (Jev or Laya) as one Choice question; its probabilities,
+///    blended per `Reranker::weight`, decide the order. If it fails, the
+///    stage-1 order stands, so a flaky network never breaks search.
+pub async fn search(
+    db: Arc<Db>,
+    cfg: &crate::embed::EmbedConfig,
+    query: &str,
+    limit: usize,
+) -> Result<SearchResponse, String> {
+    use std::collections::HashMap;
+
     let q_trimmed = query.trim().to_string();
     if q_trimmed.is_empty() {
         return Ok(SearchResponse { items: Vec::new(), time_window: None, category: None });
     }
-    let limit = limit.unwrap_or(20);
 
-    // Pull any date phrase out of the query before judging it. The residue
-    // ("semantic") is what Jev compares against candidates; the window
-    // becomes a SQL filter on `created_at` so we never rank items outside it.
     let parsed = crate::query_time::parse(chrono::Local::now(), &q_trimmed);
     let time_dto = parsed.time.as_ref().map(|t| TimeWindowDto {
         from_ms: t.from_ms,
@@ -444,158 +469,186 @@ pub async fn search_semantic(
         label: t.label.clone(),
     });
     let time_bounds = parsed.time.as_ref().map(|t| (t.from_ms, t.to_ms));
+    let (from_ms, to_ms) = time_bounds.unwrap_or((i64::MIN, i64::MAX));
 
-    // Pull category intent ("numbers", "links", "code snippets") and shed
-    // filler verbs ("I copied"). Category is a *soft* signal during ranking
-    // (boost below) — applied as a hard SQL filter only for pure category
-    // queries with no semantic residue ("numbers").
+    // Category intent ("numbers", "links") is a soft boost, or a hard SQL
+    // filter only when nothing else is left ("numbers").
     let intent = crate::query_intent::parse(&parsed.semantic);
     let semantic_q = intent.semantic.trim().to_string();
     let category_filter: Option<&str> = intent.category;
     let category_dto = intent.category.map(|c| c.to_string());
-
-    // Explicit colour intent — a named colour ("indigo") or a raw value
-    // ("#4b0082") even when the user never typed the word "color". When we
-    // resolve a concrete target below, colour clips get ranked by perceptual
-    // closeness to it so the actual swatch the user copied wins.
     let color_intent = crate::color_intent::detect(&q_trimmed);
 
-    // Pure time / category query ("yesterday", "numbers"): skip Jev entirely
-    // and return newest items matching the SQL filters, pinned first.
+    // Pure time / category query ("yesterday", "numbers"): newest matches.
     if semantic_q.is_empty() {
         if time_bounds.is_some() || category_filter.is_some() {
-            let (from, to) = time_bounds.unwrap_or((i64::MIN, i64::MAX));
             let conn = db.0.lock().map_err(|e| e.to_string())?;
-            let items = items_in_window(&conn, from, to, category_filter, limit)?;
+            let items = items_in_window(&conn, from_ms, to_ms, category_filter, limit)?;
             return Ok(SearchResponse { items, time_window: time_dto, category: category_dto });
         }
         return Ok(SearchResponse { items: Vec::new(), time_window: None, category: None });
     }
 
-    // Fast search: BM25 shortlist. Re-ranking can only promote candidates the
-    // shortlist contains, so it is sized generously (bounded by the Jev
-    // request cap in `jev::MAX_CANDIDATES`).
-    let db: Arc<Db> = db.inner().clone();
-    let candidates: Vec<ClipItem> = {
-        let conn = db.0.lock().map_err(|e| e.to_string())?;
-        bm25_pool(&conn, &semantic_q, crate::jev::MAX_CANDIDATES, time_bounds)
-            .unwrap_or_default()
+    // ---- Stage 1: local embeddings -------------------------------------
+    // If the model can't load (first-run download offline) we still answer
+    // from BM25 below.
+    let qv = {
+        let q = semantic_q.clone();
+        match tokio::task::spawn_blocking(move || crate::embed::embed_query(&q)).await {
+            Ok(Ok(v)) => Some(v),
+            Ok(Err(e)) => {
+                eprintln!("[search] query embedding unavailable: {e}");
+                None
+            }
+            Err(e) => {
+                eprintln!("[search] query embedding task: {e}");
+                None
+            }
+        }
     };
 
-    // One batched Jev call scores the whole shortlist. No DB lock is held
-    // across this network await.
-    let model = cfg.typesafe_model.clone();
-    let api_key = cfg.typesafe_api_key.trim().to_string();
-    let candidate_texts: Vec<(String, String)> = candidates
-        .iter()
-        .map(|c| (c.id.clone(), candidate_text(c)))
-        .collect();
-    let client = reqwest::Client::builder()
-        .timeout(std::time::Duration::from_secs(30))
-        .build()
-        .map_err(|e| e.to_string())?;
-    let nouls =
-        crate::jev::rerank(&client, &api_key, &model, &semantic_q, &candidate_texts).await?;
-
-    use std::collections::HashMap;
-    let mut fused: HashMap<String, (f32, ClipItem)> = HashMap::new();
-    for (item, noul) in candidates.into_iter().zip(nouls.into_iter()) {
-        fused.insert(item.id.clone(), (noul, item));
-    }
-
-    // Re-lock for the remaining synchronous scoring (colour + sorting).
-    let conn = db.0.lock().map_err(|e| e.to_string())?;
-    let (from_ms, to_ms) = time_bounds.unwrap_or((i64::MIN, i64::MAX));
-
-    // Soft category boost — a category-matching item climbs over a
-    // similarly-scored off-category neighbour, but a clearly-better
-    // off-category match still wins.
-    const CAT_BOOST: f32 = 0.05;
-    // An explicit colour request implies the `color` category even when the
-    // user never typed the keyword, so fold it into the soft boost.
     let cat_want = category_filter.or(if color_intent.is_color { Some("color") } else { None });
-    if let Some(want) = cat_want {
-        for (_, (score, item)) in fused.iter_mut() {
-            if item.category == want {
+    let now_ms = chrono::Utc::now().timestamp_millis();
+    let rerank_with = cfg.reranker();
+    let pool_size = rerank_with.as_ref().map_or(limit, |r| r.pool.max(limit));
+
+    let pool: Vec<(f32, ClipItem)> = {
+        let conn = db.0.lock().map_err(|e| e.to_string())?;
+        // id -> (score, category, created_at)
+        let mut scored: HashMap<i64, (f32, String, i64)> = HashMap::new();
+        if let Some(qv) = &qv {
+            for (id, cos, cat, created) in crate::embed::scan(&conn, qv, from_ms, to_ms)? {
+                scored.insert(id, (cos, cat, created));
+            }
+        }
+        for (rank, item) in bm25_pool(&conn, &semantic_q, 50, time_bounds)
+            .unwrap_or_default()
+            .into_iter()
+            .enumerate()
+        {
+            let Ok(id) = item.id.parse::<i64>() else { continue };
+            let nudge = BM25_W / (1.0 + rank as f32 / 5.0);
+            scored
+                .entry(id)
+                .and_modify(|e| e.0 += nudge)
+                .or_insert((nudge, item.category.clone(), now_ms - item.minutes_ago * 60_000));
+        }
+
+        // Colour similarity: when the query names a concrete colour, pull
+        // perceptually-close swatches in (even ones no text describes).
+        if let Some((tr, tg, tb)) = color_intent.target {
+            const COLOR_MAX_DIST: f32 = 64.0;
+            const COLOR_BOOST: f32 = 0.10;
+            let mut stmt = conn
+                .prepare(
+                    "SELECT id, content, created_at FROM items
+                     WHERE deleted = 0 AND category = 'color' AND created_at BETWEEN ?1 AND ?2",
+                )
+                .map_err(map_err)?;
+            let rows = stmt
+                .query_map(params![from_ms, to_ms], |r| {
+                    Ok((r.get::<_, i64>(0)?, r.get::<_, String>(1)?, r.get::<_, i64>(2)?))
+                })
+                .map_err(map_err)?;
+            for (id, content, created) in rows.filter_map(|r| r.ok()) {
+                let Some((r, g, b)) = crate::color_names::parse_color_to_rgb(&content) else {
+                    continue;
+                };
+                let (dr, dg, db_) = (tr as f32 - r as f32, tg as f32 - g as f32, tb as f32 - b as f32);
+                let dist = (dr * dr + dg * dg + db_ * db_).sqrt();
+                if dist <= COLOR_MAX_DIST {
+                    let boost = COLOR_BOOST * (1.0 - dist / COLOR_MAX_DIST);
+                    scored
+                        .entry(id)
+                        .and_modify(|e| e.0 += boost)
+                        .or_insert((boost, "color".into(), created));
+                }
+            }
+        }
+
+        for (score, cat, created) in scored.values_mut() {
+            if cat_want == Some(cat.as_str()) {
                 *score += CAT_BOOST;
             }
-        }
-    }
-
-    // Colour-similarity boost. When the query resolved to a concrete colour,
-    // rank stored `color` clips by perceptual distance to it. Scoped to
-    // colour items, so it can only reorder swatches — never promote
-    // unrelated text or code. It fades linearly to zero at COLOR_MAX_DIST,
-    // so only genuinely-close swatches get promoted.
-    if let Some((tr, tg, tb)) = color_intent.target {
-        const COLOR_MAX_DIST: f32 = 64.0;
-        const COLOR_BOOST: f32 = 0.10;
-        let mut stmt_color = conn
-            .prepare(
-                "SELECT id, content, category, label, preview, source, pinned,
-                        deleted, deleted_at, last_used_at
-                 FROM items
-                 WHERE deleted = 0 AND category = 'color'
-                   AND created_at BETWEEN ?1 AND ?2",
-            )
-            .map_err(map_err)?;
-        let color_rows: Vec<ClipItem> = stmt_color
-            .query_map(params![from_ms, to_ms], row_to_item)
-            .map_err(map_err)?
-            .filter_map(|r| r.ok())
-            .collect();
-        for item in color_rows {
-            let Some((r, g, b)) = crate::color_names::parse_color_to_rgb(&item.content) else {
-                continue;
-            };
-            let dr = tr as f32 - r as f32;
-            let dg = tg as f32 - g as f32;
-            let db_ = tb as f32 - b as f32;
-            let dist = (dr * dr + dg * dg + db_ * db_).sqrt();
-            if dist > COLOR_MAX_DIST {
-                continue;
+            // Recency tiebreak (~2-week decay), only without a date phrase.
+            if time_bounds.is_none() {
+                let age_days = (now_ms - *created).max(0) as f32 / 86_400_000.0;
+                *score += 0.005 * (-age_days / 14.0).exp();
             }
-            let boost = COLOR_BOOST * (1.0 - dist / COLOR_MAX_DIST);
-            // A clip beyond the BM25 shortlist (the swatch the user wants but
-            // never described in words) still belongs here, so insert it if
-            // absent rather than only boosting in-pool hits.
-            fused
-                .entry(item.id.clone())
-                .and_modify(|(s, _)| *s += boost)
-                .or_insert((boost, item));
+        }
+
+        let mut top: Vec<(i64, f32)> = scored.into_iter().map(|(id, (s, _, _))| (id, s)).collect();
+        top.sort_by(|a, b| b.1.total_cmp(&a.1));
+        top.truncate(pool_size);
+        load_items(&conn, &top)?
+    };
+
+    // ---- Stage 2: optional re-rank ---------------------------------------
+    // Only the top `r.pool` go out; anything below keeps its stage-1 order.
+    let mut ranked: Vec<(f32, f32, ClipItem)> = pool.into_iter().map(|(s, it)| (s, s, it)).collect();
+    if let Some(r) = rerank_with {
+        let n = ranked.len().min(r.pool);
+        let texts: Vec<String> = ranked[..n].iter().map(|(_, _, it)| candidate_text(it)).collect();
+        match crate::jev::rerank(&r.url, &r.api_key, &r.model, &semantic_q, &texts).await {
+            Ok(probs) => {
+                let stage1: Vec<f32> = ranked[..n].iter().map(|row| row.1).collect();
+                let fused = fuse(&probs, &stage1, r.weight);
+                // Re-ranked rows sit above the unsent tail.
+                for (row, f) in ranked[..n].iter_mut().zip(fused) {
+                    row.0 = f + 1e3;
+                }
+            }
+            Err(e) => eprintln!("[search] re-rank failed, using local order: {e}"),
         }
     }
-
-    // Soft recency tiebreak — only when the user didn't already constrain
-    // recency via a date phrase. Sized to *break* ties between
-    // similarly-relevant items without promoting an unrelated recent item
-    // over a relevant older one. Decays over ~2 weeks.
-    if time_bounds.is_none() {
-        for (_, (score, item)) in fused.iter_mut() {
-            let age_days = (item.minutes_ago.max(0) as f32) / (60.0 * 24.0);
-            *score += 0.005 * (-age_days / 14.0).exp();
-        }
-    }
-
-    let mut ranked: Vec<(f32, ClipItem)> = fused.into_values().collect();
-    // Pinned items win ties; otherwise sort strictly by score desc.
+    // Final score, then stage-1 score, then pinned.
     ranked.sort_by(|a, b| {
-        let pin_cmp = b.1.pinned.cmp(&a.1.pinned);
-        if pin_cmp != std::cmp::Ordering::Equal {
-            return pin_cmp;
-        }
-        b.0.partial_cmp(&a.0).unwrap_or(std::cmp::Ordering::Equal)
+        b.0.total_cmp(&a.0)
+            .then(b.1.total_cmp(&a.1))
+            .then(b.2.pinned.cmp(&a.2.pinned))
     });
-
-    let items = ranked.into_iter().take(limit).map(|(_, i)| i).collect();
+    let items = ranked.into_iter().take(limit).map(|(_, _, i)| i).collect();
     Ok(SearchResponse { items, time_window: time_dto, category: category_dto })
 }
 
-/// Upper bound on characters we send Jev per candidate, keeping token cost
-/// and latency predictable while preserving the gist of a long clip.
+/// Blend re-ranker probabilities with stage-1 scores: `w * z(ln p) +
+/// (1 - w) * z(stage1)`, z = standardised within the pool. Log-probability
+/// puts a Choice distribution and per-item logits (Laya) on one scale.
+/// `w >= 1` is the plain re-ranker order.
+fn fuse(probs: &[f32], stage1: &[f32], w: f32) -> Vec<f32> {
+    fn z(x: &[f32]) -> Vec<f32> {
+        let n = x.len().max(1) as f32;
+        let mean = x.iter().sum::<f32>() / n;
+        let sd = (x.iter().map(|v| (v - mean).powi(2)).sum::<f32>() / n).sqrt() + 1e-6;
+        x.iter().map(|v| (v - mean) / sd).collect()
+    }
+    let lp: Vec<f32> = probs.iter().map(|p| p.max(1e-12).ln()).collect();
+    if w >= 1.0 {
+        return lp;
+    }
+    z(&lp).iter().zip(z(stage1)).map(|(a, b)| w * a + (1.0 - w) * b).collect()
+}
+
+/// Fetch full rows for scored ids, preserving the given order.
+fn load_items(conn: &rusqlite::Connection, top: &[(i64, f32)]) -> Result<Vec<(f32, ClipItem)>, String> {
+    let mut stmt = conn
+        .prepare(
+            "SELECT id, content, category, label, preview, source, pinned,
+                    deleted, deleted_at, last_used_at
+             FROM items WHERE id = ?1 AND deleted = 0",
+        )
+        .map_err(map_err)?;
+    Ok(top
+        .iter()
+        .filter_map(|(id, s)| stmt.query_row(params![id], row_to_item).ok().map(|it| (*s, it)))
+        .collect())
+}
+
+/// Upper bound on characters we send the re-ranker per candidate, keeping
+/// token cost and latency predictable while preserving the gist of a long clip.
 const MAX_CAND_CHARS: usize = 500;
 
-/// Compose the plain text handed to Jev for a candidate clip. Jev reads
+/// Compose the plain text handed to the re-ranker for a candidate clip. It reads
 /// natural language, so we lead with the AI label (high-signal summary, only
 /// when present), then the body, then the source app so queries like "the
 /// slack link" can hit on source even when the content is a bare URL.
@@ -793,6 +846,17 @@ pub fn spawn_sweeper(app: AppHandle) {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn fuse_full_weight_is_reranker_order_half_weight_blends() {
+        let probs = [0.7, 0.2, 0.1];
+        let stage1 = [0.1, 0.9, 0.5];
+        let full = super::fuse(&probs, &stage1, 1.0);
+        assert!(full[0] > full[1] && full[1] > full[2]);
+        // At 0.5 the strong stage-1 score lifts item 1 over item 0.
+        let half = super::fuse(&probs, &stage1, 0.5);
+        assert!(half[1] > half[0]);
+    }
+
     #[cfg(not(target_os = "macos"))]
     #[test]
     fn paste_outcome_reports_copied_when_backend_falls_back() {

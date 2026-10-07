@@ -87,6 +87,21 @@ fn migrate(conn: &Connection) -> rusqlite::Result<()> {
         conn.execute_batch("PRAGMA user_version = 3;")?;
     }
 
+    if version < 4 {
+        // Local embedding vectors (see `embed.rs`). DBs from before v2 may
+        // still carry these columns with stale BGE vectors; `embedding_model`
+        // no longer matches, so the embed queue re-embeds them.
+        for (col, ty) in [("embedding", "BLOB"), ("embedding_model", "TEXT")] {
+            let exists = conn
+                .prepare("SELECT 1 FROM pragma_table_info('items') WHERE name = ?1")?
+                .exists([col])?;
+            if !exists {
+                conn.execute_batch(&format!("ALTER TABLE items ADD COLUMN {col} {ty};"))?;
+            }
+        }
+        conn.execute_batch("PRAGMA user_version = 4;")?;
+    }
+
     Ok(())
 }
 

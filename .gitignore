@@ -25,3 +25,5 @@ dist-ssr
 
 # Marketing — private campaign tracking
 marketing/tracking/utm-registry.csv
+
+.env

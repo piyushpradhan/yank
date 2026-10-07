@@ -1,0 +1,1350 @@
+{
+"items": [
+{
+"content": "Mom's birthday: October 14th",
+"category": "text",
+"label": null,
+"source": "Notes",
+"days_ago": 30
+},
+{
+"content": "Dad's address: 248 Maple Street, Burlington, VT 05401",
+"category": "address",
+"label": "Dad's mailing address",
+"source": "Notes",
+"days_ago": 45
+},
+{
+"content": "Aunt Susan: +1 (802) 555-3287",
+"category": "phone",
+"label": "Aunt Susan's number",
+"source": "Contacts",
+"days_ago": 60
+},
+{
+"content": "rachel.thompson@yahoo.com",
+"category": "email",
+"label": null,
+"source": "Contacts",
+"days_ago": 12
+},
+{
+"content": "Grandma's chocolate chip cookies: 2 1/4 cups flour, 1 tsp baking soda, 1 cup brown sugar, 2 eggs, 12oz choc chips",
+"category": "text",
+"label": "Grandma's chocolate chip cookie recipe",
+"source": "Notes",
+"days_ago": 90
+},
+{
+"content": "Christmas gift idea for Tom: noise-cancelling headphones",
+"category": "text",
+"label": null,
+"source": "Notes",
+"days_ago": 5
+},
+{
+"content": "Babysitter Emma: (415) 555-9921",
+"category": "phone",
+"label": "Babysitter Emma's number",
+"source": "Notes",
+"days_ago": 21
+},
+{
+"content": "Vet appointment for Biscuit: Nov 18, 3pm",
+"category": "text",
+"label": null,
+"source": "Calendar",
+"days_ago": 8
+},
+{
+"content": "Spouse's blood type: O negative",
+"category": "text",
+"label": null,
+"source": "Notes",
+"days_ago": 120
+},
+{
+"content": "House WiFi password: BlueMountain2019!",
+"category": "text",
+"label": "Home WiFi password",
+"source": "Notes",
+"days_ago": 7
+},
+{
+"content": "Anniversary dinner reservation: Le Bernardin, 7:30pm Saturday",
+"category": "text",
+"label": null,
+"source": "Email",
+"days_ago": 4
+},
+{
+"content": "Kids' school pickup time: 3:15pm",
+"category": "text",
+"label": null,
+"source": "Notes",
+"days_ago": 60
+},
+{
+"content": "Pediatrician: Dr. Lisa Chen, (212) 555-0188",
+"category": "phone",
+"label": "Pediatrician phone",
+"source": "Contacts",
+"days_ago": 40
+},
+{
+"content": "Insurance policy number: POL-2024-44872",
+"category": "text",
+"label": "Home insurance policy #",
+"source": "Mail",
+"days_ago": 30
+},
+{
+"content": "Garage door code: 7821",
+"category": "number",
+"label": "Garage door code",
+"source": "Notes",
+"days_ago": 200
+},
+{
+"content": "Costco membership #: 111888299231",
+"category": "number",
+"label": "Costco membership",
+"source": "Wallet",
+"days_ago": 365
+},
+{
+"content": "Grocery list: milk, eggs, bread, spinach, chicken thighs, olive oil",
+"category": "text",
+"label": "This week's grocery list",
+"source": "Notes",
+"days_ago": 1
+},
+{
+"content": "Birthday party venue: Pizza Palace, 142 Main St",
+"category": "text",
+"label": null,
+"source": "Notes",
+"days_ago": 14
+},
+{
+"content": "Book club meets every other Tuesday at 7pm",
+"category": "text",
+"label": null,
+"source": "Notes",
+"days_ago": 70
+},
+{
+"content": "Dentist follow-up scheduled for Jan 8",
+"category": "text",
+"label": null,
+"source": "Calendar",
+"days_ago": 35
+},
+{
+"content": "Locker combination at gym: 24-12-36",
+"category": "text",
+"label": "Gym locker combo",
+"source": "Notes",
+"days_ago": 100
+},
+{
+"content": "License plate: 7BVH239",
+"category": "text",
+"label": "My license plate",
+"source": "Notes",
+"days_ago": 180
+},
+{
+"content": "Library card number: 30087654321",
+"category": "number",
+"label": "Library card",
+"source": "Wallet",
+"days_ago": 250
+},
+{
+"content": "Apartment lease ends March 31, 2027",
+"category": "text",
+"label": null,
+"source": "Notes",
+"days_ago": 50
+},
+{
+"content": "Emergency contact: Kate (mom), (508) 555-1234",
+"category": "phone",
+"label": "Mom emergency contact",
+"source": "Contacts",
+"days_ago": 730
+},
+{
+"content": "United flight UA2347 to LAX, June 22, departs 8:55am",
+"category": "text",
+"label": "Flight UA2347 to LAX",
+"source": "Email",
+"days_ago": 15
+},
+{
+"content": "Marriott Times Square confirmation: M37281234",
+"category": "text",
+"label": "Marriott NYC reservation",
+"source": "Email",
+"days_ago": 18
+},
+{
+"content": "Rental car: Hertz, pickup at LAX terminal, June 22 11am",
+"category": "text",
+"label": "Hertz LAX rental",
+"source": "Email",
+"days_ago": 18
+},
+{
+"content": "Eurostar London to Paris, 9:13am, coach 14, seat 67A",
+"category": "text",
+"label": "Eurostar booking",
+"source": "Email",
+"days_ago": 25
+},
+{
+"content": "Currency: 1 USD = 0.92 EUR (June 2026)",
+"category": "text",
+"label": "USD to EUR rate",
+"source": "Notes",
+"days_ago": 6
+},
+{
+"content": "Airbnb in Lisbon: 47 Rua do Comercio, Apt 3B",
+"category": "address",
+"label": "Lisbon airbnb address",
+"source": "Email",
+"days_ago": 22
+},
+{
+"content": "TSA PreCheck KTN: TT34998812",
+"category": "text",
+"label": "TSA PreCheck number",
+"source": "Wallet",
+"days_ago": 400
+},
+{
+"content": "Passport expires Aug 15, 2031",
+"category": "text",
+"label": "Passport expiration",
+"source": "Notes",
+"days_ago": 600
+},
+{
+"content": "Visa interview Aug 4, US Embassy Bangkok, 10am",
+"category": "text",
+"label": null,
+"source": "Email",
+"days_ago": 30
+},
+{
+"content": "Boarding pass for SFO->JFK Saturday: gate B14, seat 18F",
+"category": "text",
+"label": "Saturday boarding pass",
+"source": "Wallet",
+"days_ago": 6
+},
+{
+"content": "Travel insurance: Allianz, policy GTI-998273-A",
+"category": "text",
+"label": "Allianz travel insurance",
+"source": "Email",
+"days_ago": 11
+},
+{
+"content": "Kyoto must-see: Fushimi Inari, Pontocho Alley, Nishiki Market, Kinkaku-ji",
+"category": "text",
+"label": "Kyoto travel notes",
+"source": "Notes",
+"days_ago": 40
+},
+{
+"content": "Amazon order #112-9876543-2233190",
+"category": "text",
+"label": "Amazon order #",
+"source": "Email",
+"days_ago": 3
+},
+{
+"content": "FedEx tracking: 7740 8392 1455",
+"category": "number",
+"label": "FedEx tracking",
+"source": "Email",
+"days_ago": 2
+},
+{
+"content": "Wishlist: Sony WH-1000XM5, Kindle Paperwhite, blue throw pillows",
+"category": "text",
+"label": "Holiday wishlist",
+"source": "Notes",
+"days_ago": 15
+},
+{
+"content": "$249.99 - KitchenAid stand mixer, artisan tilt-head",
+"category": "text",
+"label": "KitchenAid mixer price",
+"source": "Notes",
+"days_ago": 9
+},
+{
+"content": "Discount code FALL2025 - 20% off at j.crew.com",
+"category": "text",
+"label": "J.Crew discount code",
+"source": "Email",
+"days_ago": 11
+},
+{
+"content": "Etsy seller PaperGoods - wedding invitations $4.50 each",
+"category": "text",
+"label": "Etsy wedding invites",
+"source": "Notes",
+"days_ago": 33
+},
+{
+"content": "https://www.warbyparker.com/eyeglasses/men/durand",
+"category": "url",
+"label": "Warby Parker Durand frames",
+"source": "Chrome",
+"days_ago": 2
+},
+{
+"content": "Best Buy receipt #002-887-1234, $1,299 for 65 inch TV",
+"category": "text",
+"label": "Best Buy TV receipt",
+"source": "Email",
+"days_ago": 21
+},
+{
+"content": "Costco return policy: 90 days for electronics",
+"category": "text",
+"label": "Costco return policy",
+"source": "Notes",
+"days_ago": 60
+},
+{
+"content": "Trader Joe's mango sticky rice - restocked Tuesdays",
+"category": "text",
+"label": null,
+"source": "Notes",
+"days_ago": 7
+},
+{
+"content": "REI dividend balance: $84.32",
+"category": "text",
+"label": "REI dividend",
+"source": "Email",
+"days_ago": 14
+},
+{
+"content": "AliExpress: bamboo bath mat, $12.43, est. delivery May 28",
+"category": "text",
+"label": null,
+"source": "Email",
+"days_ago": 19
+},
+{
+"content": "Shoe size reference: US 10 = EU 43 = UK 9",
+"category": "text",
+"label": "Shoe size conversion",
+"source": "Notes",
+"days_ago": 80
+},
+{
+"content": "Buy Nothing group: ironing board pickup at 14 Oak St, after 5pm",
+"category": "text",
+"label": null,
+"source": "Messages",
+"days_ago": 1
+},
+{
+"content": "Subscription cancel: Spotify Family, before May 15",
+"category": "text",
+"label": null,
+"source": "Notes",
+"days_ago": 5
+},
+{
+"content": "Chase routing: 021000021",
+"category": "number",
+"label": "Chase routing number",
+"source": "Notes",
+"days_ago": 200
+},
+{
+"content": "Account ****1247, last balance $14,328.55",
+"category": "text",
+"label": "Checking balance",
+"source": "Notes",
+"days_ago": 1
+},
+{
+"content": "401k contribution: 12% pre-tax, 3% Roth, employer match 6%",
+"category": "text",
+"label": "401k contribution split",
+"source": "Notes",
+"days_ago": 90
+},
+{
+"content": "Venmo handle: @sarah-mitchell-3",
+"category": "text",
+"label": "Venmo handle",
+"source": "Notes",
+"days_ago": 50
+},
+{
+"content": "PayPal transaction ID: 7H912834BA993820L",
+"category": "text",
+"label": "PayPal transaction",
+"source": "Email",
+"days_ago": 4
+},
+{
+"content": "Tax filing deadline 2026: April 15",
+"category": "text",
+"label": "Tax filing deadline",
+"source": "Notes",
+"days_ago": 75
+},
+{
+"content": "Coinbase ETH wallet: 0x742d35Cc6634C0532925a3b8D86c1c3",
+"category": "text",
+"label": "ETH wallet address",
+"source": "Notes",
+"days_ago": 130
+},
+{
+"content": "Mortgage rate locked at 6.125% for 30y",
+"category": "text",
+"label": "Mortgage rate locked",
+"source": "Email",
+"days_ago": 28
+},
+{
+"content": "Rent due 1st of month, $2,850 - Zelle to landlord",
+"category": "text",
+"label": "Monthly rent amount",
+"source": "Notes",
+"days_ago": 60
+},
+{
+"content": "Roth IRA balance check: Vanguard, last contribution Mar 12",
+"category": "text",
+"label": null,
+"source": "Notes",
+"days_ago": 85
+},
+{
+"content": "Movie: The Brutalist (2024) - A24, 215 min, Brady Corbet",
+"category": "text",
+"label": "The Brutalist (2024)",
+"source": "Notes",
+"days_ago": 30
+},
+{
+"content": "Song lyric: I've been a fool, I've been blind",
+"category": "text",
+"label": null,
+"source": "Notes",
+"days_ago": 9
+},
+{
+"content": "Podcast: Acquired episode on TSMC, 4h 22m",
+"category": "text",
+"label": "Acquired TSMC podcast",
+"source": "Notes",
+"days_ago": 10
+},
+{
+"content": "Book to read: The Anxious Generation by Jonathan Haidt",
+"category": "text",
+"label": "Book: Anxious Generation",
+"source": "Notes",
+"days_ago": 22
+},
+{
+"content": "Concert tickets: Phoebe Bridgers, MSG, Aug 14, sec 105",
+"category": "text",
+"label": "Phoebe Bridgers concert",
+"source": "Email",
+"days_ago": 17
+},
+{
+"content": "https://open.spotify.com/playlist/37i9dQZF1DXcBWIGoYBM5M",
+"category": "url",
+"label": "Roadtrip 2026 playlist",
+"source": "Spotify",
+"days_ago": 4
+},
+{
+"content": "Letterboxd watchlist: Past Lives, Aftersun, Tar, Anatomy of a Fall",
+"category": "text",
+"label": "Letterboxd watchlist",
+"source": "Notes",
+"days_ago": 12
+},
+{
+"content": "Netflix queue: Ripley, Baby Reindeer, The Diplomat S2",
+"category": "text",
+"label": "Netflix queue",
+"source": "Notes",
+"days_ago": 6
+},
+{
+"content": "Album rec: A Light for Attracting Attention - The Smile",
+"category": "text",
+"label": null,
+"source": "Messages",
+"days_ago": 18
+},
+{
+"content": "Movie quote: Get busy living or get busy dying.",
+"category": "text",
+"label": null,
+"source": "Notes",
+"days_ago": 200
+},
+{
+"content": "TV show: Severance Season 2 - 10 episodes, dropping Jan 17",
+"category": "text",
+"label": "Severance S2 release",
+"source": "Notes",
+"days_ago": 45
+},
+{
+"content": "Steam wishlist: Outer Wilds, Disco Elysium, Hades II, Pentiment",
+"category": "text",
+"label": "Steam wishlist",
+"source": "Notes",
+"days_ago": 90
+},
+{
+"content": "https://www.youtube.com/@MarkRober",
+"category": "url",
+"label": "Mark Rober YouTube",
+"source": "Chrome",
+"days_ago": 35
+},
+{
+"content": "Stand-up special: Hannah Gadsby - Something Special",
+"category": "text",
+"label": null,
+"source": "Notes",
+"days_ago": 60
+},
+{
+"content": "https://open.spotify.com/track/4iV5W9uYEdYUVa79Axb7Rh",
+"category": "url",
+"label": "Spotify track",
+"source": "Spotify",
+"days_ago": 8
+},
+{
+"content": "Definition: umami = pleasant savory taste, fifth basic taste",
+"category": "text",
+"label": "Umami definition",
+"source": "Notes",
+"days_ago": 50
+},
+{
+"content": "Quote - Marcus Aurelius: You have power over your mind, not outside events.",
+"category": "text",
+"label": "Marcus Aurelius quote",
+"source": "Notes",
+"days_ago": 70
+},
+{
+"content": "Photosynthesis equation: 6CO2 + 6H2O -> C6H12O6 + 6O2",
+"category": "text",
+"label": "Photosynthesis equation",
+"source": "Notes",
+"days_ago": 100
+},
+{
+"content": "French phrase: Je ne sais quoi - a certain something",
+"category": "text",
+"label": "Je ne sais quoi",
+"source": "Notes",
+"days_ago": 40
+},
+{
+"content": "MCAT score 518 - 95th percentile",
+"category": "number",
+"label": "MCAT score",
+"source": "Notes",
+"days_ago": 365
+},
+{
+"content": "Coursera ML course - Andrew Ng - enrolled, week 4",
+"category": "text",
+"label": "Coursera ML course",
+"source": "Notes",
+"days_ago": 28
+},
+{
+"content": "Spanish vocab: aprovechar = to take advantage of",
+"category": "text",
+"label": "Spanish: aprovechar",
+"source": "Notes",
+"days_ago": 14
+},
+{
+"content": "Constitution Article I Section 8 - Commerce Clause",
+"category": "text",
+"label": "Commerce Clause reference",
+"source": "Notes",
+"days_ago": 180
+},
+{
+"content": "Recipe: shakshuka - 6 eggs, 28oz crushed tomatoes, paprika, cumin, onion",
+"category": "text",
+"label": "Shakshuka recipe",
+"source": "Notes",
+"days_ago": 12
+},
+{
+"content": "1 cup = 236.6 ml = 16 tbsp",
+"category": "text",
+"label": "Cup to ml conversion",
+"source": "Notes",
+"days_ago": 90
+},
+{
+"content": "Oven temp: 425 F = 218 C",
+"category": "text",
+"label": "Oven temp conversion",
+"source": "Notes",
+"days_ago": 60
+},
+{
+"content": "Air fryer salmon: 400 F, 10-12 min, skin side down",
+"category": "text",
+"label": "Air fryer salmon",
+"source": "Notes",
+"days_ago": 5
+},
+{
+"content": "Plant care: monstera prefers indirect light, water every 7-10 days",
+"category": "text",
+"label": "Monstera plant care",
+"source": "Notes",
+"days_ago": 30
+},
+{
+"content": "HVAC filter size: 16x25x1, MERV 11",
+"category": "text",
+"label": "HVAC filter size",
+"source": "Notes",
+"days_ago": 110
+},
+{
+"content": "Coffee ratio: 1g coffee to 16g water (V60)",
+"category": "text",
+"label": "V60 coffee ratio",
+"source": "Notes",
+"days_ago": 200
+},
+{
+"content": "Sourdough starter: feed 1:1:1 ratio, room temp 75 F",
+"category": "text",
+"label": "Sourdough starter feeding",
+"source": "Notes",
+"days_ago": 40
+},
+{
+"content": "Lawn care reminder: aerate in fall, overseed late September",
+"category": "text",
+"label": null,
+"source": "Notes",
+"days_ago": 250
+},
+{
+"content": "IKEA Kallax assembly: 2.5 hours, missed one cam-lock on the bottom",
+"category": "text",
+"label": null,
+"source": "Notes",
+"days_ago": 365
+},
+{
+"content": "Prescription: Atorvastatin 20mg, once daily, renew Aug",
+"category": "text",
+"label": "Atorvastatin prescription",
+"source": "Notes",
+"days_ago": 25
+},
+{
+"content": "Dr. Patel - primary care - (415) 555-0231",
+"category": "phone",
+"label": "Dr. Patel PCP",
+"source": "Contacts",
+"days_ago": 200
+},
+{
+"content": "Allergy shot schedule: every Wednesday 8am, through January",
+"category": "text",
+"label": "Allergy shot schedule",
+"source": "Notes",
+"days_ago": 80
+},
+{
+"content": "Annual physical: BP 118/76, HR 62, weight 168lbs",
+"category": "text",
+"label": "Annual physical results",
+"source": "Notes",
+"days_ago": 90
+},
+{
+"content": "Pharmacy: CVS on Geary, fills ready in 2-3 hours",
+"category": "text",
+"label": "CVS pharmacy",
+"source": "Notes",
+"days_ago": 50
+},
+{
+"content": "Therapist: Dr. Kim, biweekly Thu 4pm",
+"category": "text",
+"label": "Therapist appointment",
+"source": "Notes",
+"days_ago": 120
+},
+{
+"content": "Symptoms log: morning headache, lasted ~2 hours, after coffee",
+"category": "text",
+"label": "Headache symptoms log",
+"source": "Notes",
+"days_ago": 3
+},
+{
+"content": "Flu shot due in October at Walgreens",
+"category": "text",
+"label": "Flu shot reminder",
+"source": "Notes",
+"days_ago": 365
+},
+{
+"content": "Sales pipeline Q3: 14 qualified leads, $2.3M weighted",
+"category": "text",
+"label": "Q3 sales pipeline",
+"source": "Notes",
+"days_ago": 18
+},
+{
+"content": "Marketing campaign brief due Thursday EOD",
+"category": "text",
+"label": "Marketing brief deadline",
+"source": "Notes",
+"days_ago": 2
+},
+{
+"content": "Quarterly review with Janet: Friday 2pm conf room B",
+"category": "text",
+"label": "Q-review with Janet",
+"source": "Calendar",
+"days_ago": 5
+},
+{
+"content": "Expense report #ER-2026-0418, $1,247.83 for travel",
+"category": "text",
+"label": "Travel expense report",
+"source": "Email",
+"days_ago": 30
+},
+{
+"content": "Salesforce account ID: 0014x00001A9zB2QAJ",
+"category": "text",
+"label": "Salesforce account ID",
+"source": "Notes",
+"days_ago": 60
+},
+{
+"content": "Vendor PO: ACME-Industries, terms net-30, due July 15",
+"category": "text",
+"label": "ACME vendor PO",
+"source": "Email",
+"days_ago": 22
+},
+{
+"content": "OKR draft: increase NRR from 112% to 118% by Q4",
+"category": "text",
+"label": "Q4 NRR OKR",
+"source": "Notes",
+"days_ago": 45
+},
+{
+"content": "Press release embargo: lift 9am ET Tuesday",
+"category": "text",
+"label": "Press release embargo",
+"source": "Email",
+"days_ago": 8
+},
+{
+"content": "Client onsite at Pfizer, NJ office, Aug 7-8",
+"category": "text",
+"label": null,
+"source": "Calendar",
+"days_ago": 11
+},
+{
+"content": "LinkedIn message draft to Brian about VP role",
+"category": "text",
+"label": null,
+"source": "Notes",
+"days_ago": 4
+},
+{
+"content": "https://stripe.com/docs/webhooks/signatures",
+"category": "url",
+"label": "Stripe webhook signature docs",
+"source": "Chrome",
+"days_ago": 12
+},
+{
+"content": "stripe.webhooks.constructEvent(payload, sig, secret)",
+"category": "code",
+"label": "Stripe webhook construct call",
+"source": "VSCode",
+"days_ago": 12
+},
+{
+"content": "useEffect(() => { return () => clearInterval(id); }, [id]);",
+"category": "code",
+"label": "useEffect cleanup pattern",
+"source": "VSCode",
+"days_ago": 2
+},
+{
+"content": "export const API_URL = 'https://api.staging.acme.com/v2';",
+"category": "code",
+"label": "Staging API URL constant",
+"source": "VSCode",
+"days_ago": 7
+},
+{
+"content": "git rebase -i HEAD~5",
+"category": "code",
+"label": "Interactive rebase last 5",
+"source": "Terminal",
+"days_ago": 11
+},
+{
+"content": "SELECT * FROM users WHERE created_at > NOW() - INTERVAL '7 days';",
+"category": "code",
+"label": "Recent signups SQL query",
+"source": "DataGrip",
+"days_ago": 4
+},
+{
+"content": "/Users/me/projects/acme/api/middleware/auth.py",
+"category": "path",
+"label": "Auth middleware Python file",
+"source": "Terminal",
+"days_ago": 3
+},
+{
+"content": "kubectl rollout restart deployment/api",
+"category": "code",
+"label": "Restart API deployment",
+"source": "Terminal",
+"days_ago": 7
+},
+{
+"content": "docker compose -f docker-compose.dev.yml up --build",
+"category": "code",
+"label": "Local docker stack",
+"source": "Terminal",
+"days_ago": 1
+},
+{
+"content": "https://github.com/anthropics/claude-code/issues/42",
+"category": "url",
+"label": "Claude Code shell hooks issue",
+"source": "Chrome",
+"days_ago": 6
+},
+{
+"content": "https://github.com/piyushpradhan/yank",
+"category": "url",
+"label": "Yank repo on GitHub",
+"source": "Chrome",
+"days_ago": 2
+},
+{
+"content": "https://docs.anthropic.com/claude/docs/getting-started",
+"category": "url",
+"label": "Anthropic Claude docs",
+"source": "Chrome",
+"days_ago": 9
+},
+{
+"content": "TODO: refactor the embedding queue to use tokio::spawn",
+"category": "text",
+"label": "Embedding queue refactor todo",
+"source": "Notes",
+"days_ago": 4
+},
+{
+"content": "Q3 OKRs: ship auth, raise SLA to 99.95%, hire 2 engineers",
+"category": "text",
+"label": "Q3 engineering OKRs",
+"source": "Notes",
+"days_ago": 22
+},
+{
+"content": "https://www.figma.com/file/abc/Design-System-v3",
+"category": "url",
+"label": "Figma design system file",
+"source": "Slack",
+"days_ago": 5
+},
+{
+"content": "OTP: 482915",
+"category": "number",
+"label": null,
+"source": "Mail",
+"days_ago": 0
+},
+{
+"content": "Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0In0.abc",
+"category": "code",
+"label": "API JWT token",
+"source": "Postman",
+"days_ago": 2
+},
+{
+"content": "#FF6B35",
+"category": "color",
+"label": "Brand orange hex",
+"source": "Figma",
+"days_ago": 14
+},
+{
+"content": "1600 Amphitheatre Parkway, Mountain View, CA 94043",
+"category": "address",
+"label": "Googleplex address",
+"source": "Maps",
+"days_ago": 20
+},
+{
+"content": "noreply@figma.com",
+"category": "email",
+"label": null,
+"source": "Mail",
+"days_ago": 8
+},
+{
+"content": "+1 (415) 555-0142",
+"category": "phone",
+"label": "Sarah's mobile",
+"source": "Notes",
+"days_ago": 15
+},
+{
+"content": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+"category": "url",
+"label": "Never Gonna Give You Up",
+"source": "Chrome",
+"days_ago": 1
+},
+{
+"content": "remember to deploy by Friday before the freeze",
+"category": "text",
+"label": null,
+"source": "Notes",
+"days_ago": 0
+}
+],
+"queries": [
+{
+"q": "mom's birthday",
+"relevant": [
+0
+],
+"kind": "kw"
+},
+{
+"q": "WiFi password",
+"relevant": [
+9
+],
+"kind": "kw"
+},
+{
+"q": "garage door code",
+"relevant": [
+14
+],
+"kind": "kw"
+},
+{
+"q": "grocery list",
+"relevant": [
+16
+],
+"kind": "kw"
+},
+{
+"q": "license plate",
+"relevant": [
+21
+],
+"kind": "kw"
+},
+{
+"q": "chase routing number",
+"relevant": [
+52
+],
+"kind": "kw"
+},
+{
+"q": "stripe webhook",
+"relevant": [
+113
+],
+"kind": "kw"
+},
+{
+"q": "useEffect cleanup",
+"relevant": [
+115
+],
+"kind": "kw"
+},
+{
+"q": "shakshuka recipe",
+"relevant": [
+85
+],
+"kind": "kw"
+},
+{
+"q": "passport expiration",
+"relevant": [
+32
+],
+"kind": "kw"
+},
+{
+"q": "air fryer salmon",
+"relevant": [
+88
+],
+"kind": "kw"
+},
+{
+"q": "where my father receives his mail",
+"relevant": [
+1
+],
+"kind": "para"
+},
+{
+"q": "the contact digits for my aunt",
+"relevant": [
+2
+],
+"kind": "para"
+},
+{
+"q": "the personal inbox handle I saved",
+"relevant": [
+3
+],
+"kind": "para"
+},
+{
+"q": "how nana makes those crunchy cocoa treats",
+"relevant": [
+4
+],
+"kind": "para"
+},
+{
+"q": "what to buy my sibling for the holidays",
+"relevant": [
+5
+],
+"kind": "para"
+},
+{
+"q": "the teenager who minds the little one",
+"relevant": [
+6
+],
+"kind": "para"
+},
+{
+"q": "the furry pet's next checkup",
+"relevant": [
+7
+],
+"kind": "para"
+},
+{
+"q": "my partner's blood classification",
+"relevant": [
+8
+],
+"kind": "para"
+},
+{
+"q": "where we're dining on our special date",
+"relevant": [
+10
+],
+"kind": "para"
+},
+{
+"q": "when to collect the children from class",
+"relevant": [
+11
+],
+"kind": "para"
+},
+{
+"q": "the little one's physician's phone",
+"relevant": [
+12
+],
+"kind": "para"
+},
+{
+"q": "my homeowner's protection reference",
+"relevant": [
+13
+],
+"kind": "para"
+},
+{
+"q": "the warehouse club's account card",
+"relevant": [
+15
+],
+"kind": "para"
+},
+{
+"q": "where the little one's bash is being held",
+"relevant": [
+17
+],
+"kind": "para"
+},
+{
+"q": "the gathering of readers that happens fortnightly",
+"relevant": [
+18
+],
+"kind": "para"
+},
+{
+"q": "my next teeth cleaning appointment",
+"relevant": [
+19
+],
+"kind": "para"
+},
+{
+"q": "the digits that unlock my storage box",
+"relevant": [
+20
+],
+"kind": "para"
+},
+{
+"q": "the code for my public lending account",
+"relevant": [
+22
+],
+"kind": "para"
+},
+{
+"q": "when my rental agreement runs out",
+"relevant": [
+23
+],
+"kind": "para"
+},
+{
+"q": "who to ring if something goes wrong",
+"relevant": [
+24
+],
+"kind": "para"
+},
+{
+"q": "the plane I'm taking to the west coast",
+"relevant": [
+25
+],
+"kind": "para"
+},
+{
+"q": "the lodging I booked in the big apple",
+"relevant": [
+26
+],
+"kind": "para"
+},
+{
+"q": "the vehicle I'm hiring at the airport",
+"relevant": [
+27
+],
+"kind": "para"
+},
+{
+"q": "swap american money for european money",
+"relevant": [
+29
+],
+"kind": "para"
+},
+{
+"q": "the flat I rented in portugal's capital",
+"relevant": [
+30
+],
+"kind": "para"
+},
+{
+"q": "my expedited screening identification",
+"relevant": [
+31
+],
+"kind": "para"
+},
+{
+"q": "my consulate meeting overseas",
+"relevant": [
+33
+],
+"kind": "para"
+},
+{
+"q": "my seat details for the cross-country hop",
+"relevant": [
+34
+],
+"kind": "para"
+},
+{
+"q": "the coverage I bought for my trip",
+"relevant": [
+35
+],
+"kind": "para"
+},
+{
+"q": "landmarks to see in that japanese city",
+"relevant": [
+36
+],
+"kind": "para"
+},
+{
+"q": "the big online retailer's purchase reference",
+"relevant": [
+37
+],
+"kind": "para"
+},
+{
+"q": "where my parcel is in transit",
+"relevant": [
+38
+],
+"kind": "para"
+},
+{
+"q": "the gadgets I'm hoping to receive",
+"relevant": [
+39
+],
+"kind": "para"
+},
+{
+"q": "the countertop appliance I want to buy",
+"relevant": [
+40
+],
+"kind": "para"
+},
+{
+"q": "the promo for cheaper clothes",
+"relevant": [
+41
+],
+"kind": "para"
+},
+{
+"q": "the handcrafted invites for the ceremony",
+"relevant": [
+42
+],
+"kind": "para"
+},
+{
+"q": "the spectacles I picked from that eyewear site",
+"relevant": [
+43
+],
+"kind": "para"
+},
+{
+"q": "the big-screen television I purchased",
+"relevant": [
+44
+],
+"kind": "para"
+},
+{
+"q": "how long I can send electronics back",
+"relevant": [
+45
+],
+"kind": "para"
+},
+{
+"q": "that sweet rice dessert they restock weekly",
+"relevant": [
+46
+],
+"kind": "para"
+},
+{
+"q": "the money I have at the outdoor shop",
+"relevant": [
+47
+],
+"kind": "para"
+},
+{
+"q": "the bathroom mat I ordered from abroad",
+"relevant": [
+48
+],
+"kind": "para"
+},
+{
+"q": "how to translate footwear sizes",
+"relevant": [
+49
+],
+"kind": "para"
+},
+{
+"q": "the free-stuff neighborhood pickup",
+"relevant": [
+50
+],
+"kind": "para"
+},
+{
+"q": "the music plan I'm cutting off",
+"relevant": [
+51
+],
+"kind": "para"
+}
+]
+}

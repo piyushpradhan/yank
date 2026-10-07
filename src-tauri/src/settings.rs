@@ -1,5 +1,4 @@
 use std::sync::{Arc, RwLock};
-use std::time::Duration;
 use tauri::{AppHandle, Emitter, State};
 use tauri_plugin_store::StoreExt;
 
@@ -49,32 +48,30 @@ pub fn set_settings(
     *state.0.write().unwrap() = cfg.clone();
     persist(&app, &cfg)?;
 
-    // Re-ranking is stateless — nothing to invalidate when the provider or
-    // key changes. Only the label queue needs a nudge when a key appears.
+    // Re-ranking is stateless. Turning search back on resumes embedding; a
+    // new Anthropic key starts the labeller.
+    crate::embed_queue::kick();
     if anthropic_key_gained {
         crate::label_queue::kick(&app);
     }
     Ok(())
 }
 
-/// Probe a candidate `EmbedConfig` to verify the user can reach Jev. Used by
-/// the AI settings modal so configuration errors and network failures surface
-/// upfront instead of only at search time.
+/// Probe a candidate `EmbedConfig` to verify the re-ranker is reachable. Used
+/// by the AI settings modal so configuration errors and network failures
+/// surface upfront instead of only at search time.
 #[tauri::command]
 pub async fn test_embed_provider(cfg: EmbedConfig) -> Result<(), String> {
-    match cfg.provider {
-        Provider::Disabled => Err("Semantic search is turned off.".into()),
-        Provider::Jev => {
-            if cfg.typesafe_api_key.trim().is_empty() {
-                return Err("TypeSafe API key is required.".into());
-            }
-            let client = reqwest::Client::builder()
-                .timeout(Duration::from_secs(8))
-                .build()
-                .map_err(|e| format!("http client: {e}"))?;
-            crate::jev::ping(&client, &cfg.typesafe_api_key, &cfg.typesafe_model).await
-        }
+    if cfg.provider == Provider::Disabled {
+        return Err("Semantic search is turned off.".into());
     }
+    if cfg.provider == Provider::Jev && cfg.typesafe_api_key.trim().is_empty() {
+        return Err("TypeSafe API key is required.".into());
+    }
+    let Some(r) = cfg.reranker() else {
+        return Ok(()); // local-only: nothing remote to reach
+    };
+    crate::jev::ping(&r.url, &r.api_key, &r.model).await
 }
 
 const HINT_KEY: &str = "hintDismissed";

@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Yank · Semantic Search: Jev vs Embeddings</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --fg: #1a1a1a; --muted: #666; --border: #e6e6e6;
+    --accent: #FF6B35; --good: #0a7e3f; --bad: #c33;
+    --embed: #7f9eb7; --jev: #FF6B35; --bm25: #bcbcbc;
+  }
+  * { box-sizing: border-box; }
+  body { font: 15px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; padding: 40px; max-width: 1080px; margin: 0 auto; color: var(--fg); background: #fff; }
+  h1 { margin: 0 0 4px; font-size: 26px; letter-spacing: -0.01em; }
+  h2 { margin-top: 40px; font-size: 15px; border-bottom: 1px solid var(--border); padding-bottom: 6px; letter-spacing: .04em; text-transform: uppercase; color: #444; }
+  .sub { color: var(--muted); margin-bottom: 28px; font-size: 14px; }
+  .verdict { background: #fff7f0; border: 1px solid #ffd4b8; border-left: 4px solid var(--accent); padding: 16px 18px; border-radius: 8px; margin: 18px 0; font-size: 15px; }
+  .verdict strong { display: block; font-size: 16px; margin-bottom: 4px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  th, td { padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { background: #f4f4f4; font-weight: 600; color: #333; text-align: left; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .best { font-weight: 700; color: var(--good); }
+  .worst { color: var(--bad); }
+  .grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 24px; margin-bottom: 12px; }
+  .card { background: #fafafa; border: 1px solid var(--border); border-radius: 10px; padding: 18px; }
+  code { background: #f0f0f0; padding: 2px 5px; border-radius: 3px; font-size: 12.5px; font-family: "SF Mono", ui-monospace, monospace; }
+  .legend { font-size: 12.5px; color: var(--muted); margin: 8px 0 16px; }
+  .pill { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 11.5px; font-weight: 600; }
+  .pill.embed { background: #eef3f7; color: #3b5b76; }
+  .pill.jev { background: #fff1e9; color: #c14d1a; }
+  .pill.baseline { background: #f0f0f0; color: #666; }
+  ul.findings { padding-left: 20px; }
+  ul.findings li { margin: 10px 0; }
+  .note { font-size: 12.5px; color: var(--muted); }
+</style>
+</head>
+<body>
+
+<h1>Yank · Semantic Search: Jev re-ranking vs local embeddings</h1>
+<p class="sub">
+  Fair head-to-head on an identical, paraphrase-heavy query set — 136 seeded items, 56 queries
+  (11 keyword / 45 paraphrase, no shared word stems). Generated 2026-09-20.
+</p>
+
+<div class="verdict">
+  <strong>Jev re-ranking is not a drop-in replacement for embeddings — it's ~9× worse on paraphrase search.</strong>
+  On the semantic subset (the 80% of queries where the user paraphrases instead of reusing words),
+  local embeddings reach <b>P@1 = 0.778</b>; Jev reaches <b>P@1 = 0.089</b>, barely above the BM25
+  baseline (0.067). Jev can only re-order a BM25 shortlist, and that shortlist almost never contains
+  the right answer when there's no keyword overlap.
+</div>
+
+<h2>Retrieval accuracy by strategy</h2>
+<div class="grid">
+  <div class="card"><canvas id="semChart" height="250"></canvas></div>
+  <div class="card"><canvas id="overallChart" height="250"></canvas></div>
+</div>
+<p class="legend">P@1 = fraction of queries where the correct item is ranked #1 · MRR = mean reciprocal rank of the first relevant hit. Higher is better. The <b>semantic subset</b> (paraphrase, no word overlap) is the part that actually stresses meaning; the lexical subset is keyword-in-disguise.</p>
+
+<h2>Full results</h2>
+<table>
+<thead>
+  <tr>
+    <th>Strategy</th>
+    <th class="num">Overall P@1</th>
+    <th class="num">Overall MRR</th>
+    <th class="num">Semantic P@1</th>
+    <th class="num">Semantic P@5</th>
+    <th class="num">Semantic MRR</th>
+    <th class="num">Lexical P@1</th>
+  </tr>
+</thead>
+<tbody>
+  <tr>
+    <td><span class="pill baseline">baseline</span> BM25 (FTS5)</td>
+    <td class="num">0.232</td><td class="num">0.264</td>
+    <td class="num">0.067</td><td class="num">0.049</td><td class="num">0.107</td>
+    <td class="num">0.909</td>
+  </tr>
+  <tr>
+    <td><span class="pill embed">embedding</span> Vector-only (BGE-small)</td>
+    <td class="num best">0.804</td><td class="num best">0.848</td>
+    <td class="num best">0.778</td><td class="num best">0.173</td><td class="num best">0.822</td>
+    <td class="num">0.909</td>
+  </tr>
+  <tr>
+    <td><span class="pill embed">embedding</span> Hybrid v3 (RRF)</td>
+    <td class="num">0.268</td><td class="num">0.398</td>
+    <td class="num">0.156</td><td class="num">0.093</td><td class="num">0.300</td>
+    <td class="num">0.727</td>
+  </tr>
+  <tr>
+    <td><span class="pill embed">embedding</span> Hybrid v4 (RRF + category)</td>
+    <td class="num">0.304</td><td class="num">0.427</td>
+    <td class="num">0.178</td><td class="num">0.093</td><td class="num">0.317</td>
+    <td class="num">0.818</td>
+  </tr>
+  <tr>
+    <td><span class="pill jev">Jev</span> BM25 shortlist → Jev re-rank</td>
+    <td class="num">0.232</td><td class="num">0.277</td>
+    <td class="num">0.089</td><td class="num">0.053</td><td class="num">0.133</td>
+    <td class="num">0.818</td>
+  </tr>
+</tbody>
+</table>
+
+<h2>What the numbers mean</h2>
+<ul class="findings">
+  <li><b>BM25 collapses on paraphrase</b> — P@1 of 0.067 (finds the right item ~1 in 15 times) when the user doesn't reuse the item's vocabulary. This is expected and matches the earlier blog analysis.</li>
+  <li><b>Jev can't recover it.</b> Jev re-ranks the BM25 top-50 shortlist, so its ceiling is BM25's recall. On paraphrase queries the correct item is almost never in that shortlist, so Jev moves P@1 from 0.067 → 0.089 (roughly one extra query out of 45). The re-ranker is good; the <em>candidate generator</em> is the bottleneck.</li>
+  <li><b>Embeddings win because they do full-corpus dense retrieval.</b> Vector-only computes cosine over <em>all</em> 136 items, so it finds paraphrases with zero word overlap — P@1 0.778, ~9× Jev.</li>
+  <li><b>Jev slightly hurts keyword queries.</b> On the lexical subset it scores 0.818 vs BM25's 0.909 — re-ranking occasionally demotes a correct BM25 #1.</li>
+  <li><b>Latency &amp; privacy regressions.</b> Jev adds a ~259 ms network round-trip per query (embeddings are ~1–8 ms, fully local) and sends query + clip contents to TypeSafe.</li>
+</ul>
+
+<h2>Conclusion</h2>
+<p>
+  Replacing embeddings with Jev re-ranking regresses semantic search dramatically, because re-ranking
+  needs a <b>high-recall candidate generator</b> and BM25 alone has ~7% recall on paraphrase queries.
+  The viable path to Jev is <em>on top of</em> embeddings — use embeddings (or another dense retriever)
+  to build the shortlist, then let Jev re-rank it — not instead of them.
+</p>
+
+<h2>Methodology &amp; caveats</h2>
+<p class="note">
+  The blog's original paraphrase set (20/80 lex/sem split) was never committed to the repo, so this
+  run reconstructs a paraphrase-heavy set against the same 136 synthetic items: 11 keyword queries
+  (reuse an item word) + 45 paraphrase queries (no shared stems), hand-labeled for the lex/sem split.
+  Embedding numbers were produced by the pre-refactor eval at <code>72f8c6a</code> (fastembed BGE-small-en-v1.5);
+  Jev numbers by the current eval (<code>jev-latest</code>, single batched request per query).
+  Both share the identical item set and query set, so the comparison is apples-to-apples.
+</p>
+
+<script>
+const D = {
+  labels: ['BM25', 'Vector', 'Hybrid v3', 'Hybrid v4', 'Jev re-rank'],
+  semP1:   [0.067, 0.778, 0.156, 0.178, 0.089],
+  semMRR:  [0.107, 0.822, 0.300, 0.317, 0.133],
+  overallP1: [0.232, 0.804, 0.268, 0.304, 0.232],
+  overallMRR:[0.264, 0.848, 0.398, 0.427, 0.277],
+};
+const colors = ['#bcbcbc', '#7f9eb7', '#f3b58a', '#e68a5a', '#FF6B35'];
+const common = {
+  responsive: true,
+  scales: { y: { min: 0, max: 1, ticks: { stepSize: 0.2 } } },
+  plugins: { legend: { display: false } }
+};
+new Chart(document.getElementById('semChart'), {
+  type: 'bar',
+  data: { labels: D.labels, datasets: [
+    { label: 'Semantic P@1', data: D.semP1, backgroundColor: colors },
+    { label: 'Semantic MRR', data: D.semMRR, backgroundColor: '#d9d9d9' },
+  ]},
+  options: { ...common, plugins: { ...common.plugins, title: { display: true, text: 'Semantic (paraphrase) subset' }, legend: { position: 'bottom' } } }
+});
+new Chart(document.getElementById('overallChart'), {
+  type: 'bar',
+  data: { labels: D.labels, datasets: [
+    { label: 'Overall P@1', data: D.overallP1, backgroundColor: colors },
+    { label: 'Overall MRR', data: D.overallMRR, backgroundColor: '#d9d9d9' },
+  ]},
+  options: { ...common, plugins: { ...common.plugins, title: { display: true, text: 'All 56 queries' }, legend: { position: 'bottom' } } }
+});
+</script>
+
+</body>
+</html>

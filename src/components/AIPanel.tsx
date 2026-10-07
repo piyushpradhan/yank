@@ -22,11 +22,13 @@ interface AIPanelProps {
 }
 
 const PROVIDERS: { id: EmbedProvider; label: string }[] = [
-  { id: 'jev', label: 'TypeSafe (Jev)' },
+  { id: 'local', label: 'On-device' },
+  { id: 'jev', label: '+ Jev re-rank' },
+  { id: 'laya', label: '+ Laya re-rank' },
   { id: 'disabled', label: 'Off' },
 ];
 
-type ErrorField = 'jev_key' | 'connection';
+type ErrorField = 'jev_key' | 'laya_url' | 'connection';
 type TestState =
   | { kind: 'idle' }
   | { kind: 'running' }
@@ -50,7 +52,7 @@ function SectionHeading({ children }: { children: React.ReactNode }) {
 }
 
 function needsRemoteProbe(p: EmbedProvider): boolean {
-  return p === 'jev';
+  return p === 'jev' || p === 'laya';
 }
 
 function toErrorMessage(err: unknown): string {
@@ -75,6 +77,9 @@ export function AIPanel({ settings, onChange, onClose }: AIPanelProps) {
   const validateConfig = (): { field: ErrorField; msg: string } | null => {
     if (local.provider === 'jev' && !local.typesafe_api_key.trim()) {
       return { field: 'jev_key', msg: 'TypeSafe API key is required.' };
+    }
+    if (local.provider === 'laya' && !local.laya_url.trim()) {
+      return { field: 'laya_url', msg: 'Laya server URL is required.' };
     }
     return null;
   };
@@ -118,7 +123,7 @@ export function AIPanel({ settings, onChange, onClose }: AIPanelProps) {
         setTest({ kind: 'err', msg: res.msg });
         setError({
           field: 'connection',
-          msg: `Could not reach TypeSafe: ${res.msg}`,
+          msg: `Could not reach ${local.provider === 'laya' ? 'the Laya server' : 'TypeSafe'}: ${res.msg}`,
         });
         return;
       }
@@ -137,7 +142,7 @@ export function AIPanel({ settings, onChange, onClose }: AIPanelProps) {
       open
       onClose={onClose}
       title="AI features"
-      description="Semantic search via TypeSafe's Jev model, plus optional Claude Haiku for one-line intent labels."
+      description="On-device semantic search, optionally re-ranked by TypeSafe Jev or a local Laya model, plus optional Claude Haiku labels."
       size="md"
       footer={
         <>
@@ -171,7 +176,7 @@ export function AIPanel({ settings, onChange, onClose }: AIPanelProps) {
                 Semantic search is turned off.
               </Text>
               <Text size={11.5} tone="secondary" leading="snug">
-                The palette will use fuzzy matching only. Pick TypeSafe to turn semantic search
+                The palette will use fuzzy matching only. Pick On-device to turn semantic search
                 back on.
               </Text>
             </Stack>
@@ -217,6 +222,28 @@ export function AIPanel({ settings, onChange, onClose }: AIPanelProps) {
                 />
               </FormField>
             </>
+          )}
+
+          {local.provider === 'laya' && (
+            <FormField
+              label={<FieldLabel>Laya server URL</FieldLabel>}
+              error={error?.field === 'laya_url' ? error.msg : undefined}
+              hint="Runs on this Mac: uv run --with laya-mlx scripts/laya_server.py. Nothing leaves your machine."
+            >
+              <Input
+                value={local.laya_url}
+                onChange={(e) => set('laya_url', e.target.value)}
+                placeholder="http://127.0.0.1:8765/v1/systemone"
+              />
+            </FormField>
+          )}
+
+          {local.provider !== 'disabled' && (
+            <Text size={11.5} tone="secondary" leading="snug">
+              Clips are embedded on this device (EmbeddingGemma, ~200 MB one-time download).
+              {local.provider === 'jev' && ' Jev then re-orders the top 50 matches.'}
+              {local.provider === 'laya' && ' Laya then re-orders the top 20 matches, locally.'}
+            </Text>
           )}
 
           {needsRemoteProbe(local.provider) && (
@@ -304,11 +331,15 @@ function summariseEmbedStatus(
   if (s.provider === 'disabled') {
     return { kind: 'off', text: 'Off — fuzzy search only.' };
   }
-  if (!s.typesafe_api_key.trim()) {
-    return { kind: 'warn', text: 'TypeSafe selected but no API key yet.' };
+  if (s.provider === 'local') {
+    return { kind: 'ok', text: 'On-device embeddings.' };
   }
+  if (s.provider === 'jev' && !s.typesafe_api_key.trim()) {
+    return { kind: 'warn', text: 'No TypeSafe key yet — using on-device ranking only.' };
+  }
+  const name = s.provider === 'jev' ? `TypeSafe Jev — ${s.typesafe_model}` : 'Laya (local)';
   if (test.kind === 'err') {
-    return { kind: 'err', text: `TypeSafe unreachable — ${test.msg}` };
+    return { kind: 'err', text: `${name} unreachable — on-device ranking still works. ${test.msg}` };
   }
-  return { kind: 'ok', text: `TypeSafe — ${s.typesafe_model}` };
+  return { kind: 'ok', text: `On-device embeddings, re-ranked by ${name}.` };
 }

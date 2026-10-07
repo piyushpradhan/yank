@@ -1,9 +1,10 @@
 mod categorize;
 mod color_intent;
-mod color_names;
-mod commands;
+pub mod color_names;
+pub mod commands;
 pub mod db;
-mod embed;
+pub mod embed;
+pub mod embed_queue;
 pub mod jev;
 mod label;
 mod label_queue;
@@ -438,12 +439,14 @@ pub fn run() {
             let db = Arc::new(Db(Mutex::new(conn)));
             app.manage(db.clone());
 
+            embed::init(data_dir.join("models"));
             let settings_state = settings::init(app.handle());
             app.manage(settings::SettingsState(settings_state));
 
             watcher::spawn(app.handle().clone());
             commands::spawn_sweeper(app.handle().clone());
             label_queue::spawn(app.handle().clone());
+            embed_queue::spawn(app.handle().clone());
 
             let sc = get_loaded_shortcut(app.handle());
             let shortcut = build_shortcut(&sc);

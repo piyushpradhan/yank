@@ -105,6 +105,7 @@ pub fn spawn(app: AppHandle) {
                             continue;
                         }
                         let _ = handle.emit("clip-labeled", id);
+                        crate::embed_queue::kick();
                     }
                     Ok(_) => {
                         eprintln!("[label] empty label for id={id}; skipping");
@@ -163,7 +164,7 @@ fn store_label(app: &AppHandle, id: i64, label: &str) -> Result<(), String> {
     let db = app.state::<Arc<Db>>().inner().clone();
     let conn = db.0.lock().map_err(|e| e.to_string())?;
     conn.execute(
-        "UPDATE items SET label = ?1 WHERE id = ?2",
+        "UPDATE items SET label = ?1, embedding_model = NULL WHERE id = ?2",
         params![label, id],
     )
     .map_err(|e| e.to_string())?;

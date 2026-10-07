@@ -35,6 +35,8 @@ tokio = { version = "1.52.1", features = ["rt", "macros", "sync", "time"] }
 tauri-plugin-autostart = "2"
 tauri-plugin-single-instance = "2"
 image = { version = "0.25", default-features = false, features = ["png"] }
+# Local embeddings (EmbeddingGemma-300M, 4-bit ONNX). Model files download on first use.
+fastembed = { version = "7.1", default-features = false, features = ["ort-download-binaries-rustls-tls", "hf-hub-rustls-tls"] }
 windows = { version = "0.60", features = ["Win32_Foundation", "Win32_UI_WindowsAndMessaging", "Win32_Graphics_Dwm"] }
 
 [target.'cfg(any(target_os = "macos", target_os = "windows", target_os = "linux"))'.dependencies]
