@@ -116,6 +116,7 @@ function App() {
             previewMode={tweaks.previewMode}
             app={app}
             semanticAvailable={semanticAvailable}
+            initialMode={tweaks.paletteSemanticDefault && semanticAvailable ? 'semantic' : 'fuzzy'}
             semanticOffMessage={semanticOffMessage}
             anthropicEnabled={anthropicEnabled}
             aiActive={settings.provider !== 'disabled'}

@@ -240,6 +240,7 @@ export function Palette({
   const pinLockRef = useRef<number | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
     let paletteShownUnlisten: (() => void) | undefined;
     let focusUnlisten: (() => void) | undefined;
 
@@ -262,7 +263,11 @@ export function Palette({
       inputRef.current?.select();
     })
       .then((f) => {
-        paletteShownUnlisten = f;
+        // The effect re-runs when `initialMode` loads async; if cleanup beat
+        // this promise, unlisten now or the stale listener (old initialMode)
+        // keeps resetting the mode to fuzzy on every open.
+        if (cancelled) f();
+        else paletteShownUnlisten = f;
       })
       .catch(() => {});
 
@@ -274,11 +279,13 @@ export function Palette({
         }
       })
       .then((f) => {
-        focusUnlisten = f;
+        if (cancelled) f();
+        else focusUnlisten = f;
       })
       .catch(() => {});
 
     return () => {
+      cancelled = true;
       paletteShownUnlisten?.();
       focusUnlisten?.();
       if (pasteNoticeTimer.current) {
