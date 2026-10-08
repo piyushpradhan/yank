@@ -51,7 +51,7 @@ import {
 import { CategoryChip } from '../components/Primitives';
 import { PreviewPane } from '../components/PreviewPane';
 import { SidebarRow } from '../components/SidebarRow';
-import { MdKeyboardCommandKey } from 'react-icons/md';
+import { ModKey } from '../lib/keyIcons';
 
 const SIDEBAR_BREAKPOINT = 640;
 const PREVIEW_BREAKPOINT = 960;
@@ -904,6 +904,7 @@ export function Library({
             shrink={0}
             columns="auto 1fr auto 1fr"
             align="center"
+            className="key-hints"
             px={2}
             py={2}
             style={{
@@ -927,7 +928,7 @@ export function Library({
               rename
             </Text>
             <Kbd size="sm">
-              <MdKeyboardCommandKey />I
+              <ModKey />I
             </Kbd>
             <Text family="mono" size={10.5} tone="tertiary">
               preview
@@ -1016,7 +1017,7 @@ export function Library({
                         {previewOverlayOpen ? 'Hide preview' : 'Show preview'}
                       </Text>
                       <Kbd size="sm">
-                        <MdKeyboardCommandKey size={10} />
+                        <ModKey />
                       </Kbd>
                       <Kbd size="sm">I</Kbd>
                     </Inline>

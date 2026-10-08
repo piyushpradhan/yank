@@ -14,11 +14,19 @@ import {
 } from 'react-icons/md';
 import { LuArrowBigUp, LuX } from 'react-icons/lu';
 import type { ReactNode } from 'react';
+import { IS_MAC } from './platform';
+
+/** The primary shortcut modifier: ⌘ on macOS, Ctrl elsewhere. Handlers accept either. */
+export function ModKey({ size: iconSize = 10 }: { size?: number }) {
+  // A span (not bare text) so the Kbd's flex gap separates it from the next key.
+  return IS_MAC ? <MdKeyboardCommandKey size={iconSize} /> : <span>Ctrl</span>;
+}
 
 const size = 10;
 
 const KEY_ICON_MAP: Record<string, ReactNode> = {
   // Modifiers
+  mod: <ModKey />,
   ctrl: <MdKeyboardControlKey size={size} />,
   control: <MdKeyboardControlKey size={size} />,
   shift: <LuArrowBigUp size={size} />,

@@ -33,10 +33,10 @@ function buildGroups(shortcut: ShortcutConfig): [string, KeyRow[]][] {
     [
       { keys: ['↵'], label: 'Copy + paste · close palette' },
 
-      { keys: ['Ctrl', 'P'], label: 'Pin / unpin' },
-      { keys: ['Ctrl', '⌫'], label: 'Delete item' },
+      { keys: ['Mod', 'P'], label: 'Pin / unpin' },
+      { keys: ['Mod', '⌫'], label: 'Delete item' },
       { keys: ['E'], label: 'Rename label', scope: 'library' },
-      { keys: ['Ctrl', 'I'], label: 'Toggle preview pane', scope: 'library' },
+      { keys: ['Mod', 'I'], label: 'Toggle preview pane', scope: 'library' },
     ],
   ],
   ];

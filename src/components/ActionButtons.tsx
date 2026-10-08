@@ -1,6 +1,7 @@
 import { Box, Button, Divider, Kbd, Tooltip } from 'ember-design-system';
 import { LuClipboardPaste, LuCopy, LuPencil, LuPin, LuPinOff, LuTrash2 } from 'react-icons/lu';
-import { MdKeyboardBackspace, MdKeyboardCommandKey } from 'react-icons/md';
+import { MdKeyboardBackspace } from 'react-icons/md';
+import { ModKey } from '../lib/keyIcons';
 import type { ReactNode } from 'react';
 
 interface CopyButtonProps {
@@ -55,7 +56,7 @@ export function PinButton({ pinned, onClick }: PinButtonProps) {
       content={
         <ShortcutTooltipContent>
           <Kbd size="sm">
-            <MdKeyboardCommandKey size={10} />
+            <ModKey />
           </Kbd>
           <Kbd size="sm">P</Kbd>
         </ShortcutTooltipContent>
@@ -87,7 +88,7 @@ export function DeleteButton({ onClick, variant = 'secondary', kbd }: DeleteButt
           {kbd ?? (
             <>
               <Kbd size="sm">
-                <MdKeyboardCommandKey size={10} />
+                <ModKey />
               </Kbd>
               <Kbd size="sm">
                 <MdKeyboardBackspace size={10} />
