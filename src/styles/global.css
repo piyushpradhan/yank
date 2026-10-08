@@ -216,6 +216,11 @@ kbd,
   }
 }
 
+/* Library footer: keycaps hug their key instead of stretching to the column. */
+.key-hints kbd {
+  justify-self: start;
+}
+
 /* Toast: a floating pill centred near the bottom, high enough to clear the
  * status footers and the preview action bar (~44px) instead of covering them. */
 .toast {

@@ -17,12 +17,12 @@ import {
   LuSparkles,
   LuTextSearch,
 } from 'react-icons/lu';
-import { getKeyIcon } from '../lib/keyIcons';
+import { getKeyIcon, ModKey } from '../lib/keyIcons';
 import { CategoryChip } from '../components/Primitives';
 import { ItemBody } from '../components/Primitives';
 import { ImagePreview } from '../components/ImagePreview';
 import { CopyButton, PinButton, DeleteButton } from '../components/ActionButtons';
-import { MdKeyboardBackspace, MdKeyboardCommandKey, MdKeyboardReturn } from 'react-icons/md';
+import { MdKeyboardBackspace, MdKeyboardReturn } from 'react-icons/md';
 import { IS_LINUX } from '../lib/platform';
 
 // Stable no-op so useImageUrl's effect deps stay stable for non-image rows.
@@ -694,7 +694,7 @@ export function Palette({
               </Inline>
               <Inline shrink={0} style={{ gap: 6 }}>
                 <Kbd size="sm">
-                  <MdKeyboardCommandKey />P
+                  <ModKey />P
                 </Kbd>
                 <Text size={11} tone="tertiary">
                   pin
@@ -702,7 +702,7 @@ export function Palette({
               </Inline>
               <Inline shrink={0} style={{ gap: 6 }}>
                 <Kbd size="sm">
-                  <MdKeyboardCommandKey />
+                  <ModKey />
                   <MdKeyboardBackspace />
                 </Kbd>
                 <Text size={11} tone="tertiary">
