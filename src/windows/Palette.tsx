@@ -20,7 +20,15 @@ import { getKeyIcon, ModKey } from '../lib/keyIcons';
 import { CategoryChip } from '../components/Primitives';
 import { ItemBody } from '../components/Primitives';
 import { ImagePreview } from '../components/ImagePreview';
-import { CopyButton, DeleteButton, EditButton, PinButton } from '../components/ActionButtons';
+import {
+  CopyButton,
+  DeleteButton,
+  EditBar,
+  EditButton,
+  PinButton,
+  RenameButton,
+} from '../components/ActionButtons';
+import { TitleInput, type TitleInputHandle } from '../components/TitleInput';
 import { MdKeyboardBackspace, MdKeyboardReturn } from 'react-icons/md';
 import { IS_LINUX } from '../lib/platform';
 
@@ -227,6 +235,8 @@ export function Palette({
   const [semanticLoading, setSemanticLoading] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState('');
+  const [renamingId, setRenamingId] = useState<string | null>(null);
+  const titleRef = useRef<TitleInputHandle>(null);
   // Transient "Copied — paste with Ctrl+V" pill shown when auto-paste fell
   // back to copy-only (e.g. GNOME/Mutter Wayland has no virtual keyboard).
   const [pasteNotice, setPasteNotice] = useState<string | null>(null);
@@ -253,6 +263,7 @@ export function Palette({
       setSemanticError(null);
       setSemanticLoading(false);
       setEditingId(null);
+      setRenamingId(null);
       setPasteNotice(null);
       if (pasteNoticeTimer.current) {
         clearTimeout(pasteNoticeTimer.current);
@@ -384,6 +395,33 @@ export function Palette({
   }, [selectedItem?.id, selectedItem?.content]);
 
   useEffect(() => {
+    setRenamingId(null);
+  }, [selectedItem?.id]);
+
+  const startRename = (item: ClipItem) => {
+    setEditingId(null);
+    setRenamingId(item.id);
+  };
+
+  const finishRename = (id: string, label: string | null) => {
+    if (label) app.updateLabel(id, label);
+    setRenamingId(null);
+    inputRef.current?.focus();
+  };
+
+  const toggleEdit = (item: ClipItem) => {
+    setRenamingId(null);
+    setDraft(item.content);
+    setEditingId((id) => (id === item.id ? null : item.id));
+  };
+
+  const discardEdit = () => {
+    setDraft(selectedItem?.content ?? '');
+    setEditingId(null);
+    inputRef.current?.focus();
+  };
+
+  useEffect(() => {
     const lock = pinLockRef.current;
     if (lock != null && displayResults.length > 0) {
       pinLockRef.current = null;
@@ -426,12 +464,12 @@ export function Palette({
   };
 
   const onKey = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    // The rename input handles its own keys.
+    if (e.target instanceof HTMLInputElement && e.target !== inputRef.current) return;
     if (e.target instanceof HTMLTextAreaElement) {
       if (e.key === 'Escape') {
         e.preventDefault();
-        setDraft(selectedItem?.content ?? '');
-        setEditingId(null);
-        inputRef.current?.focus();
+        discardEdit();
       } else if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && selectedItem) {
         e.preventDefault();
         void pasteItem(selectedItem, draft);
@@ -478,10 +516,14 @@ export function Palette({
       setMode((m) => (m === 'fuzzy' ? 'semantic' : 'fuzzy'));
     } else if (e.key.toLowerCase() === 'e' && document.activeElement !== inputRef.current) {
       e.preventDefault();
-      if (selectedItem?.category !== 'image') {
-        setDraft(selectedItem.content);
-        setEditingId(selectedItem.id);
-      }
+      if (selectedItem && selectedItem.category !== 'image') toggleEdit(selectedItem);
+    } else if (
+      e.key.toLowerCase() === 'r' &&
+      // Cmd/Ctrl variant works from the search box, where focus usually is.
+      (e.metaKey || e.ctrlKey || document.activeElement !== inputRef.current)
+    ) {
+      e.preventDefault();
+      if (selectedItem) startRename(selectedItem);
     }
   };
 
@@ -747,17 +789,29 @@ export function Palette({
                   )}
                 </Inline>
                 <Inline gap={3} style={{ gap: 10 }}>
-                  <Text
-                    as="span"
-                    size={15}
-                    weight="semibold"
-                    leading={1.3}
-                    tracking="tight"
-                    truncate
-                    grow
-                  >
-                    {selectedItem.label}
-                  </Text>
+                  {renamingId === selectedItem.id ? (
+                    <TitleInput
+                      ref={titleRef}
+                      initial={selectedItem.label}
+                      size={15}
+                      onDone={(label) => finishRename(selectedItem.id, label)}
+                    />
+                  ) : (
+                    <Text
+                      as="span"
+                      className="editable-title"
+                      size={15}
+                      weight="semibold"
+                      leading={1.3}
+                      tracking="tight"
+                      truncate
+                      grow
+                      title="Double-click to rename"
+                      onDoubleClick={() => startRename(selectedItem)}
+                    >
+                      {selectedItem.label}
+                    </Text>
+                  )}
                   {!selectedItem.labelGenerated && anthropicEnabled && (
                     <Box
                       as="span"
@@ -841,44 +895,49 @@ export function Palette({
                   background: 'color-mix(in oklab, var(--bg-surface) 60%, transparent)',
                 }}
               >
-                <CopyButton
-                  onClick={() => {
-                    void pasteItem(
-                      selectedItem,
-                      editingId === selectedItem.id ? draft : selectedItem.content
-                    );
-                  }}
-                  label="Paste"
-                />
-
-                {selectedItem.category !== 'image' && (
-                  <EditButton
-                    compact
-                    onClick={() => {
-                      setDraft(selectedItem.content);
-                      setEditingId((id) => (id === selectedItem.id ? null : selectedItem.id));
-                    }}
+                {renamingId === selectedItem.id ? (
+                  <EditBar
+                    onSave={() => titleRef.current?.finish(true)}
+                    onDiscard={() => titleRef.current?.finish(false)}
                   />
+                ) : (
+                  <>
+                    <CopyButton
+                      onClick={() => {
+                        void pasteItem(
+                          selectedItem,
+                          editingId === selectedItem.id ? draft : selectedItem.content
+                        );
+                      }}
+                      label="Paste"
+                    />
+
+                    {selectedItem.category !== 'image' && (
+                      <EditButton compact onClick={() => toggleEdit(selectedItem)} />
+                    )}
+
+                    <RenameButton compact onClick={() => startRename(selectedItem)} />
+
+                    <PinButton
+                      compact
+                      pinned={!!selectedItem.pinned}
+                      onClick={() => {
+                        pinLockRef.current = selected;
+                        app.pinItem(selectedItem.id);
+                      }}
+                    />
+
+                    <Box grow={1} />
+
+                    <DeleteButton
+                      compact
+                      onClick={() => {
+                        pinLockRef.current = selected;
+                        app.deleteItem(selectedItem.id);
+                      }}
+                    />
+                  </>
                 )}
-
-                <PinButton
-                  compact
-                  pinned={!!selectedItem.pinned}
-                  onClick={() => {
-                    pinLockRef.current = selected;
-                    app.pinItem(selectedItem.id);
-                  }}
-                />
-
-                <Box grow={1} />
-
-                <DeleteButton
-                  compact
-                  onClick={() => {
-                    pinLockRef.current = selected;
-                    app.deleteItem(selectedItem.id);
-                  }}
-                />
               </Inline>
             </>
           ) : (

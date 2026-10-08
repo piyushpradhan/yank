@@ -163,7 +163,8 @@ fn store_label(app: &AppHandle, id: i64, label: &str) -> Result<(), String> {
     let db = app.state::<Arc<Db>>().inner().clone();
     let conn = db.0.lock().map_err(|e| e.to_string())?;
     conn.execute(
-        "UPDATE items SET label = ?1 WHERE id = ?2",
+        // Skip if the user renamed the item while the label was generating.
+        "UPDATE items SET label = ?1 WHERE id = ?2 AND (label IS NULL OR label = '')",
         params![label, id],
     )
     .map_err(|e| e.to_string())?;

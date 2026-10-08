@@ -215,3 +215,97 @@ it('shows a copy fallback pill and stays open when auto-paste falls back to copy
   // The pill is transient: after the grace window the palette closes itself.
   await waitFor(() => expect(onClose).toHaveBeenCalled(), { timeout: 1200 });
 });
+
+it('renames an item from the palette and cancels with Escape', () => {
+  const updateLabel = vi.fn();
+  const onClose = vi.fn();
+  const app = {
+    items: [item],
+    copyItem: vi.fn(async () => true),
+    pinItem: vi.fn(),
+    deleteItem: vi.fn(),
+    updateLabel,
+    getImage: vi.fn(async () => null),
+    semanticSearch: vi.fn(),
+    showToast: vi.fn(),
+  } as unknown as AppState;
+
+  render(
+    <Palette
+      t={theme}
+      showLabels
+      categoryMode="chip"
+      app={app}
+      onClose={onClose}
+      semanticAvailable={false}
+      semanticOffMessage={null}
+      anthropicEnabled={false}
+    />
+  );
+
+  fireEvent.click(screen.getByRole('button', { name: 'Rename' }));
+  let title = screen.getByRole('textbox', { name: 'Item title' });
+  fireEvent.change(title, { target: { value: '  New name ' } });
+  fireEvent.keyDown(title, { key: 'Enter' });
+  expect(updateLabel).toHaveBeenCalledTimes(1);
+  expect(updateLabel).toHaveBeenCalledWith('1', 'New name');
+  expect(screen.queryByRole('textbox', { name: 'Item title' })).toBeNull();
+  expect(screen.getByPlaceholderText('Search clipboard history')).toHaveFocus();
+
+  // Cmd+R works straight from the search box; Escape cancels without closing.
+  fireEvent.keyDown(screen.getByPlaceholderText('Search clipboard history'), {
+    key: 'r',
+    metaKey: true,
+  });
+  title = screen.getByRole('textbox', { name: 'Item title' });
+  expect(title).toHaveValue('Greeting');
+  fireEvent.change(title, { target: { value: 'Discarded' } });
+  fireEvent.keyDown(title, { key: 'Escape' });
+  expect(updateLabel).toHaveBeenCalledTimes(1);
+  expect(onClose).not.toHaveBeenCalled();
+  expect(screen.queryByRole('textbox', { name: 'Item title' })).toBeNull();
+});
+
+it('confirms or cancels a rename with the visible Save / Discard buttons', () => {
+  const updateLabel = vi.fn();
+  const app = {
+    items: [item],
+    copyItem: vi.fn(async () => true),
+    pinItem: vi.fn(),
+    deleteItem: vi.fn(),
+    updateLabel,
+    getImage: vi.fn(async () => null),
+    semanticSearch: vi.fn(),
+    showToast: vi.fn(),
+  } as unknown as AppState;
+
+  render(
+    <Palette
+      t={theme}
+      showLabels
+      categoryMode="chip"
+      app={app}
+      onClose={vi.fn()}
+      semanticAvailable={false}
+      semanticOffMessage={null}
+      anthropicEnabled={false}
+    />
+  );
+
+  fireEvent.click(screen.getByRole('button', { name: 'Rename' }));
+  fireEvent.change(screen.getByRole('textbox', { name: 'Item title' }), {
+    target: { value: 'Discarded' },
+  });
+  fireEvent.click(screen.getByRole('button', { name: /Discard/ }));
+  expect(updateLabel).not.toHaveBeenCalled();
+  // Back to the normal action bar.
+  expect(screen.getByRole('button', { name: 'Rename' })).toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole('button', { name: 'Rename' }));
+  fireEvent.change(screen.getByRole('textbox', { name: 'Item title' }), {
+    target: { value: 'Kept' },
+  });
+  fireEvent.click(screen.getByRole('button', { name: /Save/ }));
+  expect(updateLabel).toHaveBeenCalledTimes(1);
+  expect(updateLabel).toHaveBeenCalledWith('1', 'Kept');
+});

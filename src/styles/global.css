@@ -226,9 +226,35 @@ kbd,
   }
 }
 
+/* Renamable titles: hover previews the exact box the rename field will
+ * occupy, so double-click → edit feels like the same object. Padding is
+ * cancelled by negative margin so text doesn't move. Matches TitleInput. */
+.editable-title {
+  padding: 1px 6px;
+  margin: -1px -6px;
+  border-radius: var(--radius-sm);
+  cursor: text;
+  transition: background-color 120ms ease-out;
+}
+.editable-title:hover {
+  background: var(--bg-subtle);
+}
+
 /* Library footer: keycaps hug their key instead of stretching to the column. */
 .key-hints kbd {
   justify-self: start;
+}
+
+/* Key hints inside edit-bar buttons: centred on the label, readable size. */
+.inline-keys {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  height: 14px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1;
+  opacity: 0.7;
 }
 
 /* Action bars: hover is a plain background change inside the button's own
