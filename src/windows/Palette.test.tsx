@@ -85,7 +85,7 @@ it('starts each palette session fresh and pastes a temporary edit without changi
   act(() => mocks.listeners.get('palette-shown')?.());
   expect(search).toHaveValue('');
 
-  fireEvent.click(screen.getByRole('button', { name: 'Edit' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Edit before pasting' }));
   const editor = screen.getByRole('textbox', { name: 'Temporary clipboard text' });
   fireEvent.change(editor, { target: { value: 'Temporary version' } });
   fireEvent.click(screen.getByRole('button', { name: 'Paste' }));
@@ -124,7 +124,7 @@ it('focuses the search input every time the palette is shown', async () => {
   );
 
   const search = screen.getByPlaceholderText('Search clipboard history');
-  screen.getByRole('button', { name: 'Edit' }).focus();
+  screen.getByRole('button', { name: 'Edit before pasting' }).focus();
   expect(search).not.toHaveFocus();
 
   await waitFor(() => expect(mocks.listeners.has('palette-shown')).toBe(true));

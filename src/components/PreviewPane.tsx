@@ -123,10 +123,10 @@ export function PreviewPane({
         )}
       </Box>
       <Inline
-        gap={1}
+        className="action-bar"
+        gap={2}
         px={3}
         py={2}
-        wrap
         style={{
           borderTop: '1px solid var(--border-subtle)',
           background: 'color-mix(in oklab, var(--bg-surface) 60%, transparent)',
@@ -137,13 +137,15 @@ export function PreviewPane({
           trailingKbd={<MdKeyboardReturn size={10} />}
         />
 
-        <PinButton pinned={!!item.pinned} onClick={() => onPinItem ? onPinItem(item.id) : app.pinItem(item.id)} />
+        <PinButton compact pinned={!!item.pinned} onClick={() => onPinItem ? onPinItem(item.id) : app.pinItem(item.id)} />
 
-        <RenameButton onClick={() => setEditing(true)} />
+        <RenameButton compact onClick={() => setEditing(true)} />
+
+        <Box grow={1} />
 
         <DeleteButton
+          compact
           onClick={() => onDeleteItem ? onDeleteItem(item.id) : app.deleteItem(item.id)}
-          variant="secondary"
           kbd={
             <Kbd size="sm">
               <MdKeyboardBackspace size={10} />

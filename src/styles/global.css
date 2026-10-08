@@ -144,6 +144,16 @@ kbd,
   background: var(--bg-surface);
   color: var(--text-primary);
   box-shadow: var(--shadow-md);
+  /* Hug the keycaps: a thin edge and tight padding instead of a big blob. */
+  border: 1px solid var(--border-subtle);
+  /* Keycap radius (--radius-sm) plus the 4px padding, so the corners nest. */
+  border-radius: calc(var(--radius-sm) + 4px);
+  padding: 4px 6px;
+}
+/* Keycaps sit one step recessed from the tooltip so they read as keys,
+ * not as a second box of the same color. */
+[role='tooltip'] kbd {
+  background: var(--bg-subtle);
 }
 
 /* Palette search sits on a translucent near-white background in light mode;
@@ -219,6 +229,30 @@ kbd,
 /* Library footer: keycaps hug their key instead of stretching to the column. */
 .key-hints kbd {
   justify-self: start;
+}
+
+/* Action bars: hover is a plain background change inside the button's own
+ * box. Drops the design system's hover lift, icon zoom, shine sweep and the
+ * ring drawn outside the button, which crowded neighbouring buttons. */
+.action-bar button,
+.action-bar button > * {
+  transform: none !important;
+}
+.action-bar button::before,
+.action-bar button::after {
+  display: none;
+}
+.action-bar button {
+  box-shadow: none !important;
+  transition:
+    background-color 120ms ease-out,
+    color 120ms ease-out;
+}
+.action-bar button:focus-visible {
+  box-shadow: var(--focus-ring) !important;
+}
+.action-bar button[class*='variant-ghost']:hover:not(:disabled) {
+  background: var(--bg-muted);
 }
 
 /* Toast: a floating pill centred near the bottom, high enough to clear the

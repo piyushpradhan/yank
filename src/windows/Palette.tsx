@@ -11,7 +11,6 @@ import { Box, Button, Image, Inline, Input, Kbd, Stack, Text } from 'ember-desig
 import {
   LuArrowUpDown,
   LuEllipsis,
-  LuPencil,
   LuPin,
   LuSearch,
   LuSparkles,
@@ -21,7 +20,7 @@ import { getKeyIcon, ModKey } from '../lib/keyIcons';
 import { CategoryChip } from '../components/Primitives';
 import { ItemBody } from '../components/Primitives';
 import { ImagePreview } from '../components/ImagePreview';
-import { CopyButton, PinButton, DeleteButton } from '../components/ActionButtons';
+import { CopyButton, DeleteButton, EditButton, PinButton } from '../components/ActionButtons';
 import { MdKeyboardBackspace, MdKeyboardReturn } from 'react-icons/md';
 import { IS_LINUX } from '../lib/platform';
 
@@ -833,10 +832,10 @@ export function Palette({
                 )}
               </Box>
               <Inline
-                gap={1}
+                className="action-bar"
+                gap={2}
                 px={2}
                 py={2}
-                wrap
                 style={{
                   borderTop: '1px solid var(--border-subtle)',
                   background: 'color-mix(in oklab, var(--bg-surface) 60%, transparent)',
@@ -853,25 +852,17 @@ export function Palette({
                 />
 
                 {selectedItem.category !== 'image' && (
-                  <Button
-                    size="sm"
-                    variant={editingId === selectedItem.id ? 'primary' : 'secondary'}
-                    leadingIcon={<LuPencil size={13} />}
+                  <EditButton
+                    compact
                     onClick={() => {
-                      if (editingId === selectedItem.id) {
-                        setDraft(selectedItem.content);
-                        setEditingId(null);
-                      } else {
-                        setDraft(selectedItem.content);
-                        setEditingId(selectedItem.id);
-                      }
+                      setDraft(selectedItem.content);
+                      setEditingId((id) => (id === selectedItem.id ? null : selectedItem.id));
                     }}
-                  >
-                    {editingId === selectedItem.id ? 'Cancel edit' : 'Edit'}
-                  </Button>
+                  />
                 )}
 
                 <PinButton
+                  compact
                   pinned={!!selectedItem.pinned}
                   onClick={() => {
                     pinLockRef.current = selected;
@@ -879,12 +870,14 @@ export function Palette({
                   }}
                 />
 
+                <Box grow={1} />
+
                 <DeleteButton
+                  compact
                   onClick={() => {
                     pinLockRef.current = selected;
                     app.deleteItem(selectedItem.id);
                   }}
-                  variant="ghost"
                 />
               </Inline>
             </>
