@@ -180,13 +180,18 @@ export function RenameButton({ onClick, compact }: SimpleActionProps) {
   );
 }
 
-/** Toggles a temporary, paste-only edit of the item's text. */
+/** Starts editing the item's text: save it, or use it once. */
 export function EditButton({ onClick, compact }: SimpleActionProps) {
   return (
     <Action
-      label="Edit before pasting"
+      label="Edit"
       icon={<LuPencil size={14} />}
-      keys={<Kbd size="sm">E</Kbd>}
+      keys={
+        <>
+          {CMD}
+          <Kbd size="sm">E</Kbd>
+        </>
+      }
       onClick={onClick}
       compact={compact}
     />

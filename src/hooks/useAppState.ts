@@ -27,6 +27,8 @@ export interface AppState {
   pinItem: (id: string) => void;
   deleteItem: (id: string) => void;
   updateLabel: (id: string, label: string) => void;
+  /** Permanently replace an item's text. */
+  updateContent: (id: string, content: string) => void;
   refresh: () => Promise<void>;
   semanticSearch: (query: string, limit?: number) => Promise<SemanticSearchResponse>;
   getImage: (id: string) => Promise<Blob | null>;
@@ -162,6 +164,20 @@ export function useAppState(): AppState {
     [refresh],
   );
 
+  const updateContent = useCallback(
+    (id: string, content: string) => {
+      setItems((prev) => prev.map((it) => (it.id === id ? { ...it, content } : it)));
+      invoke("update_content", { id, content }).then(
+        () => void refresh(),
+        (err) => {
+          console.error("update_content failed", err);
+          void refresh();
+        },
+      );
+    },
+    [refresh],
+  );
+
   const semanticSearch = useCallback(
     async (query: string, limit = 20): Promise<SemanticSearchResponse> => {
       if (!query.trim()) return { items: [], timeWindow: null, category: null };
@@ -219,6 +235,7 @@ export function useAppState(): AppState {
     pinItem,
     deleteItem,
     updateLabel,
+    updateContent,
     refresh,
     semanticSearch,
     getImage,

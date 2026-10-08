@@ -29,6 +29,7 @@ import {
   RenameButton,
 } from '../components/ActionButtons';
 import { TitleInput, type TitleInputHandle } from '../components/TitleInput';
+import { ContentEditor } from '../components/ContentEditor';
 import { MdKeyboardBackspace, MdKeyboardReturn } from 'react-icons/md';
 import { IS_LINUX } from '../lib/platform';
 
@@ -409,10 +410,18 @@ export function Palette({
     inputRef.current?.focus();
   };
 
-  const toggleEdit = (item: ClipItem) => {
+  const startEdit = (item: ClipItem) => {
     setRenamingId(null);
     setDraft(item.content);
-    setEditingId((id) => (id === item.id ? null : item.id));
+    setEditingId(item.id);
+  };
+
+  const saveEdit = () => {
+    if (selectedItem && draft.trim() && draft !== selectedItem.content) {
+      app.updateContent(selectedItem.id, draft);
+    }
+    setEditingId(null);
+    inputRef.current?.focus();
   };
 
   const discardEdit = () => {
@@ -466,16 +475,8 @@ export function Palette({
   const onKey = (e: React.KeyboardEvent<HTMLDivElement>) => {
     // The rename input handles its own keys.
     if (e.target instanceof HTMLInputElement && e.target !== inputRef.current) return;
-    if (e.target instanceof HTMLTextAreaElement) {
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        discardEdit();
-      } else if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && selectedItem) {
-        e.preventDefault();
-        void pasteItem(selectedItem, draft);
-      }
-      return;
-    }
+    // The content editor handles its own keys.
+    if (e.target instanceof HTMLTextAreaElement) return;
 
     if (e.key === 'ArrowDown') {
       e.preventDefault();
@@ -514,12 +515,15 @@ export function Palette({
       e.preventDefault();
       if (mode === 'fuzzy' && !semanticAvailable) return;
       setMode((m) => (m === 'fuzzy' ? 'semantic' : 'fuzzy'));
-    } else if (e.key.toLowerCase() === 'e' && document.activeElement !== inputRef.current) {
+    } else if (
+      e.key.toLowerCase() === 'e' &&
+      (e.metaKey || e.ctrlKey || document.activeElement !== inputRef.current)
+    ) {
+      // Cmd/Ctrl variant works from the search box, where focus usually is.
       e.preventDefault();
-      if (selectedItem && selectedItem.category !== 'image') toggleEdit(selectedItem);
+      if (selectedItem && selectedItem.category !== 'image') startEdit(selectedItem);
     } else if (
       e.key.toLowerCase() === 'r' &&
-      // Cmd/Ctrl variant works from the search box, where focus usually is.
       (e.metaKey || e.ctrlKey || document.activeElement !== inputRef.current)
     ) {
       e.preventDefault();
@@ -848,7 +852,7 @@ export function Palette({
                         transform="uppercase"
                         tracking="widest"
                       >
-                        Temporary edit
+                        Editing
                       </Text>
                     </Box>
                   )}
@@ -858,26 +862,13 @@ export function Palette({
                 {selectedItem.category === 'image' ? (
                   <ImagePreview item={selectedItem} getImage={app.getImage} maxHeight="280px" />
                 ) : editingId === selectedItem.id ? (
-                  <textarea
-                    autoFocus
-                    aria-label="Temporary clipboard text"
+                  <ContentEditor
+                    item={selectedItem}
                     value={draft}
-                    onChange={(event) => setDraft(event.target.value)}
-                    spellCheck={selectedItem.category !== 'code'}
-                    style={{
-                      width: '100%',
-                      minHeight: 280,
-                      resize: 'none',
-                      border: '1px solid var(--border-default)',
-                      borderRadius: 'var(--radius-lg)',
-                      padding: 12,
-                      background: 'var(--bg-surface)',
-                      color: 'var(--text-primary)',
-                      fontFamily: selectedItem.category === 'code' ? 'monospace' : 'inherit',
-                      fontSize: 13,
-                      lineHeight: 1.55,
-                      outline: 'none',
-                    }}
+                    onChange={setDraft}
+                    onSave={saveEdit}
+                    onUseOnce={() => void pasteItem(selectedItem, draft)}
+                    onDiscard={discardEdit}
                   />
                 ) : (
                   <Box fullWidth style={{ maxWidth: 400, minWidth: 0 }}>
@@ -900,20 +891,21 @@ export function Palette({
                     onSave={() => titleRef.current?.finish(true)}
                     onDiscard={() => titleRef.current?.finish(false)}
                   />
+                ) : editingId === selectedItem.id ? (
+                  <EditBar
+                    onSave={saveEdit}
+                    onDiscard={discardEdit}
+                    once={{ label: 'Paste once', onClick: () => void pasteItem(selectedItem, draft) }}
+                  />
                 ) : (
                   <>
                     <CopyButton
-                      onClick={() => {
-                        void pasteItem(
-                          selectedItem,
-                          editingId === selectedItem.id ? draft : selectedItem.content
-                        );
-                      }}
+                      onClick={() => void pasteItem(selectedItem)}
                       label="Paste"
                     />
 
                     {selectedItem.category !== 'image' && (
-                      <EditButton compact onClick={() => toggleEdit(selectedItem)} />
+                      <EditButton compact onClick={() => startEdit(selectedItem)} />
                     )}
 
                     <RenameButton compact onClick={() => startRename(selectedItem)} />

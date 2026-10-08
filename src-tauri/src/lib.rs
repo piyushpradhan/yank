@@ -397,6 +397,7 @@ pub fn run() {
             commands::delete_item,
             commands::restore_item,
             commands::update_label,
+            commands::update_content,
             commands::clear_history,
             commands::search_fts,
             commands::search_semantic,

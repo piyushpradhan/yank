@@ -85,10 +85,10 @@ it('starts each palette session fresh and pastes a temporary edit without changi
   act(() => mocks.listeners.get('palette-shown')?.());
   expect(search).toHaveValue('');
 
-  fireEvent.click(screen.getByRole('button', { name: 'Edit before pasting' }));
-  const editor = screen.getByRole('textbox', { name: 'Temporary clipboard text' });
+  fireEvent.click(screen.getByRole('button', { name: 'Edit' }));
+  const editor = screen.getByRole('textbox', { name: 'Clipboard text' });
   fireEvent.change(editor, { target: { value: 'Temporary version' } });
-  fireEvent.click(screen.getByRole('button', { name: 'Paste' }));
+  fireEvent.click(screen.getByRole('button', { name: /Paste once/ }));
 
   await waitFor(() => {
     expect(copyItem).toHaveBeenCalledWith('1', 'Temporary version');
@@ -124,7 +124,7 @@ it('focuses the search input every time the palette is shown', async () => {
   );
 
   const search = screen.getByPlaceholderText('Search clipboard history');
-  screen.getByRole('button', { name: 'Edit before pasting' }).focus();
+  screen.getByRole('button', { name: 'Edit' }).focus();
   expect(search).not.toHaveFocus();
 
   await waitFor(() => expect(mocks.listeners.has('palette-shown')).toBe(true));
@@ -266,7 +266,7 @@ it('renames an item from the palette and cancels with Escape', () => {
   expect(screen.queryByRole('textbox', { name: 'Item title' })).toBeNull();
 });
 
-it('confirms or cancels a rename with the visible Save / Discard buttons', () => {
+it('confirms or cancels a rename with the visible Save / Cancel buttons', () => {
   const updateLabel = vi.fn();
   const app = {
     items: [item],
@@ -308,4 +308,46 @@ it('confirms or cancels a rename with the visible Save / Discard buttons', () =>
   fireEvent.click(screen.getByRole('button', { name: /Save/ }));
   expect(updateLabel).toHaveBeenCalledTimes(1);
   expect(updateLabel).toHaveBeenCalledWith('1', 'Kept');
+});
+
+it('saves an edit with Enter, keeps Shift+Enter for newlines, discards with Escape', () => {
+  const updateContent = vi.fn();
+  const app = {
+    items: [item],
+    copyItem: vi.fn(async () => true),
+    pinItem: vi.fn(),
+    deleteItem: vi.fn(),
+    updateContent,
+    getImage: vi.fn(async () => null),
+    semanticSearch: vi.fn(),
+    showToast: vi.fn(),
+  } as unknown as AppState;
+
+  render(
+    <Palette
+      t={theme}
+      showLabels
+      categoryMode="chip"
+      app={app}
+      onClose={vi.fn()}
+      semanticAvailable={false}
+      semanticOffMessage={null}
+      anthropicEnabled={false}
+    />
+  );
+
+  fireEvent.click(screen.getByRole('button', { name: 'Edit' }));
+  let editor = screen.getByRole('textbox', { name: 'Clipboard text' });
+  fireEvent.change(editor, { target: { value: 'Thrown away' } });
+  fireEvent.keyDown(editor, { key: 'Escape' });
+  expect(screen.queryByRole('textbox', { name: 'Clipboard text' })).toBeNull();
+
+  fireEvent.click(screen.getByRole('button', { name: 'Edit' }));
+  editor = screen.getByRole('textbox', { name: 'Clipboard text' });
+  fireEvent.change(editor, { target: { value: 'Hello, edited' } });
+  fireEvent.keyDown(editor, { key: 'Enter', shiftKey: true });
+  expect(updateContent).not.toHaveBeenCalled();
+  fireEvent.keyDown(editor, { key: 'Enter' });
+  expect(updateContent).toHaveBeenCalledTimes(1);
+  expect(updateContent).toHaveBeenCalledWith('1', 'Hello, edited');
 });

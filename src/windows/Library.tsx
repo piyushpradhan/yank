@@ -487,6 +487,7 @@ export function Library({
   const [editingId, setEditingId] = useState<string | null>(
     initialEditing ? (initialSelectedId ?? app.items[0]?.id ?? null) : null
   );
+  const [contentEditingId, setContentEditingId] = useState<string | null>(null);
   const [localPreview, setLocalPreview] = useState<PreviewMode>(previewMode);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [previewOverlayOpen, setPreviewOverlayOpen] = useState(false);
@@ -695,15 +696,21 @@ export function Library({
     }, 0);
   };
 
-  // Closing the rename field unmounts the focused input; hand focus back to
-  // the window so arrow keys and shortcuts keep working without a click.
+  // Closing the rename field or editor unmounts the focused input; hand focus
+  // back to the window so arrow keys and shortcuts keep working without a click.
   const renamingFor = (id: string) => (v: boolean) => {
+    setContentEditingId(null);
     setEditingId(v ? id : null);
+    if (!v) rootRef.current?.focus();
+  };
+  const contentEditingFor = (id: string) => (v: boolean) => {
+    setEditingId(null);
+    setContentEditingId(v ? id : null);
     if (!v) rootRef.current?.focus();
   };
 
   const onKey = (e: React.KeyboardEvent<HTMLDivElement>) => {
-    if (editingId) return;
+    if (editingId || contentEditingId) return;
     const inSearch = document.activeElement === searchRef.current;
     if (e.key === 'Escape') {
       if (previewOverlayOpen) {
@@ -756,13 +763,12 @@ export function Library({
         rowIndexLock.current = selectedIdx;
         app.deleteItem(current.id);
       }
-    } else if (
-      (e.key.toLowerCase() === 'r' && (e.metaKey || e.ctrlKey || !inSearch)) ||
-      // Bare E was the original rename key; kept for existing muscle memory.
-      (e.key.toLowerCase() === 'e' && !inSearch)
-    ) {
+    } else if (e.key.toLowerCase() === 'r' && (e.metaKey || e.ctrlKey || !inSearch)) {
       e.preventDefault();
       if (current) renamingFor(current.id)(true);
+    } else if (e.key.toLowerCase() === 'e' && (e.metaKey || e.ctrlKey || !inSearch)) {
+      e.preventDefault();
+      if (current && current.category !== 'image') contentEditingFor(current.id)(true);
     } else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'i') {
       e.preventDefault();
       if (previewAllowed) {
@@ -939,6 +945,10 @@ export function Library({
             <Kbd size="sm">R</Kbd>
             <Text family="mono" size={10.5} tone="tertiary">
               rename
+            </Text>
+            <Kbd size="sm">E</Kbd>
+            <Text family="mono" size={10.5} tone="tertiary">
+              edit
             </Text>
             <Kbd size="sm">
               <ModKey />I
@@ -1234,6 +1244,8 @@ export function Library({
               showLabels={showLabels}
               renaming={editingId === current.id}
               setRenaming={renamingFor(current.id)}
+              contentEditing={contentEditingId === current.id}
+              setContentEditing={contentEditingFor(current.id)}
               app={app}
               anthropicEnabled={anthropicEnabled}
               onPinItem={handlePreviewPin}
@@ -1281,6 +1293,8 @@ export function Library({
                 showLabels={showLabels}
                 renaming={editingId === current.id}
                 setRenaming={renamingFor(current.id)}
+                contentEditing={contentEditingId === current.id}
+                setContentEditing={contentEditingFor(current.id)}
                 app={app}
                 anthropicEnabled={anthropicEnabled}
                 onPinItem={handlePreviewPin}
