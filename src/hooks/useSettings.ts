@@ -1,17 +1,19 @@
 import { useCallback, useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 
-export type EmbedProvider = "jev" | "disabled";
+export type EmbedProvider = "local" | "jev" | "disabled";
 
 export interface EmbedSettings {
   provider: EmbedProvider;
+  local_model: string;
   typesafe_model: string;
   typesafe_api_key: string;
   anthropic_api_key: string;
 }
 
 const DEFAULT: EmbedSettings = {
-  provider: "jev",
+  provider: "local",
+  local_model: "bge-small-en-v1.5",
   typesafe_model: "jev-latest",
   typesafe_api_key: "",
   anthropic_api_key: "",
@@ -24,6 +26,8 @@ export function isSemanticAvailable(s: EmbedSettings): boolean {
   switch (s.provider) {
     case "disabled":
       return false;
+    case "local":
+      return true;
     case "jev":
       return s.typesafe_api_key.trim().length > 0;
   }

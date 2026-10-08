@@ -1,6 +1,6 @@
 use std::sync::{Arc, RwLock};
 use std::time::Duration;
-use tauri::{AppHandle, Emitter, State};
+use tauri::{AppHandle, Emitter, Manager, State};
 use tauri_plugin_store::StoreExt;
 
 use crate::embed::{EmbedConfig, Provider};
@@ -14,10 +14,15 @@ fn load_from_store(app: &AppHandle) -> EmbedConfig {
     let Ok(store) = app.store(STORE_PATH) else {
         return EmbedConfig::default();
     };
-    store
+    let mut cfg: EmbedConfig = store
         .get(KEY)
         .and_then(|v| serde_json::from_value::<EmbedConfig>(v).ok())
-        .unwrap_or_default()
+        .unwrap_or_default();
+    // Jev was briefly the default; without a key it was never really chosen.
+    if cfg.provider == Provider::Jev && cfg.typesafe_api_key.trim().is_empty() {
+        cfg.provider = Provider::Local;
+    }
+    cfg
 }
 
 fn persist(app: &AppHandle, cfg: &EmbedConfig) -> Result<(), String> {
@@ -43,27 +48,51 @@ pub fn set_settings(
     state: State<'_, SettingsState>,
 ) -> Result<(), String> {
     let prev = state.0.read().unwrap().clone();
+    let model_changed = prev.local_model != cfg.local_model;
     let anthropic_key_gained =
         prev.anthropic_api_key.trim().is_empty() && !cfg.anthropic_api_key.trim().is_empty();
 
     *state.0.write().unwrap() = cfg.clone();
     persist(&app, &cfg)?;
 
-    // Re-ranking is stateless — nothing to invalidate when the provider or
-    // key changes. Only the label queue needs a nudge when a key appears.
+    if model_changed {
+        // Drop the loaded model so the next embed reloads the new one.
+        if let Some(local) = app.try_state::<crate::local_embed::LocalState>() {
+            local.invalidate();
+        }
+    }
+    // Jev re-ranks at query time; only the local provider has vectors to backfill.
+    if cfg.provider == Provider::Local && (model_changed || prev.provider != Provider::Local) {
+        let db = app.state::<Arc<crate::db::Db>>().inner().clone();
+        let conn = db.0.lock().map_err(|e| e.to_string())?;
+        let pending: i64 = conn
+            .query_row(
+                "SELECT COUNT(*) FROM items WHERE deleted = 0
+                   AND (embedding_model IS NULL OR embedding_model != ?1)",
+                [cfg.model_id()],
+                |r| r.get(0),
+            )
+            .unwrap_or(0);
+        if pending > 0 {
+            let _ = app.emit("embed-backfill-started", pending);
+        }
+    }
+
+    crate::embed_queue::kick(&app);
     if anthropic_key_gained {
         crate::label_queue::kick(&app);
     }
     Ok(())
 }
 
-/// Probe a candidate `EmbedConfig` to verify the user can reach Jev. Used by
-/// the AI settings modal so configuration errors and network failures surface
-/// upfront instead of only at search time.
+/// Probe a candidate `EmbedConfig` so configuration errors and network
+/// failures surface in the AI settings modal instead of only at search time.
+/// `Local` is skipped — it would download/load the model on first call.
 #[tauri::command]
 pub async fn test_embed_provider(cfg: EmbedConfig) -> Result<(), String> {
     match cfg.provider {
         Provider::Disabled => Err("Semantic search is turned off.".into()),
+        Provider::Local => Ok(()),
         Provider::Jev => {
             if cfg.typesafe_api_key.trim().is_empty() {
                 return Err("TypeSafe API key is required.".into());

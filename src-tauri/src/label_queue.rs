@@ -105,6 +105,7 @@ pub fn spawn(app: AppHandle) {
                             continue;
                         }
                         let _ = handle.emit("clip-labeled", id);
+                        crate::embed_queue::kick(&handle);
                     }
                     Ok(_) => {
                         eprintln!("[label] empty label for id={id}; skipping");
@@ -164,7 +165,9 @@ fn store_label(app: &AppHandle, id: i64, label: &str) -> Result<(), String> {
     let conn = db.0.lock().map_err(|e| e.to_string())?;
     conn.execute(
         // Skip if the user renamed the item while the label was generating.
-        "UPDATE items SET label = ?1 WHERE id = ?2 AND (label IS NULL OR label = '')",
+        // Clearing embedding_model re-embeds it: the label is part of the embedded text.
+        "UPDATE items SET label = ?1, embedding_model = NULL
+         WHERE id = ?2 AND (label IS NULL OR label = '')",
         params![label, id],
     )
     .map_err(|e| e.to_string())?;

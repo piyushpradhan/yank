@@ -20,7 +20,7 @@
 
 Yank is a local-first clipboard history manager for **Windows, Linux, and macOS**. It captures everything you copy, categorizes it automatically, and lets you find it again with either fuzzy search or AI-powered semantic search.
 
-The entire "find → paste" loop takes under five seconds. Semantic search runs on TypeSafe's Jev model — paste an API key to turn it on, or stick to fuzzy-only.
+The entire "find → paste" loop takes under five seconds. Semantic search runs on-device out of the box; TypeSafe's Jev re-ranking is an opt-in upgrade if you bring your own API key.
 
 ## Why Yank?
 
@@ -28,8 +28,8 @@ The entire "find → paste" loop takes under five seconds. Semantic search runs 
 |--------|-------------------|
 | "I know I copied that link but can't find it" | Semantic search — describe what you remember, not what you copied |
 | "Clipboard managers are cluttered / slow" | 500ms capture, SQLite+FTS5, keyboard-first UI |
-| "I want AI but don't trust cloud with my data" | Fuzzy search stays fully local; semantic search is opt-in |
-| "I want AI search that understands meaning" | TypeSafe Jev re-ranks a keyword shortlist by relevance |
+| "I want AI but don't trust cloud with my data" | Default semantic search runs on-device; cloud re-ranking is opt-in |
+| "I want AI search that understands meaning" | Local embeddings + keyword search, fused by rank; optionally TypeSafe Jev |
 | "I want AI labels but not monthly fees" | Optional Anthropic key — you control your usage and spend |
 
 ## Features
@@ -37,9 +37,10 @@ The entire "find → paste" loop takes under five seconds. Semantic search runs 
 - **Silent auto-capture** — every copy lands in history within 500ms
 - **Image capture & paste** — screenshots and images captured automatically; full-resolution preview and one-key paste-back
 - **Auto-categorization** — clips sorted into `code`, `url`, `email`, `phone`, `color`, `path`, `text`, `address`, `number`, or `image`
-- **Semantic search (opt-in)** — TypeSafe's Jev model re-ranks a keyword shortlist by relevance. Paste an API key to enable.
+- **Semantic search** — on-device ONNX embeddings (BGE Small / MiniLM), no key or network needed after the first model download.
+- **TypeSafe Jev (opt-in)** — paste your own TypeSafe API key to re-rank a keyword shortlist with Jev instead.
 - **Fuzzy search** — keystroke-level fast, SQLite FTS5 with BM25 ranking
-- **Re-ranked results** — BM25 shortlist, then Jev scores each candidate against your query
+- **Hybrid ranking** — vector and BM25 pools fused with reciprocal rank fusion (or Jev scores with TypeSafe)
 - **Raycast-style palette** — `Ctrl+Shift+Space` from anywhere, type, paste
 - **Pin, rename, soft-delete with undo** — 4-second grace window
 - **Native tray + global shortcut + launch-at-startup**
@@ -98,7 +99,7 @@ Build from source: `make build` (produces `.dmg`)
 
 Click the **AI** button in the top-right. Two independent features:
 
-1. **Semantic search** — opt-in, powered by TypeSafe's Jev model. Paste a TypeSafe API key to enable; off by default without one.
+1. **Semantic search** — on by default with a local embedding model. Optionally switch to TypeSafe's Jev by pasting your own API key.
 2. **AI intent labels** — paste an Anthropic key for one-line summaries ("Stripe webhook debug snippet", "login URL"). Off by default.
 
 ## Status: Early Alpha
@@ -122,8 +123,8 @@ Yank is being built in public. Things may break. Features may change. We're ship
 | Framework | **Tauri v2** — Rust backend, React + TypeScript frontend |
 | Storage | SQLite + FTS5 |
 | Clipboard | `arboard` crate, 500ms polling + dedupe |
-| Semantic search | TypeSafe Jev (BM25 shortlist → noul re-rank) |
-| Search | BM25 (FTS5) fast search, then Jev re-ranking |
+| Semantic search | fastembed ONNX (local, default) or TypeSafe Jev (opt-in) |
+| Search | BM25 (FTS5) + cosine, fused via RRF; or BM25 → Jev re-rank |
 
 ## Building from Source
 
@@ -141,8 +142,8 @@ make install && make build
 ## Privacy
 
 - All data stored locally in SQLite — never leaves your machine
-- Fuzzy search is fully local; semantic search sends your query and matching clip contents to TypeSafe (opt-in)
-- Network calls only if you configure TypeSafe or Anthropic
+- Fuzzy and default semantic search are fully local; only the opt-in TypeSafe provider sends your query and matching clip contents off-device
+- Network calls only for the one-time model download, or if you configure TypeSafe or Anthropic
 - No telemetry, no analytics, no accounts
 
 ## Let's Build Together

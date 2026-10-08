@@ -6,7 +6,7 @@ import { PaletteWindow } from './PaletteWindow';
 
 const mocks = vi.hoisted(() => ({
   listeners: new Map<string, (e: { payload: unknown }) => void>(),
-  stored: { semanticDefault: false, provider: 'jev' as string },
+  stored: { semanticDefault: false, provider: 'local' as string },
   invoke: vi.fn(),
 }));
 
@@ -42,15 +42,16 @@ vi.mock('../hooks/useAppState', () => ({
 beforeEach(() => {
   mocks.listeners.clear();
   mocks.stored.semanticDefault = false;
-  mocks.stored.provider = 'jev';
+  mocks.stored.provider = 'local';
   mocks.invoke.mockReset();
   mocks.invoke.mockImplementation(async (cmd: string) => {
     if (cmd === 'get_palette_semantic_default') return mocks.stored.semanticDefault;
     if (cmd === 'get_settings')
       return {
         provider: mocks.stored.provider,
+        local_model: 'bge-small-en-v1.5',
         typesafe_model: 'jev-latest',
-        typesafe_api_key: 'test-key',
+        typesafe_api_key: '',
         anthropic_api_key: '',
       };
     return null;
@@ -86,7 +87,7 @@ it('pref on + provider disabled -> falls back to fuzzy', async () => {
 
 it('live toggle event flips mode without restart', async () => {
   mocks.stored.semanticDefault = false;
-  mocks.stored.provider = 'jev';
+  mocks.stored.provider = 'local';
   render(<PaletteWindow />);
   await waitFor(() => expect(mocks.listeners.has('palette-semantic-default-changed')).toBe(true));
   await act(async () => {});

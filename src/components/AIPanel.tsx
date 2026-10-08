@@ -10,6 +10,7 @@ import {
   Input,
   Modal,
   Overline,
+  Select,
   Stack,
   Text,
 } from 'ember-design-system';
@@ -22,8 +23,22 @@ interface AIPanelProps {
 }
 
 const PROVIDERS: { id: EmbedProvider; label: string }[] = [
+  { id: 'local', label: 'Local (default)' },
   { id: 'jev', label: 'TypeSafe (Jev)' },
   { id: 'disabled', label: 'Off' },
+];
+
+const LOCAL_MODELS: { id: string; label: string; note: string }[] = [
+  {
+    id: 'bge-small-en-v1.5',
+    label: 'BGE Small EN v1.5',
+    note: 'Best quality. ~130 MB download on first use.',
+  },
+  {
+    id: 'all-minilm-l6-v2',
+    label: 'All-MiniLM-L6-v2',
+    note: 'Smallest, fastest. ~90 MB download on first use.',
+  },
 ];
 
 type ErrorField = 'jev_key' | 'connection';
@@ -131,13 +146,16 @@ export function AIPanel({ settings, onChange, onClose }: AIPanelProps) {
 
   const embedStatus = summariseEmbedStatus(local, test);
   const labelsOn = local.anthropic_api_key.trim().length > 0;
+  const localNote =
+    LOCAL_MODELS.find((m) => m.id === local.local_model)?.note ??
+    'Runs entirely on your machine via ONNX.';
 
   return (
     <Modal
       open
       onClose={onClose}
       title="AI features"
-      description="Semantic search via TypeSafe's Jev model, plus optional Claude Haiku for one-line intent labels."
+      description="On-device semantic search by default (or TypeSafe's Jev with your own key), plus optional Claude Haiku for one-line intent labels."
       size="md"
       footer={
         <>
@@ -171,8 +189,8 @@ export function AIPanel({ settings, onChange, onClose }: AIPanelProps) {
                 Semantic search is turned off.
               </Text>
               <Text size={11.5} tone="secondary" leading="snug">
-                The palette will use fuzzy matching only. Pick TypeSafe to turn semantic search
-                back on.
+                The palette will use fuzzy matching only. Pick Local or TypeSafe to turn semantic
+                search back on.
               </Text>
             </Stack>
           </Box>
@@ -196,12 +214,26 @@ export function AIPanel({ settings, onChange, onClose }: AIPanelProps) {
             </Inline>
           </FormField>
 
+          {local.provider === 'local' && (
+            <FormField
+              label={<FieldLabel>Embedding model</FieldLabel>}
+              hint={`${localNote} Runs on your machine; nothing leaves it.`}
+            >
+              <Select
+                value={local.local_model}
+                onChange={(v) => set('local_model', v)}
+                options={LOCAL_MODELS.map((m) => ({ value: m.id, label: m.label }))}
+                aria-label="Embedding model"
+              />
+            </FormField>
+          )}
+
           {local.provider === 'jev' && (
             <>
               <FormField
                 label={<FieldLabel>TypeSafe API key</FieldLabel>}
                 error={error?.field === 'jev_key' ? error.msg : undefined}
-                hint="Search queries and matching clip contents are sent to TypeSafe to re-rank results."
+                hint="Optional. Bring your own TypeSafe key — search queries and matching clip contents are sent to TypeSafe to re-rank results."
               >
                 <Input
                   type="password"
@@ -303,6 +335,9 @@ function summariseEmbedStatus(
 ): { kind: StatusKind; text: string } {
   if (s.provider === 'disabled') {
     return { kind: 'off', text: 'Off — fuzzy search only.' };
+  }
+  if (s.provider === 'local') {
+    return { kind: 'ok', text: `Local — ${s.local_model} (offline after first download)` };
   }
   if (!s.typesafe_api_key.trim()) {
     return { kind: 'warn', text: 'TypeSafe selected but no API key yet.' };

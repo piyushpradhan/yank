@@ -354,16 +354,17 @@ pub fn update_label(
 ) -> Result<(), String> {
     let conn = db.0.lock().map_err(|e| e.to_string())?;
     let id_num: i64 = id.parse().map_err(map_err)?;
-    // Re-ranking reads the label at query time, so no cache to invalidate —
-    // the edited label flows into the next search automatically.
+    // Clearing embedding_model re-embeds it: the label is part of the embedded
+    // text. Jev reads the label at query time, so it needs nothing.
     conn.execute(
-        "UPDATE items SET label = ?1 WHERE id = ?2",
+        "UPDATE items SET label = ?1, embedding_model = NULL WHERE id = ?2",
         params![label, id_num],
     )
     .map_err(map_err)?;
     drop(conn);
     // Palette and Library are separate windows; tell the other one to refresh.
     let _ = app.emit("clip-labeled", id_num);
+    crate::embed_queue::kick(&app);
     Ok(())
 }
 
@@ -382,7 +383,7 @@ pub fn update_content(
     let conn = db.0.lock().map_err(|e| e.to_string())?;
     let id_num: i64 = id.parse().map_err(map_err)?;
     conn.execute(
-        "UPDATE items SET content = ?1, preview = ?2, category = ?3
+        "UPDATE items SET content = ?1, preview = ?2, category = ?3, embedding_model = NULL
          WHERE id = ?4 AND category != 'image'",
         params![
             content,
@@ -394,6 +395,7 @@ pub fn update_content(
     .map_err(map_err)?;
     drop(conn);
     let _ = app.emit("clip-labeled", id_num);
+    crate::embed_queue::kick(&app);
     Ok(())
 }
 
@@ -451,11 +453,14 @@ pub struct SearchResponse {
 pub async fn search_semantic(
     query: String,
     limit: Option<usize>,
+    app: AppHandle,
     db: State<'_, Arc<Db>>,
     settings: State<'_, crate::settings::SettingsState>,
+    local: State<'_, crate::local_embed::LocalState>,
 ) -> Result<SearchResponse, String> {
-    let cfg: crate::embed::EmbedConfig =
-        settings.0.read().map_err(|e| e.to_string())?.clone();
+    use crate::embed::{EmbedConfig, EmbedTask, Provider};
+
+    let cfg: EmbedConfig = settings.0.read().map_err(|e| e.to_string())?.clone();
     if !cfg.is_active() {
         return Err("semantic search not configured".into());
     }
@@ -466,7 +471,7 @@ pub async fn search_semantic(
     let limit = limit.unwrap_or(20);
 
     // Pull any date phrase out of the query before judging it. The residue
-    // ("semantic") is what Jev compares against candidates; the window
+    // ("semantic") is what gets ranked against candidates; the window
     // becomes a SQL filter on `created_at` so we never rank items outside it.
     let parsed = crate::query_time::parse(chrono::Local::now(), &q_trimmed);
     let time_dto = parsed.time.as_ref().map(|t| TimeWindowDto {
@@ -491,7 +496,7 @@ pub async fn search_semantic(
     // closeness to it so the actual swatch the user copied wins.
     let color_intent = crate::color_intent::detect(&q_trimmed);
 
-    // Pure time / category query ("yesterday", "numbers"): skip Jev entirely
+    // Pure time / category query ("yesterday", "numbers"): skip ranking entirely
     // and return newest items matching the SQL filters, pinned first.
     if semantic_q.is_empty() {
         if time_bounds.is_some() || category_filter.is_some() {
@@ -503,52 +508,40 @@ pub async fn search_semantic(
         return Ok(SearchResponse { items: Vec::new(), time_window: None, category: None });
     }
 
-    // Fast search: BM25 shortlist. Re-ranking can only promote candidates the
-    // shortlist contains, so it is sized generously (bounded by the Jev
-    // request cap in `jev::MAX_CANDIDATES`).
+    // Jev's noul is a 0–1 probability while RRF tops out near 2/(K+1) ≈ 0.033,
+    // so the additive boosts below are scaled to each provider's range.
     let db: Arc<Db> = db.inner().clone();
-    let candidates: Vec<ClipItem> = {
-        let conn = db.0.lock().map_err(|e| e.to_string())?;
-        bm25_pool(&conn, &semantic_q, crate::jev::MAX_CANDIDATES, time_bounds)
-            .unwrap_or_default()
+    let (mut fused, cat_boost, color_boost): (Scored, f32, f32) = match cfg.provider {
+        Provider::Local => {
+            // Embed outside the DB lock.
+            let q_vec = crate::local_embed::embed_local(
+                local.inner(),
+                crate::local_embed::cache_dir(&app),
+                &cfg.local_model,
+                &semantic_q,
+                EmbedTask::Query,
+            )
+            .await?;
+            let conn = db.0.lock().map_err(|e| e.to_string())?;
+            let scores = rrf_scores(&conn, &q_vec, &cfg.model_id(), &semantic_q, time_bounds)?;
+            (scores, 0.010, 0.06)
+        }
+        _ => (jev_scores(&db, &cfg, &semantic_q, time_bounds).await?, 0.05, 0.10),
     };
 
-    // One batched Jev call scores the whole shortlist. No DB lock is held
-    // across this network await.
-    let model = cfg.typesafe_model.clone();
-    let api_key = cfg.typesafe_api_key.trim().to_string();
-    let candidate_texts: Vec<(String, String)> = candidates
-        .iter()
-        .map(|c| (c.id.clone(), candidate_text(c)))
-        .collect();
-    let client = reqwest::Client::builder()
-        .timeout(std::time::Duration::from_secs(30))
-        .build()
-        .map_err(|e| e.to_string())?;
-    let nouls =
-        crate::jev::rerank(&client, &api_key, &model, &semantic_q, &candidate_texts).await?;
-
-    use std::collections::HashMap;
-    let mut fused: HashMap<String, (f32, ClipItem)> = HashMap::new();
-    for (item, noul) in candidates.into_iter().zip(nouls.into_iter()) {
-        fused.insert(item.id.clone(), (noul, item));
-    }
-
-    // Re-lock for the remaining synchronous scoring (colour + sorting).
     let conn = db.0.lock().map_err(|e| e.to_string())?;
     let (from_ms, to_ms) = time_bounds.unwrap_or((i64::MIN, i64::MAX));
 
     // Soft category boost — a category-matching item climbs over a
     // similarly-scored off-category neighbour, but a clearly-better
     // off-category match still wins.
-    const CAT_BOOST: f32 = 0.05;
     // An explicit colour request implies the `color` category even when the
     // user never typed the keyword, so fold it into the soft boost.
     let cat_want = category_filter.or(if color_intent.is_color { Some("color") } else { None });
     if let Some(want) = cat_want {
         for (_, (score, item)) in fused.iter_mut() {
             if item.category == want {
-                *score += CAT_BOOST;
+                *score += cat_boost;
             }
         }
     }
@@ -560,7 +553,6 @@ pub async fn search_semantic(
     // so only genuinely-close swatches get promoted.
     if let Some((tr, tg, tb)) = color_intent.target {
         const COLOR_MAX_DIST: f32 = 64.0;
-        const COLOR_BOOST: f32 = 0.10;
         let mut stmt_color = conn
             .prepare(
                 "SELECT id, content, category, label, preview, source, pinned,
@@ -586,8 +578,8 @@ pub async fn search_semantic(
             if dist > COLOR_MAX_DIST {
                 continue;
             }
-            let boost = COLOR_BOOST * (1.0 - dist / COLOR_MAX_DIST);
-            // A clip beyond the BM25 shortlist (the swatch the user wants but
+            let boost = color_boost * (1.0 - dist / COLOR_MAX_DIST);
+            // A clip beyond the candidate pools (the swatch the user wants but
             // never described in words) still belongs here, so insert it if
             // absent rather than only boosting in-pool hits.
             fused
@@ -620,6 +612,99 @@ pub async fn search_semantic(
 
     let items = ranked.into_iter().take(limit).map(|(_, i)| i).collect();
     Ok(SearchResponse { items, time_window: time_dto, category: category_dto })
+}
+
+type Scored = std::collections::HashMap<String, (f32, ClipItem)>;
+
+/// Local provider: cosine pool over stored vectors fused with the BM25 pool
+/// via reciprocal rank fusion. Items in both pools are boosted; items unique
+/// to one still get that pool's contribution. Robust to BM25's unbounded
+/// scale and cosine's [-1, 1] scale.
+fn rrf_scores(
+    conn: &rusqlite::Connection,
+    q_vec: &[f32],
+    model_id: &str,
+    semantic_q: &str,
+    time_bounds: Option<(i64, i64)>,
+) -> Result<Scored, String> {
+    // Pools are wider than `limit` because RRF re-ranks before we trim.
+    const VEC_POOL: usize = 50;
+    const FTS_POOL: usize = 50;
+    // Loose floor — RRF does the ranking; this drops clearly orthogonal vectors.
+    const VEC_THRESHOLD: f32 = 0.15;
+    // Standard RRF constant; dampens runaway rank differences between pools.
+    const RRF_K: f32 = 60.0;
+
+    let (from_ms, to_ms) = time_bounds.unwrap_or((i64::MIN, i64::MAX));
+    let mut stmt = conn
+        .prepare(
+            "SELECT id, content, category, label, preview, source, pinned,
+                    deleted, deleted_at, last_used_at, embedding
+             FROM items
+             WHERE deleted = 0 AND embedding IS NOT NULL AND embedding_model = ?1
+               AND created_at BETWEEN ?2 AND ?3",
+        )
+        .map_err(map_err)?;
+    let mut vec_pool: Vec<(f32, ClipItem)> = stmt
+        .query_map(params![model_id, from_ms, to_ms], |row| {
+            let item = row_to_item(row)?;
+            let bytes: Vec<u8> = row.get("embedding")?;
+            Ok((crate::embed::cosine(q_vec, &crate::embed::from_bytes(&bytes)), item))
+        })
+        .map_err(map_err)?
+        .filter_map(|r| r.ok())
+        .filter(|(score, _)| *score >= VEC_THRESHOLD)
+        .collect();
+    vec_pool.sort_by(|a, b| b.0.partial_cmp(&a.0).unwrap_or(std::cmp::Ordering::Equal));
+    vec_pool.truncate(VEC_POOL);
+
+    let fts_pool = bm25_pool(conn, semantic_q, FTS_POOL, time_bounds).unwrap_or_default();
+
+    let mut fused = Scored::new();
+    let vec_items: Vec<ClipItem> = vec_pool.into_iter().map(|(_, item)| item).collect();
+    for pool in [vec_items, fts_pool] {
+        for (rank, item) in pool.into_iter().enumerate() {
+            let contribution = 1.0 / (RRF_K + rank as f32 + 1.0);
+            fused
+                .entry(item.id.clone())
+                .and_modify(|(s, _)| *s += contribution)
+                .or_insert((contribution, item));
+        }
+    }
+    Ok(fused)
+}
+
+/// Jev provider: BM25 shortlist re-ranked by TypeSafe's `noul` probability in
+/// one batched request. Re-ranking can only promote what the shortlist holds,
+/// so it is sized generously (bounded by `jev::MAX_CANDIDATES`). No DB lock is
+/// held across the network await.
+async fn jev_scores(
+    db: &Arc<Db>,
+    cfg: &crate::embed::EmbedConfig,
+    semantic_q: &str,
+    time_bounds: Option<(i64, i64)>,
+) -> Result<Scored, String> {
+    let candidates: Vec<ClipItem> = {
+        let conn = db.0.lock().map_err(|e| e.to_string())?;
+        bm25_pool(&conn, semantic_q, crate::jev::MAX_CANDIDATES, time_bounds)
+            .unwrap_or_default()
+    };
+    let candidate_texts: Vec<(String, String)> = candidates
+        .iter()
+        .map(|c| (c.id.clone(), candidate_text(c)))
+        .collect();
+    let client = reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(30))
+        .build()
+        .map_err(|e| e.to_string())?;
+    let api_key = cfg.typesafe_api_key.trim();
+    let nouls = crate::jev::rerank(&client, api_key, &cfg.typesafe_model, semantic_q, &candidate_texts)
+        .await?;
+    Ok(candidates
+        .into_iter()
+        .zip(nouls)
+        .map(|(item, noul)| (item.id.clone(), (noul, item)))
+        .collect())
 }
 
 /// Upper bound on characters we send Jev per candidate, keeping token cost
@@ -797,6 +882,13 @@ pub fn search_fts(
         .collect::<rusqlite::Result<Vec<_>>>()
         .map_err(map_err)?;
     Ok(rows)
+}
+
+/// Kick the embed queue to retry any failed or stalled backfill items.
+/// Callable from the frontend when the user clicks "Retry" on the backfill pill.
+#[tauri::command]
+pub fn retry_embed_backfill(app: AppHandle) {
+    crate::embed_queue::kick(&app);
 }
 
 pub fn spawn_sweeper(app: AppHandle) {
