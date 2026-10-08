@@ -6,12 +6,14 @@ import type { ClipItem, Theme } from '../lib/types';
 import type { AppState } from '../hooks/useAppState';
 import { CategoryChip, ItemBody } from './Primitives';
 import { ImagePreview } from './ImagePreview';
-import { useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { TitleInput, type TitleInputHandle } from './TitleInput';
+import { ContentEditor } from './ContentEditor';
 import {
   CopyButton,
   DeleteButton,
   EditBar,
+  EditButton,
   PinButton,
   RenameButton,
 } from './ActionButtons';
@@ -22,6 +24,8 @@ interface PreviewPaneProps {
   showLabels: boolean;
   renaming: boolean;
   setRenaming: (v: boolean) => void;
+  contentEditing: boolean;
+  setContentEditing: (v: boolean) => void;
   app: AppState;
   anthropicEnabled: boolean;
   /** If provided, called instead of app.pinItem so the parent can lock the row index. */
@@ -36,12 +40,31 @@ export function PreviewPane({
   showLabels,
   renaming,
   setRenaming,
+  contentEditing,
+  setContentEditing,
   app,
   anthropicEnabled,
   onPinItem,
   onDeleteItem,
 }: PreviewPaneProps) {
   const titleRef = useRef<TitleInputHandle>(null);
+  const [draft, setDraft] = useState(item.content);
+
+  useEffect(() => {
+    if (contentEditing) setDraft(item.content);
+    // Only reset when an edit starts or the item changes, not on every keystroke.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [contentEditing, item.id]);
+
+  const copyOnce = () => {
+    void app.copyItem(item.id, draft);
+    setContentEditing(false);
+  };
+
+  const saveEdit = () => {
+    if (draft.trim() && draft !== item.content) app.updateContent(item.id, draft);
+    setContentEditing(false);
+  };
   return (
     <Stack grow={1} bg="subtle" style={{ minWidth: 0 }}>
       <Box px={5} pt={4} pb={3} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
@@ -108,6 +131,15 @@ export function PreviewPane({
       <Box grow={1} overflow="auto" p={5}>
         {item.category === 'image' ? (
           <ImagePreview item={item} getImage={app.getImage} maxHeight="400px" />
+        ) : contentEditing ? (
+          <ContentEditor
+            item={item}
+            value={draft}
+            onChange={setDraft}
+            onSave={saveEdit}
+            onUseOnce={copyOnce}
+            onDiscard={() => setContentEditing(false)}
+          />
         ) : (
           <ItemBody t={t} item={item} />
         )}
@@ -127,6 +159,12 @@ export function PreviewPane({
             onSave={() => titleRef.current?.finish(true)}
             onDiscard={() => titleRef.current?.finish(false)}
           />
+        ) : contentEditing ? (
+          <EditBar
+            onSave={saveEdit}
+            onDiscard={() => setContentEditing(false)}
+            once={{ label: 'Copy once', onClick: copyOnce }}
+          />
         ) : (
           <>
             <CopyButton
@@ -135,6 +173,10 @@ export function PreviewPane({
             />
 
             <PinButton compact pinned={!!item.pinned} onClick={() => onPinItem ? onPinItem(item.id) : app.pinItem(item.id)} />
+
+            {item.category !== 'image' && (
+              <EditButton compact onClick={() => setContentEditing(true)} />
+            )}
 
             <RenameButton compact onClick={() => setRenaming(true)} />
 

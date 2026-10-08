@@ -36,6 +36,7 @@ function buildGroups(shortcut: ShortcutConfig): [string, KeyRow[]][] {
       { keys: ['Mod', 'P'], label: 'Pin / unpin' },
       { keys: ['Mod', '⌫'], label: 'Delete item' },
       { keys: ['Mod', 'R'], label: 'Rename' },
+      { keys: ['Mod', 'E'], label: 'Edit text' },
       { keys: ['Mod', 'I'], label: 'Toggle preview pane', scope: 'library' },
     ],
   ],

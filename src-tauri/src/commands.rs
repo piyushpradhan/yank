@@ -367,6 +367,36 @@ pub fn update_label(
     Ok(())
 }
 
+/// Permanently replace an item's text. Category and preview are re-derived
+/// from the new text; the label is kept. The FTS update trigger reindexes it.
+#[tauri::command]
+pub fn update_content(
+    id: String,
+    content: String,
+    app: tauri::AppHandle,
+    db: State<'_, Arc<Db>>,
+) -> Result<(), String> {
+    if content.trim().is_empty() {
+        return Err("content cannot be empty".into());
+    }
+    let conn = db.0.lock().map_err(|e| e.to_string())?;
+    let id_num: i64 = id.parse().map_err(map_err)?;
+    conn.execute(
+        "UPDATE items SET content = ?1, preview = ?2, category = ?3
+         WHERE id = ?4 AND category != 'image'",
+        params![
+            content,
+            crate::categorize::make_preview(&content),
+            crate::categorize::categorize(&content),
+            id_num
+        ],
+    )
+    .map_err(map_err)?;
+    drop(conn);
+    let _ = app.emit("clip-labeled", id_num);
+    Ok(())
+}
+
 /// Parse a query the same way `search_semantic` does and return only the
 /// semantic residue — used by the UI when the user dismisses the
 /// detected-date chip, so the time phrase is removed from the input
