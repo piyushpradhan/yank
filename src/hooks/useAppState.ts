@@ -147,9 +147,16 @@ export function useAppState(): AppState {
 
   const updateLabel = useCallback(
     (id: string, label: string) => {
+      // Optimistic: show the new title now instead of after the round-trip.
+      setItems((prev) =>
+        prev.map((it) => (it.id === id ? { ...it, label, labelGenerated: true } : it)),
+      );
       invoke("update_label", { id, label }).then(
         () => void refresh(),
-        (err) => console.error("update_label failed", err),
+        (err) => {
+          console.error("update_label failed", err);
+          void refresh();
+        },
       );
     },
     [refresh],

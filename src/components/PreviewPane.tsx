@@ -1,5 +1,4 @@
-import { useEffect, useState } from 'react';
-import { Badge, Box, Inline, Input, Kbd, Stack, Text } from 'ember-design-system';
+import { Badge, Box, Inline, Kbd, Stack, Text } from 'ember-design-system';
 import { LuPin } from 'react-icons/lu';
 import { MdKeyboardBackspace, MdKeyboardReturn } from 'react-icons/md';
 import { relTime } from '../lib/time';
@@ -7,10 +6,13 @@ import type { ClipItem, Theme } from '../lib/types';
 import type { AppState } from '../hooks/useAppState';
 import { CategoryChip, ItemBody } from './Primitives';
 import { ImagePreview } from './ImagePreview';
+import { useRef } from 'react';
+import { TitleInput, type TitleInputHandle } from './TitleInput';
 import {
   CopyButton,
-  PinButton,
   DeleteButton,
+  EditBar,
+  PinButton,
   RenameButton,
 } from './ActionButtons';
 
@@ -18,8 +20,8 @@ interface PreviewPaneProps {
   t: Theme;
   item: ClipItem;
   showLabels: boolean;
-  editing: boolean;
-  setEditing: (v: boolean) => void;
+  renaming: boolean;
+  setRenaming: (v: boolean) => void;
   app: AppState;
   anthropicEnabled: boolean;
   /** If provided, called instead of app.pinItem so the parent can lock the row index. */
@@ -32,19 +34,14 @@ export function PreviewPane({
   t,
   item,
   showLabels,
-  editing,
-  setEditing,
+  renaming,
+  setRenaming,
   app,
   anthropicEnabled,
   onPinItem,
   onDeleteItem,
 }: PreviewPaneProps) {
-  const [draft, setDraft] = useState(item.label);
-
-  useEffect(() => {
-    setDraft(item.label);
-  }, [item.id, item.label]);
-
+  const titleRef = useRef<TitleInputHandle>(null);
   return (
     <Stack grow={1} bg="subtle" style={{ minWidth: 0 }}>
       <Box px={5} pt={4} pb={3} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
@@ -62,40 +59,33 @@ export function PreviewPane({
             />
           )}
         </Inline>
-        {showLabels &&
-          (editing ? (
-            <Input
-              autoFocus
-              value={draft}
-              onChange={(e) => setDraft(e.target.value)}
-              onBlur={() => {
-                app.updateLabel(item.id, draft);
-                setEditing(false);
-              }}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  app.updateLabel(item.id, draft);
-                  setEditing(false);
-                }
-                if (e.key === 'Escape') {
-                  setDraft(item.label);
-                  setEditing(false);
-                }
-              }}
-            />
+        {/* Renaming must show the field even when labels are hidden. */}
+        {(showLabels || renaming) &&
+          (renaming ? (
+            <Inline>
+              <TitleInput
+                ref={titleRef}
+                initial={item.label}
+                size={17}
+                onDone={(label) => {
+                  if (label) app.updateLabel(item.id, label);
+                  setRenaming(false);
+                }}
+              />
+            </Inline>
           ) : (
             <Inline
               gap={3}
-              onDoubleClick={() => setEditing(true)}
+              onDoubleClick={() => setRenaming(true)}
               title={
                 item.labelGenerated
                   ? 'Double-click to rename'
                   : 'Awaiting AI label — double-click to rename'
               }
-              style={{ cursor: 'text' }}
             >
               <Text
                 as="span"
+                className="editable-title"
                 size={17}
                 leading={1.3}
                 tracking="tight"
@@ -132,26 +122,35 @@ export function PreviewPane({
           background: 'color-mix(in oklab, var(--bg-surface) 60%, transparent)',
         }}
       >
-        <CopyButton
-          onClick={() => app.copyItem(item.id)}
-          trailingKbd={<MdKeyboardReturn size={10} />}
-        />
+        {renaming ? (
+          <EditBar
+            onSave={() => titleRef.current?.finish(true)}
+            onDiscard={() => titleRef.current?.finish(false)}
+          />
+        ) : (
+          <>
+            <CopyButton
+              onClick={() => app.copyItem(item.id)}
+              trailingKbd={<MdKeyboardReturn size={10} />}
+            />
 
-        <PinButton compact pinned={!!item.pinned} onClick={() => onPinItem ? onPinItem(item.id) : app.pinItem(item.id)} />
+            <PinButton compact pinned={!!item.pinned} onClick={() => onPinItem ? onPinItem(item.id) : app.pinItem(item.id)} />
 
-        <RenameButton compact onClick={() => setEditing(true)} />
+            <RenameButton compact onClick={() => setRenaming(true)} />
 
-        <Box grow={1} />
+            <Box grow={1} />
 
-        <DeleteButton
-          compact
-          onClick={() => onDeleteItem ? onDeleteItem(item.id) : app.deleteItem(item.id)}
-          kbd={
-            <Kbd size="sm">
-              <MdKeyboardBackspace size={10} />
-            </Kbd>
-          }
-        />
+            <DeleteButton
+              compact
+              onClick={() => onDeleteItem ? onDeleteItem(item.id) : app.deleteItem(item.id)}
+              kbd={
+                <Kbd size="sm">
+                  <MdKeyboardBackspace size={10} />
+                </Kbd>
+              }
+            />
+          </>
+        )}
       </Inline>
     </Stack>
   );

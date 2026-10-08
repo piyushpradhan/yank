@@ -362,7 +362,8 @@ pub fn update_label(
     )
     .map_err(map_err)?;
     drop(conn);
-    let _ = app;
+    // Palette and Library are separate windows; tell the other one to refresh.
+    let _ = app.emit("clip-labeled", id_num);
     Ok(())
 }
 

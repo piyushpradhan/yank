@@ -8,8 +8,8 @@ import {
   LuTextCursorInput,
   LuTrash2,
 } from 'react-icons/lu';
-import { MdKeyboardBackspace } from 'react-icons/md';
-import type { ReactNode } from 'react';
+import { MdKeyboardBackspace, MdKeyboardReturn } from 'react-icons/md';
+import type { MouseEvent, ReactNode } from 'react';
 import { ModKey } from '../lib/keyIcons';
 
 /** Tooltip body: optional action name followed by its keycaps. */
@@ -168,7 +168,12 @@ export function RenameButton({ onClick, compact }: SimpleActionProps) {
     <Action
       label="Rename"
       icon={<LuTextCursorInput size={14} />}
-      keys={<Kbd size="sm">E</Kbd>}
+      keys={
+        <>
+          {CMD}
+          <Kbd size="sm">R</Kbd>
+        </>
+      }
       onClick={onClick}
       compact={compact}
     />
@@ -185,6 +190,79 @@ export function EditButton({ onClick, compact }: SimpleActionProps) {
       onClick={onClick}
       compact={compact}
     />
+  );
+}
+
+/**
+ * Key hint printed inside a button, so it's visible without hovering. Icons
+ * rather than text glyphs (↵, ⌘) so they're legible and centre on the label.
+ */
+function InlineKeys({ children }: { children: ReactNode }) {
+  return (
+    <span className="inline-keys" aria-hidden>
+      {children}
+    </span>
+  );
+}
+
+const ENTER = <MdKeyboardReturn size={14} />;
+
+interface EditBarProps {
+  onSave: () => void;
+  onDiscard: () => void;
+  /** Optional "use it now without saving" action, e.g. Paste once / Copy once. */
+  once?: { label: string; onClick: () => void };
+}
+
+/**
+ * Replaces the action bar while renaming or editing. Same words and keys
+ * everywhere: the filled button is Enter, Discard is Escape.
+ */
+export function EditBar({ onSave, onDiscard, once }: EditBarProps) {
+  // Keep focus in the field being edited; a blur would otherwise commit
+  // before the click lands.
+  const keepFocus = (e: MouseEvent) => e.preventDefault();
+  const fixed = { flexShrink: 0 };
+  return (
+    <>
+      <Button
+        size="sm"
+        variant="primary"
+        onMouseDown={keepFocus}
+        onClick={onSave}
+        trailingIcon={<InlineKeys>{ENTER}</InlineKeys>}
+        style={fixed}
+      >
+        Save
+      </Button>
+      {once && (
+        <Button
+          size="sm"
+          variant="ghost"
+          onMouseDown={keepFocus}
+          onClick={once.onClick}
+          trailingIcon={
+            <InlineKeys>
+              <ModKey size={13} />
+              {ENTER}
+            </InlineKeys>
+          }
+          style={fixed}
+        >
+          {once.label}
+        </Button>
+      )}
+      <Button
+        size="sm"
+        variant="ghost"
+        onMouseDown={keepFocus}
+        onClick={onDiscard}
+        trailingIcon={<InlineKeys>esc</InlineKeys>}
+        style={fixed}
+      >
+        Discard
+      </Button>
+    </>
   );
 }
 

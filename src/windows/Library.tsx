@@ -537,6 +537,7 @@ export function Library({
   }, []);
 
   const searchRef = useRef<HTMLInputElement>(null);
+  const rootRef = useRef<HTMLElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   // When the user pins/unpins or deletes via keyboard, the item moves or
   // disappears in the sorted list. We want the highlight to stay at the same
@@ -694,6 +695,13 @@ export function Library({
     }, 0);
   };
 
+  // Closing the rename field unmounts the focused input; hand focus back to
+  // the window so arrow keys and shortcuts keep working without a click.
+  const renamingFor = (id: string) => (v: boolean) => {
+    setEditingId(v ? id : null);
+    if (!v) rootRef.current?.focus();
+  };
+
   const onKey = (e: React.KeyboardEvent<HTMLDivElement>) => {
     if (editingId) return;
     const inSearch = document.activeElement === searchRef.current;
@@ -748,9 +756,13 @@ export function Library({
         rowIndexLock.current = selectedIdx;
         app.deleteItem(current.id);
       }
-    } else if (e.key.toLowerCase() === 'e' && !inSearch) {
+    } else if (
+      (e.key.toLowerCase() === 'r' && (e.metaKey || e.ctrlKey || !inSearch)) ||
+      // Bare E was the original rename key; kept for existing muscle memory.
+      (e.key.toLowerCase() === 'e' && !inSearch)
+    ) {
       e.preventDefault();
-      if (current) setEditingId(current.id);
+      if (current) renamingFor(current.id)(true);
     } else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'i') {
       e.preventDefault();
       if (previewAllowed) {
@@ -768,6 +780,7 @@ export function Library({
 
   return (
     <Stack
+      ref={rootRef}
       tabIndex={0}
       onKeyDown={onKey}
       fullHeight
@@ -923,7 +936,7 @@ export function Library({
             <Text family="mono" size={10.5} tone="tertiary">
               filter
             </Text>
-            <Kbd size="sm">E</Kbd>
+            <Kbd size="sm">R</Kbd>
             <Text family="mono" size={10.5} tone="tertiary">
               rename
             </Text>
@@ -1219,8 +1232,8 @@ export function Library({
               t={t}
               item={current}
               showLabels={showLabels}
-              editing={editingId === current.id}
-              setEditing={(v) => setEditingId(v ? current.id : null)}
+              renaming={editingId === current.id}
+              setRenaming={renamingFor(current.id)}
               app={app}
               anthropicEnabled={anthropicEnabled}
               onPinItem={handlePreviewPin}
@@ -1266,8 +1279,8 @@ export function Library({
                 t={t}
                 item={current}
                 showLabels={showLabels}
-                editing={editingId === current.id}
-                setEditing={(v) => setEditingId(v ? current.id : null)}
+                renaming={editingId === current.id}
+                setRenaming={renamingFor(current.id)}
                 app={app}
                 anthropicEnabled={anthropicEnabled}
                 onPinItem={handlePreviewPin}
