@@ -56,3 +56,6 @@ enigo = { version = "0.2", default-features = false }
 # portal/XDG portal service that most distros do not ship, so it would be
 # dead weight. macOS never uses enigo (CGEvent handles paste there).
 enigo = { version = "0.2", default-features = false, features = ["x11rb", "wayland"] }
+
+[dev-dependencies]
+tauri = { version = "2", features = ["test"] }

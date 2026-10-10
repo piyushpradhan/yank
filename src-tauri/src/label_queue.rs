@@ -136,10 +136,7 @@ fn snapshot_config(app: &AppHandle) -> EmbedConfig {
 
 fn load_pending(app: &AppHandle, limit: i64) -> Vec<(i64, String, String)> {
     let db = app.state::<Arc<Db>>().inner().clone();
-    let conn = match db.0.lock() {
-        Ok(c) => c,
-        Err(_) => return Vec::new(),
-    };
+    let conn = db.conn();
     let Ok(mut stmt) = conn.prepare(
         "SELECT id, category, content
          FROM items
@@ -162,7 +159,7 @@ fn load_pending(app: &AppHandle, limit: i64) -> Vec<(i64, String, String)> {
 
 fn store_label(app: &AppHandle, id: i64, label: &str) -> Result<(), String> {
     let db = app.state::<Arc<Db>>().inner().clone();
-    let conn = db.0.lock().map_err(|e| e.to_string())?;
+    let conn = db.conn();
     conn.execute(
         // Skip if the user renamed the item while the label was generating.
         // Clearing embedding_model re-embeds it: the label is part of the embedded text.

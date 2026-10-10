@@ -208,6 +208,8 @@ static RE_RELATIVE_AGO: Lazy<Regex> = Lazy::new(|| {
     Regex::new(r"\b(\d+)\s+(minute|hour|day|week|month|year)s?\s+ago\b").unwrap()
 });
 
+const MAX_AGO: i64 = 10_000;
+
 static RE_YESTERDAY: Lazy<Regex> = Lazy::new(|| Regex::new(r"\byesterday\b").unwrap());
 static RE_TODAY: Lazy<Regex> = Lazy::new(|| Regex::new(r"\btoday\b").unwrap());
 
@@ -317,7 +319,8 @@ fn parse_single(lower: &str, now: DateTime<Local>) -> Option<TimeWindow> {
 
     // "4 days ago"
     if let Some(c) = RE_RELATIVE_AGO.captures(lower) {
-        if let Ok(n) = c[1].parse::<i64>() {
+        // ponytail: ≤10k of any unit keeps every date helper inside chrono's range (and the month loop ≤834 iterations); a larger N isn't a real query, it falls through as plain text.
+        if let Some(n) = c[1].parse::<i64>().ok().filter(|n| *n <= MAX_AGO) {
             let unit = &c[2];
             let (from, to, label) = match unit {
                 "minute" => {
@@ -480,6 +483,15 @@ mod tests {
         assert_eq!(tw.from_ms, f);
         assert_eq!(tw.to_ms, t);
         assert_eq!(tw.label, "4 days ago");
+    }
+
+    #[test]
+    fn huge_relative_counts_fall_through_as_text() {
+        for unit in ["minutes", "hours", "days", "weeks", "months", "years"] {
+            let q = format!("99999999999 {unit} ago");
+            assert!(parse(frozen_now(), &q).time.is_none(), "{q}");
+        }
+        assert!(parse(frozen_now(), "10000 years ago").time.is_some());
     }
 
     #[test]

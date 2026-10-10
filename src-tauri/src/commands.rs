@@ -10,6 +10,25 @@ use crate::db::Db;
 // PNG file magic bytes — used to detect new-format vs. legacy RGBA storage.
 const PNG_MAGIC: &[u8; 8] = &[0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
 
+/// Parses legacy `[w:4le][h:4le][rgba…]`, rejecting headers whose
+/// dimensions overflow or disagree with the payload length.
+fn legacy_rgba(raw: &[u8]) -> Result<(u32, u32, &[u8]), String> {
+    if raw.len() < 8 {
+        return Err("Image data too short".into());
+    }
+    let w = u32::from_le_bytes([raw[0], raw[1], raw[2], raw[3]]);
+    let h = u32::from_le_bytes([raw[4], raw[5], raw[6], raw[7]]);
+    let rgba = &raw[8..];
+    let expected = (w as usize).checked_mul(h as usize).and_then(|p| p.checked_mul(4));
+    if expected != Some(rgba.len()) {
+        return Err(format!(
+            "Legacy RGBA length mismatch: {w}x{h}, got {} bytes",
+            rgba.len()
+        ));
+    }
+    Ok((w, h, rgba))
+}
+
 /// Ensures the stored bytes are in PNG format.
 /// New items are already PNG; legacy items used `[width:4le][height:4le][rgba…]`
 /// and are re-encoded on first access.
@@ -17,21 +36,8 @@ fn ensure_png(raw: &[u8]) -> Result<Vec<u8>, String> {
     if raw.len() >= 8 && raw.starts_with(PNG_MAGIC) {
         return Ok(raw.to_vec());
     }
-    // Legacy format: [width:4le][height:4le][rgba_bytes…]
-    if raw.len() < 8 {
-        return Err("Image data too short".into());
-    }
-    let width = u32::from_le_bytes([raw[0], raw[1], raw[2], raw[3]]) as usize;
-    let height = u32::from_le_bytes([raw[4], raw[5], raw[6], raw[7]]) as usize;
-    let rgba = &raw[8..];
-    let expected = width * height * 4;
-    if rgba.len() != expected {
-        return Err(format!(
-            "Legacy RGBA length mismatch: expected {expected}, got {}",
-            rgba.len()
-        ));
-    }
-    let buf = ImageBuffer::<Rgba<u8>, _>::from_raw(width as u32, height as u32, rgba.to_vec())
+    let (w, h, rgba) = legacy_rgba(raw)?;
+    let buf = ImageBuffer::<Rgba<u8>, _>::from_raw(w, h, rgba.to_vec())
         .ok_or("Legacy image buffer creation failed")?;
     let mut png = Vec::new();
     buf.write_to(
@@ -51,12 +57,8 @@ fn decode_to_rgba(raw: &[u8]) -> Result<RawImage, String> {
         let (width, height) = (rgba.width() as usize, rgba.height() as usize);
         return Ok(RawImage { width, height, bytes: rgba.into_raw() });
     }
-    if raw.len() < 8 {
-        return Err("Image data too short".into());
-    }
-    let width = u32::from_le_bytes([raw[0], raw[1], raw[2], raw[3]]) as usize;
-    let height = u32::from_le_bytes([raw[4], raw[5], raw[6], raw[7]]) as usize;
-    Ok(RawImage { width, height, bytes: raw[8..].to_vec() })
+    let (w, h, rgba) = legacy_rgba(raw)?;
+    Ok(RawImage { width: w as usize, height: h as usize, bytes: rgba.to_vec() })
 }
 
 struct RawImage {
@@ -129,7 +131,7 @@ fn row_to_item(row: &rusqlite::Row<'_>) -> rusqlite::Result<ClipItem> {
 
 #[tauri::command]
 pub fn list_items(db: State<'_, Arc<Db>>) -> Result<Vec<ClipItem>, String> {
-    let conn = db.0.lock().map_err(|e| e.to_string())?;
+    let conn = db.conn();
     let mut stmt = conn
         .prepare(
             "SELECT id, content, category, label, preview, source, pinned, deleted, deleted_at, last_used_at
@@ -149,7 +151,7 @@ pub fn list_items(db: State<'_, Arc<Db>>) -> Result<Vec<ClipItem>, String> {
 
 #[tauri::command]
 pub fn touch_item(id: String, db: State<'_, Arc<Db>>) -> Result<(), String> {
-    let conn = db.0.lock().map_err(|e| e.to_string())?;
+    let conn = db.conn();
     let now = chrono::Utc::now().timestamp_millis();
     let id_num: i64 = id.parse().map_err(map_err)?;
     conn.execute(
@@ -162,7 +164,7 @@ pub fn touch_item(id: String, db: State<'_, Arc<Db>>) -> Result<(), String> {
 
 #[tauri::command]
 pub fn pin_item(id: String, db: State<'_, Arc<Db>>) -> Result<bool, String> {
-    let conn = db.0.lock().map_err(|e| e.to_string())?;
+    let conn = db.conn();
     let id_num: i64 = id.parse().map_err(map_err)?;
     let current: i64 = conn
         .query_row(
@@ -182,7 +184,7 @@ pub fn pin_item(id: String, db: State<'_, Arc<Db>>) -> Result<bool, String> {
 
 #[tauri::command]
 pub fn delete_item(id: String, db: State<'_, Arc<Db>>) -> Result<(), String> {
-    let conn = db.0.lock().map_err(|e| e.to_string())?;
+    let conn = db.conn();
     let id_num: i64 = id.parse().map_err(map_err)?;
     let now = chrono::Utc::now().timestamp_millis();
     conn.execute(
@@ -214,7 +216,7 @@ fn load_raw(conn: &rusqlite::Connection, id_num: i64) -> Option<Vec<u8>> {
 
 #[tauri::command]
 pub fn get_image(id: String, db: State<'_, Arc<Db>>) -> Result<Option<ImagePng>, String> {
-    let conn = db.0.lock().map_err(|e| e.to_string())?;
+    let conn = db.conn();
     let id_num: i64 = id.parse().map_err(map_err)?;
     let raw = match load_raw(&conn, id_num) {
         None => return Ok(None),
@@ -235,7 +237,7 @@ pub fn get_image(id: String, db: State<'_, Arc<Db>>) -> Result<Option<ImagePng>,
 
 #[tauri::command]
 pub fn copy_image(id: String, db: State<'_, Arc<Db>>) -> Result<(), String> {
-    let conn = db.0.lock().map_err(|e| e.to_string())?;
+    let conn = db.conn();
     let id_num: i64 = id.parse().map_err(map_err)?;
     let raw = load_raw(&conn, id_num).ok_or("Image not found")?;
     let decoded = decode_to_rgba(&raw)?;
@@ -335,7 +337,7 @@ pub fn paste_to_frontmost_app(app: AppHandle) -> Result<String, String> {
 
 #[tauri::command]
 pub fn restore_item(id: String, db: State<'_, Arc<Db>>) -> Result<(), String> {
-    let conn = db.0.lock().map_err(|e| e.to_string())?;
+    let conn = db.conn();
     let id_num: i64 = id.parse().map_err(map_err)?;
     conn.execute(
         "UPDATE items SET deleted = 0, deleted_at = NULL WHERE id = ?1",
@@ -352,7 +354,7 @@ pub fn update_label(
     app: tauri::AppHandle,
     db: State<'_, Arc<Db>>,
 ) -> Result<(), String> {
-    let conn = db.0.lock().map_err(|e| e.to_string())?;
+    let conn = db.conn();
     let id_num: i64 = id.parse().map_err(map_err)?;
     // Clearing embedding_model re-embeds it: the label is part of the embedded
     // text. Jev reads the label at query time, so it needs nothing.
@@ -380,7 +382,7 @@ pub fn update_content(
     if content.trim().is_empty() {
         return Err("content cannot be empty".into());
     }
-    let conn = db.0.lock().map_err(|e| e.to_string())?;
+    let conn = db.conn();
     let id_num: i64 = id.parse().map_err(map_err)?;
     conn.execute(
         "UPDATE items SET content = ?1, preview = ?2, category = ?3, embedding_model = NULL
@@ -419,7 +421,7 @@ pub fn strip_category(query: String) -> String {
 
 #[tauri::command]
 pub fn clear_history(db: State<'_, Arc<Db>>) -> Result<(), String> {
-    let conn = db.0.lock().map_err(|e| e.to_string())?;
+    let conn = db.conn();
     conn.execute("DELETE FROM items WHERE pinned = 0", [])
         .map_err(map_err)?;
     Ok(())
@@ -501,7 +503,7 @@ pub async fn search_semantic(
     if semantic_q.is_empty() {
         if time_bounds.is_some() || category_filter.is_some() {
             let (from, to) = time_bounds.unwrap_or((i64::MIN, i64::MAX));
-            let conn = db.0.lock().map_err(|e| e.to_string())?;
+            let conn = db.conn();
             let items = items_in_window(&conn, from, to, category_filter, limit)?;
             return Ok(SearchResponse { items, time_window: time_dto, category: category_dto });
         }
@@ -522,14 +524,14 @@ pub async fn search_semantic(
                 EmbedTask::Query,
             )
             .await?;
-            let conn = db.0.lock().map_err(|e| e.to_string())?;
+            let conn = db.conn();
             let scores = rrf_scores(&conn, &q_vec, &cfg.model_id(), &semantic_q, time_bounds)?;
             (scores, 0.010, 0.06)
         }
         _ => (jev_scores(&db, &cfg, &semantic_q, time_bounds).await?, 0.05, 0.10),
     };
 
-    let conn = db.0.lock().map_err(|e| e.to_string())?;
+    let conn = db.conn();
     let (from_ms, to_ms) = time_bounds.unwrap_or((i64::MIN, i64::MAX));
 
     // Soft category boost — a category-matching item climbs over a
@@ -685,7 +687,7 @@ async fn jev_scores(
     time_bounds: Option<(i64, i64)>,
 ) -> Result<Scored, String> {
     let candidates: Vec<ClipItem> = {
-        let conn = db.0.lock().map_err(|e| e.to_string())?;
+        let conn = db.conn();
         bm25_pool(&conn, semantic_q, crate::jev::MAX_CANDIDATES, time_bounds)
             .unwrap_or_default()
     };
@@ -780,14 +782,19 @@ fn bm25_pool(
     limit: usize,
     time: Option<(i64, i64)>,
 ) -> Result<Vec<ClipItem>, String> {
-    // Split on whitespace, strip quotes, prefix-match each term. `cors`
-    // matches `corsair`. Embedded quotes are escaped per FTS5 syntax.
-    let terms: Vec<String> = query
+    // Split on whitespace, prefix-match each term. `cors` matches `corsair`.
+    // Each token becomes a quoted FTS5 string, so `:` `-` `@` `(` and
+    // AND/OR/NOT/NEAR are literal text, never syntax.
+    let mut terms: Vec<String> = query
         .split_whitespace()
         .map(|t| t.trim_matches(|c: char| !c.is_alphanumeric()))
         .filter(|t| !t.is_empty())
-        .map(|t| format!("{}*", t.replace('\"', "\"\"")))
+        .map(|t| format!("\"{}\"*", t.replace('\"', "\"\"")))
         .collect();
+    let mut uniq = std::collections::HashSet::new();
+    terms.retain(|t| uniq.insert(t.clone()));
+    // ponytail: FTS5 AND/OR cost is quadratic in terms and runs under the DB mutex; cap at 32 first-seen terms, rank by rarity if long natural-language queries need recall
+    terms.truncate(32);
     if terms.is_empty() {
         return Ok(Vec::new());
     }
@@ -854,36 +861,6 @@ fn run_bm25(
     Ok(rows)
 }
 
-#[tauri::command]
-pub fn search_fts(
-    query: String,
-    db: State<'_, Arc<Db>>,
-) -> Result<Vec<ClipItem>, String> {
-    let q = query.trim();
-    if q.is_empty() {
-        return list_items(db);
-    }
-    let match_q = format!("{}*", q.replace('\"', "\"\""));
-    let conn = db.0.lock().map_err(|e| e.to_string())?;
-    let mut stmt = conn
-        .prepare(
-            "SELECT i.id, i.content, i.category, i.label, i.preview, i.source,
-                    i.pinned, i.deleted, i.deleted_at, i.last_used_at
-             FROM items_fts
-             JOIN items i ON i.id = items_fts.rowid
-             WHERE items_fts MATCH ?1 AND i.deleted = 0
-             ORDER BY i.pinned DESC, bm25(items_fts)
-             LIMIT 100",
-        )
-        .map_err(map_err)?;
-    let rows = stmt
-        .query_map(params![match_q], row_to_item)
-        .map_err(map_err)?
-        .collect::<rusqlite::Result<Vec<_>>>()
-        .map_err(map_err)?;
-    Ok(rows)
-}
-
 /// Kick the embed queue to retry any failed or stalled backfill items.
 /// Callable from the frontend when the user clicks "Retry" on the backfill pill.
 #[tauri::command]
@@ -898,10 +875,7 @@ pub fn spawn_sweeper(app: AppHandle) {
         let db: Arc<Db> = app.state::<Arc<Db>>().inner().clone();
         let cutoff = chrono::Utc::now().timestamp_millis() - 4_000;
         let n = {
-            let conn = match db.0.lock() {
-                Ok(c) => c,
-                Err(_) => continue,
-            };
+            let conn = db.conn();
             conn.execute(
                 "DELETE FROM items WHERE deleted = 1 AND deleted_at IS NOT NULL AND deleted_at < ?1",
                 params![cutoff],
@@ -922,4 +896,46 @@ mod tests {
         assert_eq!(super::paste_outcome(true), "pasted");
         assert_eq!(super::paste_outcome(false), "copied");
     }
+
+    #[test]
+    fn legacy_blob_with_lying_header_is_rejected() {
+        let mut blob = vec![0xFF; 8];
+        blob.extend([0u8; 16]);
+        assert!(super::ensure_png(&blob).is_err());
+        assert!(super::decode_to_rgba(&blob).is_err());
+    }
+
+    #[test]
+    fn valid_legacy_blob_still_decodes() {
+        let mut blob = Vec::new();
+        blob.extend(1u32.to_le_bytes());
+        blob.extend(1u32.to_le_bytes());
+        blob.extend([1u8, 2, 3, 4]);
+        assert!(super::ensure_png(&blob).unwrap().starts_with(super::PNG_MAGIC));
+        assert_eq!(super::decode_to_rgba(&blob).unwrap().bytes.len(), 4);
+    }
+
+    #[test]
+    fn bm25_pool_treats_punctuation_and_keywords_literally() {
+        let conn = crate::db::open(std::path::Path::new(":memory:")).unwrap();
+        crate::db::insert_item(&conn, "see https://example.com/a-b or foo:bar and a@b.co", "text", "p", None).unwrap();
+        for q in ["https://example.com", "a-b", "foo:bar", "a@b.co", "AND", "NEAR(", "col: x", "*x"] {
+            assert!(super::bm25_pool(&conn, q, 10, None).is_ok(), "{q}");
+        }
+        assert_eq!(super::bm25_pool(&conn, "https://example.com", 10, None).unwrap().len(), 1);
+    }
+
+    #[test]
+    fn bm25_pool_survives_huge_repeated_query() {
+        let conn = crate::db::open(std::path::Path::new(":memory:")).unwrap();
+        crate::db::insert_item(&conn, "phone numbers", "text", "p", None).unwrap();
+        let t = std::time::Instant::now();
+        let hits = super::bm25_pool(&conn, &"phone numbers ".repeat(5000), 10, None).unwrap();
+        assert_eq!(hits.len(), 1);
+        assert!(t.elapsed() < std::time::Duration::from_secs(2), "{:?}", t.elapsed());
+    }
 }
+
+#[cfg(test)]
+#[path = "chaos.rs"]
+mod chaos;

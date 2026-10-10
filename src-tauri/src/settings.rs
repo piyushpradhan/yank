@@ -64,7 +64,7 @@ pub fn set_settings(
     // Jev re-ranks at query time; only the local provider has vectors to backfill.
     if cfg.provider == Provider::Local && (model_changed || prev.provider != Provider::Local) {
         let db = app.state::<Arc<crate::db::Db>>().inner().clone();
-        let conn = db.0.lock().map_err(|e| e.to_string())?;
+        let conn = db.conn();
         let pending: i64 = conn
             .query_row(
                 "SELECT COUNT(*) FROM items WHERE deleted = 0

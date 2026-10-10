@@ -94,6 +94,9 @@ pub fn to_bytes(v: &[f32]) -> Vec<u8> {
 }
 
 pub fn from_bytes(b: &[u8]) -> Vec<f32> {
+    if b.len() % 4 != 0 {
+        return Vec::new(); // corrupt blob → no vector
+    }
     b.chunks_exact(4)
         .map(|c| f32::from_le_bytes([c[0], c[1], c[2], c[3]]))
         .collect()
@@ -101,12 +104,21 @@ pub fn from_bytes(b: &[u8]) -> Vec<f32> {
 
 /// Dot product of two L2-normalized vectors = cosine similarity.
 pub fn cosine(a: &[f32], b: &[f32]) -> f32 {
+    if a.len() != b.len() {
+        return 0.0; // truncated/foreign vector never matches
+    }
     a.iter().zip(b).map(|(x, y)| x * y).sum()
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn vector_math_is_dimension_safe() {
+        assert_eq!(cosine(&[1.0, 0.0], &[1.0]), 0.0);
+        assert!(from_bytes(&[0; 5]).is_empty());
+    }
 
     #[test]
     fn older_stored_configs_still_parse() {

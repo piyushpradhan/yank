@@ -3,6 +3,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { writeText } from "@tauri-apps/plugin-clipboard-manager";
 import { truncate } from "../lib/time";
+import { knownCategory } from "../lib/category";
 import type { ClipItem, SemanticSearchResponse, Toast, ToastKind } from "../lib/types";
 import { evictImageUrl } from "./useImageUrl";
 
@@ -46,9 +47,15 @@ export interface AppState {
 
 let toastSeq = 0;
 
+function normalizeItems(items: unknown): ClipItem[] {
+  return Array.isArray(items)
+    ? items.map((it: ClipItem) => ({ ...it, category: knownCategory(it.category) }))
+    : [];
+}
+
 async function fetchItems(): Promise<ClipItem[]> {
   try {
-    return await invoke<ClipItem[]>("list_items");
+    return normalizeItems(await invoke<ClipItem[]>("list_items"));
   } catch (err) {
     console.error("list_items failed", err);
     return [];
@@ -244,7 +251,11 @@ export function useAppState(): AppState {
         setProviderHealth((prev) =>
           prev.status === "ok" ? prev : { status: "ok", error: null },
         );
-        return resp;
+        return {
+          ...resp,
+          items: normalizeItems(resp?.items),
+          category: resp?.category == null ? null : knownCategory(resp.category),
+        };
       } catch (err) {
         console.error("search_semantic failed", err);
         const msg =

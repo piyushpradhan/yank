@@ -32,6 +32,13 @@ export const CATEGORIES: Category[] = [
   'image',
 ];
 
+/** Rows from another build may carry a category this one lacks; show them as text. */
+export function knownCategory(c: unknown): Category {
+  return typeof c === 'string' && Object.prototype.hasOwnProperty.call(CATEGORY_META, c)
+    ? (c as Category)
+    : 'text';
+}
+
 export interface CategoryStyle {
   bg: string;
   bgStrong: string;

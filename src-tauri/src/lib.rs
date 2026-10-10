@@ -402,7 +402,6 @@ pub fn run() {
             commands::update_content,
             commands::clear_history,
             commands::retry_embed_backfill,
-            commands::search_fts,
             commands::search_semantic,
             commands::strip_time,
             commands::strip_category,
@@ -558,12 +557,11 @@ pub fn run() {
                     }
                     "clear" => {
                         if let Some(db) = app.try_state::<Arc<crate::db::Db>>() {
-                            if let Ok(conn) = db.0.lock() {
-                                let _ = conn.execute(
-                                    "DELETE FROM items WHERE pinned = 0",
-                                    [],
-                                );
-                            }
+                            let conn = db.conn();
+                            let _ = conn.execute(
+                                "DELETE FROM items WHERE pinned = 0",
+                                [],
+                            );
                         }
                         let _ = app.emit("clip-swept", 0u32);
                     }

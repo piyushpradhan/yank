@@ -70,6 +70,26 @@ cargo test           # Backend (Rust)
 npm run test:watch
 ```
 
+### Chaos Monkey
+
+Seeded fault injection: hostile clipboard text, malformed images, FTS-breaking
+queries, corrupt/half-migrated SQLite files, panics under the DB lock, and a UI
+driven by random input against a backend that rejects, hangs and lags.
+
+```sh
+npm run chaos          # both suites
+npm run chaos:rust     # src-tauri/src/chaos.rs  (also part of `cargo test`)
+npm run chaos:ui       # src/test/app.chaos.tsx  (opt-in, not in `npm test`)
+
+# Replay a failure — the seed is printed with the findings
+CHAOS_SEED=1337 npm run chaos
+CHAOS_ITERS=800 npm run chaos:rust    # Rust: iterations per scenario (default 400)
+CHAOS_STEPS=300 npm run chaos:ui      # UI: random actions per session (default 120)
+```
+
+When a scenario fails it lists every finding at once. Fix the bug, keep the
+scenario; add a small unit test next to the code for the exact input.
+
 ### Git Commits
 
 - Use clear, descriptive commit messages

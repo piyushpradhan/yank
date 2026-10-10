@@ -92,7 +92,7 @@ fn snapshot_config(app: &AppHandle) -> EmbedConfig {
 
 fn load_pending(app: &AppHandle, model_id: &str, limit: i64) -> Vec<(i64, String)> {
     let db = app.state::<Arc<Db>>().inner().clone();
-    let conn = db.0.lock().unwrap();
+    let conn = db.conn();
     let mut stmt = conn
         .prepare(
             "SELECT id, category, COALESCE(label, ''), COALESCE(source, ''), content
@@ -158,7 +158,7 @@ fn build_doc_text(category: &str, label: &str, source: &str, content: &str) -> S
 
 fn store_embedding(app: &AppHandle, id: i64, vec: &[f32], model_id: &str) {
     let db = app.state::<Arc<Db>>().inner().clone();
-    let conn = db.0.lock().unwrap();
+    let conn = db.conn();
     let bytes = embed::to_bytes(vec);
     let _ = conn.execute(
         "UPDATE items SET embedding = ?1, embedding_model = ?2 WHERE id = ?3",

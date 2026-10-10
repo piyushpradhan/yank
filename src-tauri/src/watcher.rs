@@ -77,12 +77,18 @@ fn image_hash(img: &ImageData) -> u64 {
 pub fn encode_as_png(img: &ImageData) -> Result<Vec<u8>, String> {
     use image::{ImageBuffer, Rgba};
 
-    let pixels = img.width * img.height;
-    if pixels > MAX_PIXELS {
-        return Err(format!(
-            "Image too large ({pixels} px, limit {MAX_PIXELS})"
-        ));
-    }
+    let pixels = img
+        .width
+        .checked_mul(img.height)
+        .filter(|&p| p <= MAX_PIXELS)
+        .ok_or_else(|| {
+            format!(
+                "Image too large ({}x{}, limit {MAX_PIXELS} px)",
+                img.width, img.height
+            )
+        })?;
+    let w = u32::try_from(img.width).map_err(|e| e.to_string())?;
+    let h = u32::try_from(img.height).map_err(|e| e.to_string())?;
     let expected = pixels * 4;
     if img.bytes.len() != expected {
         return Err(format!(
@@ -91,12 +97,8 @@ pub fn encode_as_png(img: &ImageData) -> Result<Vec<u8>, String> {
         ));
     }
 
-    let buf = ImageBuffer::<Rgba<u8>, _>::from_raw(
-        img.width as u32,
-        img.height as u32,
-        img.bytes.to_vec(),
-    )
-    .ok_or("ImageBuffer creation failed")?;
+    let buf = ImageBuffer::<Rgba<u8>, _>::from_raw(w, h, img.bytes.to_vec())
+        .ok_or("ImageBuffer creation failed")?;
 
     let mut png = Vec::new();
     buf.write_to(
@@ -140,7 +142,7 @@ fn insert_text_and_emit(app: &AppHandle, text: &str, source: Option<String>) {
     let preview = make_preview(text);
     let db: Arc<Db> = app.state::<Arc<Db>>().inner().clone();
     let id = {
-        let conn = db.0.lock().unwrap();
+        let conn = db.conn();
 
         // If this exact content already exists (non-deleted), just bump its
         // last_used_at instead of inserting a duplicate.  This prevents every
@@ -190,7 +192,7 @@ fn insert_image_and_emit(app: &AppHandle, img: &ImageData, source: Option<String
     let preview = format!("{}×{} image", img.width, img.height);
     let db: Arc<Db> = app.state::<Arc<Db>>().inner().clone();
     let id = {
-        let conn = db.0.lock().unwrap();
+        let conn = db.conn();
         match crate::db::insert_image_item(&conn, &png, &preview, source.as_deref()) {
             Ok(id) => id,
             Err(err) => {

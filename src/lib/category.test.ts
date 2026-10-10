@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { CATEGORY_META, CATEGORIES, catStyle } from './category'
+import { CATEGORY_META, CATEGORIES, catStyle, knownCategory } from './category'
 import type { Theme } from './types'
 
 describe('CATEGORY_META', () => {
@@ -28,6 +28,17 @@ describe('CATEGORY_META', () => {
   it('has a unique mono code per category', () => {
     const monos = CATEGORIES.map((cat) => CATEGORY_META[cat].mono)
     expect(new Set(monos).size).toBe(CATEGORIES.length)
+  })
+})
+
+describe('knownCategory', () => {
+  it('falls back to text for unknown categories', () => {
+    expect(knownCategory('category-from-an-older-build')).toBe('text')
+    expect(knownCategory('toString')).toBe('text')
+  })
+
+  it('passes known categories through', () => {
+    expect(knownCategory('url')).toBe('url')
   })
 })
 
