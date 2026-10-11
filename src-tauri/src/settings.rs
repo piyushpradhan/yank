@@ -303,6 +303,29 @@ pub fn set_translucent(app: AppHandle, translucent: bool) -> Result<(), String> 
     Ok(())
 }
 
+const MONOCHROME_ICON_KEY: &str = "monochromeIcon";
+
+/// Default is `false` — the tray shows the orange app icon unless the user
+/// opts into the monochrome one from the tray menu.
+pub fn monochrome_icon_enabled(app: &AppHandle) -> bool {
+    let Ok(store) = app.store(STORE_PATH) else {
+        return false;
+    };
+    store
+        .get(MONOCHROME_ICON_KEY)
+        .and_then(|v| v.as_bool())
+        .unwrap_or(false)
+}
+
+/// Persist the choice and update the live tray icon to match.
+pub fn set_monochrome_icon(app: &AppHandle, enabled: bool) -> Result<(), String> {
+    let store = app.store(STORE_PATH).map_err(|e| e.to_string())?;
+    store.set(MONOCHROME_ICON_KEY, serde_json::json!(enabled));
+    store.save().map_err(|e| e.to_string())?;
+    crate::apply_tray_icon(app, enabled);
+    Ok(())
+}
+
 const PALETTE_SEMANTIC_DEFAULT_KEY: &str = "paletteSemanticDefault";
 
 /// Default is `false` — the palette opens in fuzzy mode unless the user opts
