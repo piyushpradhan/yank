@@ -36,7 +36,7 @@ tauri-plugin-autostart = "2"
 tauri-plugin-single-instance = "2"
 fastembed = { version = "4", default-features = false, features = ["ort-download-binaries", "hf-hub-rustls-tls"] }
 image = { version = "0.25", default-features = false, features = ["png"] }
-windows = { version = "0.60", features = ["Win32_Foundation", "Win32_UI_WindowsAndMessaging", "Win32_Graphics_Dwm"] }
+windows = { version = "0.60", features = ["Win32_Foundation", "Win32_UI_WindowsAndMessaging", "Win32_Graphics_Dwm", "Win32_Security", "Win32_System_Registry", "Win32_System_Threading"] }
 
 [target.'cfg(any(target_os = "macos", target_os = "windows", target_os = "linux"))'.dependencies]
 tauri-plugin-updater = "2"
@@ -56,6 +56,8 @@ enigo = { version = "0.2", default-features = false }
 # portal/XDG portal service that most distros do not ship, so it would be
 # dead weight. macOS never uses enigo (CGEvent handles paste there).
 enigo = { version = "0.2", default-features = false, features = ["x11rb", "wayland"] }
+# Already pulled in by tauri/wry; named here for gtk::Settings (tray glyph theme).
+gtk = "0.18"
 
 [dev-dependencies]
 tauri = { version = "2", features = ["test"] }

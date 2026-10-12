@@ -13,6 +13,7 @@ mod platform_info;
 pub mod query_intent;
 pub mod query_time;
 mod settings;
+mod tray_theme;
 mod watcher;
 
 use std::str::FromStr;
@@ -23,9 +24,9 @@ use std::sync::atomic::{AtomicIsize, Ordering};
 use std::sync::{Arc, Mutex, OnceLock};
 use tauri::{
     image::Image,
-    menu::{CheckMenuItem, Menu, MenuItem, PredefinedMenuItem},
+    menu::{CheckMenuItem, Menu, MenuItem, PredefinedMenuItem, Submenu},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
-    Emitter, Manager, Theme, WindowEvent,
+    Emitter, Manager, WindowEvent,
 };
 use tauri_plugin_autostart::ManagerExt;
 use tauri_plugin_global_shortcut::{
@@ -33,7 +34,7 @@ use tauri_plugin_global_shortcut::{
 };
 
 use crate::db::Db;
-use crate::settings::{get_loaded_shortcut, ShortcutConfig};
+use crate::settings::{get_loaded_shortcut, MonoIcon, ShortcutConfig};
 
 pub static SHORTCUT: OnceLock<Arc<Mutex<Option<Shortcut>>>> = OnceLock::new();
 
@@ -320,31 +321,23 @@ pub fn apply_translucency(_app: &tauri::AppHandle, _translucent: bool) {}
 const TRAY_WHITE: &[u8] = include_bytes!("../icons/tray-mono-white.png");
 const TRAY_DARK: &[u8] = include_bytes!("../icons/tray-mono-dark.png");
 
-/// macOS tints a template image itself, so it always gets the white glyph;
-/// elsewhere a light tray needs the dark one.
-fn mono_icon_bytes(light_tray: bool) -> &'static [u8] {
-    if light_tray && !cfg!(target_os = "macos") {
-        TRAY_DARK
-    } else {
-        TRAY_WHITE
-    }
+fn tray_icon(app: &tauri::AppHandle, mode: MonoIcon) -> Image<'_> {
+    let dark_glyph = match mode {
+        MonoIcon::Off => return app.default_window_icon().unwrap().clone(),
+        MonoIcon::Light => false,
+        MonoIcon::Dark => true,
+        // A light tray needs the dark glyph.
+        MonoIcon::Auto => tray_theme::is_light(),
+    };
+    Image::from_bytes(if dark_glyph { TRAY_DARK } else { TRAY_WHITE }).expect("bad tray icon")
 }
 
-fn tray_icon(app: &tauri::AppHandle, mono: bool) -> Image<'_> {
-    if !mono {
-        return app.default_window_icon().unwrap().clone();
-    }
-    // ponytail: window theme stands in for the tray's theme (Windows can differ).
-    let light = app.get_webview_window("library").and_then(|w| w.theme().ok()) == Some(Theme::Light);
-    Image::from_bytes(mono_icon_bytes(light)).expect("bad tray icon")
-}
-
-/// Swap the tray icon between the app icon and the monochrome one.
-pub fn apply_tray_icon(app: &tauri::AppHandle, mono: bool) {
+/// Swap the tray icon to match the chosen mode.
+pub fn apply_tray_icon(app: &tauri::AppHandle, mode: MonoIcon) {
     if let Some(tray) = app.tray_by_id("main-tray") {
-        let _ = tray.set_icon(Some(tray_icon(app, mono)));
-        // macOS: let the OS tint the white icon to match a light/dark menu bar.
-        let _ = tray.set_icon_as_template(mono);
+        let _ = tray.set_icon(Some(tray_icon(app, mode)));
+        // macOS: Auto is a template image, so the OS tints it for light/dark menu bars.
+        let _ = tray.set_icon_as_template(mode == MonoIcon::Auto);
     }
 }
 
@@ -511,15 +504,22 @@ pub fn run() {
                 MenuItem::with_id(app, "show_pinned", "Show Pinned", true, None::<&str>)?;
             let hide_i = MenuItem::with_id(app, "hide", "Hide Library", true, None::<&str>)?;
             let sep_a = PredefinedMenuItem::separator(app)?;
-            let mono_enabled = settings::monochrome_icon_enabled(app.handle());
-            let mono_i = CheckMenuItem::with_id(
-                app,
-                "monochrome",
-                "Use monochrome icon",
-                true,
-                mono_enabled,
-                None::<&str>,
-            )?;
+            let mono_mode = settings::monochrome_icon(app.handle());
+            // Radio group: one item checked at a time, kept in sync by the menu handler.
+            let mono_sub = Submenu::new(app, "Monochrome icon", true)?;
+            let mut mono_items = Vec::new();
+            for m in MonoIcon::ALL {
+                let item = CheckMenuItem::with_id(
+                    app,
+                    format!("mono-{}", m.id()),
+                    m.label(),
+                    true,
+                    m == mono_mode,
+                    None::<&str>,
+                )?;
+                mono_sub.append(&item)?;
+                mono_items.push((m, item));
+            }
             let autostart_enabled = app.autolaunch().is_enabled().unwrap_or(false);
             let autostart_i = CheckMenuItem::with_id(
                 app,
@@ -541,7 +541,7 @@ pub fn run() {
                     &show_pinned_i,
                     &hide_i,
                     &sep_a,
-                    &mono_i,
+                    &mono_sub,
                     &autostart_i,
                     &clear_i,
                     &sep_b,
@@ -551,8 +551,8 @@ pub fn run() {
 
             let _tray = TrayIconBuilder::with_id("main-tray")
                 .tooltip("Yank")
-                .icon(tray_icon(app.handle(), mono_enabled))
-                .icon_as_template(mono_enabled)
+                .icon(tray_icon(app.handle(), mono_mode))
+                .icon_as_template(mono_mode == MonoIcon::Auto)
                 .menu(&menu)
                 .show_menu_on_left_click(false)
                 .on_menu_event(move |app, event| match event.id.as_ref() {
@@ -585,11 +585,6 @@ pub fn run() {
                             set_dock_visible(app, false);
                         }
                     }
-                    "monochrome" => {
-                        let mono = !settings::monochrome_icon_enabled(app);
-                        let _ = settings::set_monochrome_icon(app, mono);
-                        let _ = mono_i.set_checked(mono);
-                    }
                     "autostart" => {
                         let mgr = app.autolaunch();
                         let enabled = mgr.is_enabled().unwrap_or(false);
@@ -616,7 +611,14 @@ pub fn run() {
                     "quit" => {
                         app.exit(0);
                     }
-                    _ => {}
+                    id => {
+                        if let Some(mode) = id.strip_prefix("mono-").and_then(MonoIcon::from_id) {
+                            let _ = settings::set_monochrome_icon(app, mode);
+                            for (m, item) in &mono_items {
+                                let _ = item.set_checked(*m == mode);
+                            }
+                        }
+                    }
                 })
                 .on_tray_icon_event(|tray, event| {
                     if let TrayIconEvent::Click {
@@ -641,19 +643,22 @@ pub fn run() {
                 })
                 .build(app)?;
 
+            let theme_app = app.handle().clone();
+            tray_theme::watch(move || {
+                if settings::monochrome_icon(&theme_app) == MonoIcon::Auto {
+                    apply_tray_icon(&theme_app, MonoIcon::Auto);
+                }
+            });
+
             if let Some(w) = app.get_webview_window("library") {
                 let wc = w.clone();
                 let app_handle = app.handle().clone();
-                w.on_window_event(move |event| match event {
-                    WindowEvent::CloseRequested { api, .. } => {
+                w.on_window_event(move |event| {
+                    if let WindowEvent::CloseRequested { api, .. } = event {
                         api.prevent_close();
                         let _ = wc.hide();
                         set_dock_visible(&app_handle, false);
                     }
-                    WindowEvent::ThemeChanged(_) if settings::monochrome_icon_enabled(&app_handle) => {
-                        apply_tray_icon(&app_handle, true);
-                    }
-                    _ => {}
                 });
             }
 
@@ -775,7 +780,7 @@ pub fn run() {
 
 #[cfg(test)]
 mod tests {
-    use super::{mono_icon_bytes, should_start_minimized, TRAY_DARK, TRAY_WHITE};
+    use super::{should_start_minimized, MonoIcon, TRAY_DARK, TRAY_WHITE};
 
     #[test]
     fn minimized_flag_is_detected() {
@@ -785,11 +790,11 @@ mod tests {
     }
 
     #[test]
-    fn mono_icon_matches_tray_background() {
-        assert_eq!(mono_icon_bytes(false), TRAY_WHITE);
-        // macOS tints the template itself, so it never needs the dark glyph.
-        let on_light = if cfg!(target_os = "macos") { TRAY_WHITE } else { TRAY_DARK };
-        assert_eq!(mono_icon_bytes(true), on_light);
+    fn mono_icon_ids_round_trip() {
+        for m in MonoIcon::ALL {
+            assert_eq!(MonoIcon::from_id(m.id()), Some(m));
+        }
+        assert_eq!(MonoIcon::from_id("bogus"), None);
     }
 
     #[test]

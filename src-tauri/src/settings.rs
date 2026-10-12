@@ -305,24 +305,65 @@ pub fn set_translucent(app: AppHandle, translucent: bool) -> Result<(), String> 
 
 const MONOCHROME_ICON_KEY: &str = "monochromeIcon";
 
-/// Default is `false` — the tray shows the orange app icon unless the user
-/// opts into the monochrome one from the tray menu.
-pub fn monochrome_icon_enabled(app: &AppHandle) -> bool {
+/// Tray icon style. `Off` is the orange app icon; the rest are the monochrome
+/// glyph, `Auto` picking its colour from the tray theme and `Light`/`Dark`
+/// forcing it (for panels whose colour we can't detect).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum MonoIcon {
+    Off,
+    Auto,
+    Light,
+    Dark,
+}
+
+impl MonoIcon {
+    /// Menu order.
+    pub const ALL: [MonoIcon; 4] = [Self::Off, Self::Auto, Self::Light, Self::Dark];
+
+    /// Stored value and tray menu id suffix.
+    pub fn id(self) -> &'static str {
+        match self {
+            Self::Off => "off",
+            Self::Auto => "auto",
+            Self::Light => "light",
+            Self::Dark => "dark",
+        }
+    }
+
+    /// Inverse of [`MonoIcon::id`]; `None` for anything unrecognised.
+    pub fn from_id(id: &str) -> Option<Self> {
+        Self::ALL.into_iter().find(|m| m.id() == id)
+    }
+
+    /// Tray menu text.
+    pub fn label(self) -> &'static str {
+        match self {
+            Self::Off => "Off",
+            Self::Auto => "Auto",
+            Self::Light => "Light icon",
+            Self::Dark => "Dark icon",
+        }
+    }
+}
+
+/// Default is `Off` — the tray shows the orange app icon unless the user
+/// opts into a monochrome one from the tray menu.
+pub fn monochrome_icon(app: &AppHandle) -> MonoIcon {
     let Ok(store) = app.store(STORE_PATH) else {
-        return false;
+        return MonoIcon::Off;
     };
     store
         .get(MONOCHROME_ICON_KEY)
-        .and_then(|v| v.as_bool())
-        .unwrap_or(false)
+        .and_then(|v| v.as_str().and_then(MonoIcon::from_id))
+        .unwrap_or(MonoIcon::Off)
 }
 
 /// Persist the choice and update the live tray icon to match.
-pub fn set_monochrome_icon(app: &AppHandle, enabled: bool) -> Result<(), String> {
+pub fn set_monochrome_icon(app: &AppHandle, mode: MonoIcon) -> Result<(), String> {
     let store = app.store(STORE_PATH).map_err(|e| e.to_string())?;
-    store.set(MONOCHROME_ICON_KEY, serde_json::json!(enabled));
+    store.set(MONOCHROME_ICON_KEY, serde_json::json!(mode.id()));
     store.save().map_err(|e| e.to_string())?;
-    crate::apply_tray_icon(app, enabled);
+    crate::apply_tray_icon(app, mode);
     Ok(())
 }
 
