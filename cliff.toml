@@ -1,0 +1,58 @@
+[changelog]
+header = """
+# Changelog
+
+Notable changes for each stable release of Yank. Generated with
+[git-cliff](https://git-cliff.org); existing entries can be edited for clarity.
+Historical entries were backfilled from Git tags and commit messages.
+
+"""
+body = """
+## [{{ version | trim_start_matches(pat="v") }}](https://github.com/piyushpradhan/yank/releases/tag/{{ version }}) - {{ timestamp | date(format="%Y-%m-%d") }}
+{% for group, commits in commits | group_by(attribute="group") %}
+{% if group != "Internal" %}
+### {{ group }}
+{% for commit in commits %}
+- {% if commit.breaking %}**BREAKING:** {% endif %}{% if commit.scope %}**{{ commit.scope }}:** {% endif %}{{ commit.message | split(pat="\n") | first | upper_first }} ([{{ commit.id | truncate(length=7, end="") }}](https://github.com/piyushpradhan/yank/commit/{{ commit.id }}))
+{% if commit.breaking_description %}  {{ commit.breaking_description }}
+{% endif %}{% endfor %}
+{% endif %}
+{% endfor %}
+{% set internal = commits | filter(attribute="group", value="Internal") %}
+{% if commits | length == internal | length %}
+### Maintenance
+
+- No user-facing changes in this release.
+{% endif %}
+{% if previous.version %}
+**Full changelog:** [{{ previous.version }}...{{ version }}](https://github.com/piyushpradhan/yank/compare/{{ previous.version }}...{{ version }})
+{% else %}
+**Full changelog:** [{{ version }}](https://github.com/piyushpradhan/yank/commits/{{ version }})
+{% endif %}
+
+"""
+trim = true
+render_always = true
+format = true
+
+[git]
+conventional_commits = true
+filter_unconventional = false
+protect_breaking_commits = true
+commit_parsers = [
+  { message = '^\w+(\([^)]*\))?!:', group = "Breaking Changes" },
+  { footer = 'BREAKING[ -]CHANGE:', group = "Breaking Changes" },
+  # Keep internal commits in the context so tags with no notable changes render.
+  { message = '^(Merge |merge:|t3 checkpoint)', group = "Internal" },
+  { message = '(?i)^chore(\(release\))?: (bump( version| to)|sync (Cargo\.lock|lockfiles|version)|release\b|v[0-9])', group = "Internal" },
+  { message = '^feat', group = "Added" },
+  { message = '^fix', group = "Fixed" },
+  { message = '^security', group = "Security" },
+  { message = '^perf', group = "Performance" },
+  { message = '^(refactor|style|polish|refine|quality)', group = "Changed" },
+  { message = '^docs?', group = "Documentation" },
+  { message = '^(test|ci|build|chore)', group = "Maintenance" },
+  { message = '.*', group = "Changed" },
+]
+tag_pattern = '^v[0-9]+\.[0-9]+\.[0-9]+$'
+sort_commits = "oldest"

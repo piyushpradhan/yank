@@ -96,6 +96,44 @@ scenario; add a small unit test next to the code for the exact input.
 - Prefix with type: `feat:`, `fix:`, `quality:`, `chore:`
 - Example: `feat: add semantic search toggle` or `fix: clipboard polling race condition`
 
+### Changelogs and releases
+
+Every stable `vX.Y.Z` tag gets its own changelog entry, including patch,
+minor, and major releases. [git-cliff](https://git-cliff.org) groups commit
+messages using `cliff.toml`; use descriptions that explain the change to users.
+Mark breaking changes with `!` (for example `feat!: change storage format`) and
+include a `BREAKING CHANGE:` footer with upgrade instructions.
+
+The release workflow generates notes for the exact tag, publishes only that
+version's entry on GitHub, and saves it to `CHANGELOG.md` alongside the version
+bump. GitHub's generated PR notes and contributor credits are appended. Merge
+commits and routine version bumps are excluded. Tags without notable changes
+still get a maintenance entry. Existing entries are preserved, so you can edit
+generated summaries or write a version's notes before tagging it.
+
+```sh
+git fetch origin --tags
+npm run changelog                 # Backfill through the latest stable tag
+npm run changelog -- v0.7.69       # Backfill through a specific tag
+npm run test:changelog            # Check generation and release isolation
+```
+
+Historical dates come from Git tags; backfilled summaries come from commit
+messages and may need editorial cleanup. A tag from a separate Git history can
+be backfilled explicitly with the same command. Regeneration preserves edits.
+
+Pushes to `main` continue to create patch releases automatically. To release a
+minor or major version, tag the intended commit and push that tag (replace the
+example with the intended version):
+
+```sh
+git tag -a v0.8.0 -m "Release v0.8.0"
+git push origin v0.8.0
+```
+
+If pushing a commit and its release tag together, use `git push --atomic origin
+main v0.8.0` so auto-tagging sees the manual tag and skips its patch bump.
+
 ## Building
 
 ```sh
