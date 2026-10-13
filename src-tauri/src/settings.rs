@@ -348,7 +348,7 @@ impl MonoIcon {
 
 /// Default is `Off` — the tray shows the orange app icon unless the user
 /// opts into a monochrome one from the tray menu.
-pub fn monochrome_icon(app: &AppHandle) -> MonoIcon {
+pub fn monochrome_icon<R: tauri::Runtime>(app: &AppHandle<R>) -> MonoIcon {
     let Ok(store) = app.store(STORE_PATH) else {
         return MonoIcon::Off;
     };
@@ -359,10 +359,21 @@ pub fn monochrome_icon(app: &AppHandle) -> MonoIcon {
 }
 
 /// Persist the choice and update the live tray icon to match.
-pub fn set_monochrome_icon(app: &AppHandle, mode: MonoIcon) -> Result<(), String> {
+pub fn set_monochrome_icon<R: tauri::Runtime>(
+    app: &AppHandle<R>,
+    mode: MonoIcon,
+) -> Result<(), String> {
     let store = app.store(STORE_PATH).map_err(|e| e.to_string())?;
+    let previous = store.get(MONOCHROME_ICON_KEY);
     store.set(MONOCHROME_ICON_KEY, serde_json::json!(mode.id()));
-    store.save().map_err(|e| e.to_string())?;
+    if let Err(error) = store.save() {
+        if let Some(previous) = previous {
+            store.set(MONOCHROME_ICON_KEY, previous);
+        } else {
+            store.delete(MONOCHROME_ICON_KEY);
+        }
+        return Err(error.to_string());
+    }
     crate::apply_tray_icon(app, mode);
     Ok(())
 }
@@ -391,4 +402,76 @@ pub fn set_palette_semantic_default(app: AppHandle, enabled: bool) -> Result<(),
     // picks up the new default without a restart.
     let _ = app.emit("palette-semantic-default-changed", enabled);
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::path::Path;
+    use tauri::test::{mock_builder, mock_context, noop_assets, MockRuntime};
+    use tauri_plugin_store::Store;
+
+    fn with_store(test: impl FnOnce(&AppHandle<MockRuntime>, &Store<MockRuntime>, &Path)) {
+        let mut context = mock_context(noop_assets());
+        let nonce = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        context.config_mut().identifier =
+            format!("com.getyank.settings-test-{}-{nonce}", std::process::id());
+        let app = mock_builder()
+            .plugin(tauri_plugin_store::Builder::default().build())
+            .build(context)
+            .unwrap();
+        let store = app
+            .store_builder(STORE_PATH)
+            .disable_auto_save()
+            .build()
+            .unwrap();
+        let dir = app.path().app_data_dir().unwrap();
+        test(app.handle(), &store, &dir.join(STORE_PATH));
+        drop(store);
+        drop(app);
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn monochrome_choice_is_saved_without_changing_other_settings() {
+        with_store(|app, store, path| {
+            store.set("otherSetting", serde_json::json!(42));
+            set_monochrome_icon(app, MonoIcon::Dark).unwrap();
+            assert_eq!(monochrome_icon(app), MonoIcon::Dark);
+            let saved: serde_json::Value =
+                serde_json::from_slice(&std::fs::read(path).unwrap()).unwrap();
+            assert_eq!(saved[MONOCHROME_ICON_KEY], "dark");
+            assert_eq!(saved["otherSetting"], 42);
+        });
+    }
+
+    #[test]
+    fn monochrome_save_failure_restores_previous_choice() {
+        with_store(|app, store, path| {
+            store.set(MONOCHROME_ICON_KEY, serde_json::json!("light"));
+            store.save().unwrap();
+            // A directory at the settings file path makes writes fail on every OS.
+            std::fs::remove_file(path).unwrap();
+            std::fs::create_dir(path).unwrap();
+            assert!(set_monochrome_icon(app, MonoIcon::Dark).is_err());
+            assert_eq!(monochrome_icon(app), MonoIcon::Light);
+            assert_eq!(
+                store.get(MONOCHROME_ICON_KEY),
+                Some(serde_json::json!("light"))
+            );
+        });
+    }
+
+    #[test]
+    fn monochrome_save_failure_preserves_unset_choice() {
+        with_store(|app, store, path| {
+            std::fs::create_dir_all(path).unwrap();
+            assert!(set_monochrome_icon(app, MonoIcon::Auto).is_err());
+            assert_eq!(monochrome_icon(app), MonoIcon::Off);
+            assert_eq!(store.get(MONOCHROME_ICON_KEY), None);
+        });
+    }
 }

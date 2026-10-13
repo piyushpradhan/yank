@@ -321,7 +321,7 @@ pub fn apply_translucency(_app: &tauri::AppHandle, _translucent: bool) {}
 const TRAY_WHITE: &[u8] = include_bytes!("../icons/tray-mono-white.png");
 const TRAY_DARK: &[u8] = include_bytes!("../icons/tray-mono-dark.png");
 
-fn tray_icon(app: &tauri::AppHandle, mode: MonoIcon) -> Image<'_> {
+fn tray_icon<R: tauri::Runtime>(app: &tauri::AppHandle<R>, mode: MonoIcon) -> Image<'_> {
     let dark_glyph = match mode {
         MonoIcon::Off => return app.default_window_icon().unwrap().clone(),
         MonoIcon::Light => false,
@@ -333,7 +333,7 @@ fn tray_icon(app: &tauri::AppHandle, mode: MonoIcon) -> Image<'_> {
 }
 
 /// Swap the tray icon to match the chosen mode.
-pub fn apply_tray_icon(app: &tauri::AppHandle, mode: MonoIcon) {
+pub fn apply_tray_icon<R: tauri::Runtime>(app: &tauri::AppHandle<R>, mode: MonoIcon) {
     if let Some(tray) = app.tray_by_id("main-tray") {
         let _ = tray.set_icon(Some(tray_icon(app, mode)));
         // macOS: Auto is a template image, so the OS tints it for light/dark menu bars.
@@ -613,9 +613,13 @@ pub fn run() {
                     }
                     id => {
                         if let Some(mode) = id.strip_prefix("mono-").and_then(MonoIcon::from_id) {
-                            let _ = settings::set_monochrome_icon(app, mode);
+                            if let Err(error) = settings::set_monochrome_icon(app, mode) {
+                                eprintln!("Failed to save monochrome tray icon setting: {error}");
+                            }
+                            // Check items toggle before the event, including failed saves.
+                            let selected = settings::monochrome_icon(app);
                             for (m, item) in &mono_items {
-                                let _ = item.set_checked(*m == mode);
+                                let _ = item.set_checked(*m == selected);
                             }
                         }
                     }
@@ -645,9 +649,13 @@ pub fn run() {
 
             let theme_app = app.handle().clone();
             tray_theme::watch(move || {
-                if settings::monochrome_icon(&theme_app) == MonoIcon::Auto {
-                    apply_tray_icon(&theme_app, MonoIcon::Auto);
-                }
+                let app = theme_app.clone();
+                // Read the mode when applying the update, after any pending menu selection.
+                let _ = theme_app.run_on_main_thread(move || {
+                    if settings::monochrome_icon(&app) == MonoIcon::Auto {
+                        apply_tray_icon(&app, MonoIcon::Auto);
+                    }
+                });
             });
 
             if let Some(w) = app.get_webview_window("library") {
