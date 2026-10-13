@@ -4,6 +4,14 @@ Notable changes for each stable release of Yank. Generated with
 [git-cliff](https://git-cliff.org); existing entries can be edited for clarity.
 Historical entries were backfilled from Git tags and commit messages.
 
+## [0.7.71](https://github.com/piyushpradhan/yank/releases/tag/v0.7.71) - 2026-10-13
+
+### Maintenance
+
+- **release:** Generate versioned changelogs ([d581a9c](https://github.com/piyushpradhan/yank/commit/d581a9c55c8ea95c6a5d9f4ae0bdfc12b996bed1))
+
+**Full changelog:** [v0.7.70...v0.7.71](https://github.com/piyushpradhan/yank/compare/v0.7.70...v0.7.71)
+
 ## [0.7.70](https://github.com/piyushpradhan/yank/releases/tag/v0.7.70) - 2026-10-13
 
 ### Fixed
