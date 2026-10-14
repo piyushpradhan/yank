@@ -4,6 +4,14 @@ Notable changes for each stable release of Yank. Generated with
 [git-cliff](https://git-cliff.org); existing entries can be edited for clarity.
 Historical entries were backfilled from Git tags and commit messages.
 
+## [0.7.72](https://github.com/piyushpradhan/yank/releases/tag/v0.7.72) - 2026-10-14
+
+### Added
+
+- Add opt-in Umami usage telemetry ([e99fe6f](https://github.com/piyushpradhan/yank/commit/e99fe6f3b5131aa2b89f18890f3f2340dce18fdd))
+
+**Full changelog:** [v0.7.71...v0.7.72](https://github.com/piyushpradhan/yank/compare/v0.7.71...v0.7.72)
+
 ## [0.7.71](https://github.com/piyushpradhan/yank/releases/tag/v0.7.71) - 2026-10-13
 
 ### Maintenance
