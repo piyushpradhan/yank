@@ -13,6 +13,7 @@ mod platform_info;
 pub mod query_intent;
 pub mod query_time;
 mod settings;
+mod telemetry;
 mod tray_theme;
 mod watcher;
 
@@ -450,6 +451,9 @@ pub fn run() {
             settings::set_translucent,
             settings::get_palette_semantic_default,
             settings::set_palette_semantic_default,
+            telemetry::get_telemetry_preferences,
+            telemetry::set_telemetry_enabled,
+            telemetry::track_usage,
             platform_info::platform_info,
         ])
         .setup(move |app| {
@@ -471,6 +475,7 @@ pub fn run() {
             let settings_state = settings::init(app.handle());
             app.manage(settings::SettingsState(settings_state));
             app.manage(local_embed::LocalState::new());
+            telemetry::init(app.handle());
 
             watcher::spawn(app.handle().clone());
             commands::spawn_sweeper(app.handle().clone());
@@ -654,6 +659,11 @@ pub fn run() {
                 let wc = w.clone();
                 let app_handle = app.handle().clone();
                 w.on_window_event(move |event| {
+                    if let WindowEvent::Focused(true) = event {
+                        telemetry::record(&app_handle, telemetry::TelemetryEvent::WindowFocused {
+                            surface: telemetry::Surface::Library,
+                        });
+                    }
                     if let WindowEvent::CloseRequested { api, .. } = event {
                         api.prevent_close();
                         let _ = wc.hide();
@@ -687,7 +697,13 @@ pub fn run() {
                 }
 
                 let wc = w.clone();
+                let telemetry_app = app.handle().clone();
                 w.on_window_event(move |event| match event {
+                    WindowEvent::Focused(true) => {
+                        telemetry::record(&telemetry_app, telemetry::TelemetryEvent::WindowFocused {
+                            surface: telemetry::Surface::Palette,
+                        });
+                    }
                     WindowEvent::CloseRequested { api, .. } => {
                         api.prevent_close();
                         let _ = wc.hide();

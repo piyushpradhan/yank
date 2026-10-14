@@ -2,6 +2,8 @@ import type { ReactNode } from 'react';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useImageUrl } from '../hooks/useImageUrl';
 import { useWindowSize } from '../hooks/useWindowSize';
+import { useSearchTelemetry } from '../hooks/useSearchTelemetry';
+import { trackFeature } from '../lib/telemetry';
 import { listen } from '@tauri-apps/api/event';
 import { CATEGORIES, CATEGORY_META } from '../lib/category';
 import { groupByTime, highlightMatch, searchItems } from '../lib/search';
@@ -64,6 +66,7 @@ interface LibraryProps {
   app: AppState;
   /** Whether semantic search (embedding) provider is active. */
   semanticAvailable: boolean;
+  searchProvider?: 'local' | 'jev' | 'disabled';
   /** When semantic is unavailable, the reason in human-readable form. Drives
    *  the inline strip in the empty state so users know *why* it's off. */
   semanticOffMessage: string | null;
@@ -460,6 +463,7 @@ export function Library({
   previewMode,
   app,
   semanticAvailable,
+  searchProvider = 'local',
   semanticOffMessage,
   anthropicEnabled,
   aiActive,
@@ -491,6 +495,13 @@ export function Library({
   const [localPreview, setLocalPreview] = useState<PreviewMode>(previewMode);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [previewOverlayOpen, setPreviewOverlayOpen] = useState(false);
+  const lastFilter = useRef(filter);
+  useEffect(() => {
+    if (lastFilter.current !== filter) {
+      trackFeature('library', 'category_filter', filter === 'all' || filter === 'pinned' ? null : filter);
+      lastFilter.current = filter;
+    }
+  }, [filter]);
 
   const { width: viewportWidth } = useWindowSize();
   const sidebarFloating = viewportWidth < SIDEBAR_BREAKPOINT;
@@ -558,6 +569,7 @@ export function Library({
 
   const [semanticResults, setSemanticResults] = useState<typeof app.items | null>(null);
   const [semanticError, setSemanticError] = useState<string | null>(null);
+  const [settledQuery, setSettledQuery] = useState<string | null>(null);
   const [detectedTime, setDetectedTime] = useState<TimeWindowDto | null>(null);
   const [detectedCategory, setDetectedCategory] = useState<Category | null>(null);
 
@@ -577,11 +589,13 @@ export function Library({
       return;
     }
     let cancelled = false;
+    setSettledQuery(null);
     const h = setTimeout(() => {
       app
         .semanticSearch(query, 50)
         .then((resp) => {
           if (cancelled) return;
+          setSettledQuery(query);
           setSemanticResults(resp.items);
           setDetectedTime(resp.timeWindow);
           setDetectedCategory(resp.category);
@@ -589,6 +603,7 @@ export function Library({
         })
         .catch((err: unknown) => {
           if (cancelled) return;
+          setSettledQuery(query);
           const msg = err instanceof Error ? err.message : typeof err === 'string' ? err : 'failed';
           setSemanticError(msg);
           setSemanticResults([]);
@@ -608,6 +623,7 @@ export function Library({
   }, [query, mode, app.semanticSearch, semanticAvailable]);
 
   const dismissTimeChip = useCallback(async () => {
+    trackFeature('library', 'dismiss_date_filter');
     try {
       const stripped = await invoke<string>('strip_time', { query });
       setQuery(stripped);
@@ -619,6 +635,7 @@ export function Library({
   }, [query]);
 
   const dismissCategoryChip = useCallback(async () => {
+    trackFeature('library', 'dismiss_category_filter');
     try {
       const stripped = await invoke<string>('strip_category', { query });
       setQuery(stripped);
@@ -636,6 +653,15 @@ export function Library({
     }
     return searchItems(filterStage, query);
   }, [filterStage, query, mode, semanticResults]);
+
+  useSearchTelemetry({
+    query, mode, surface: 'library', results: searched,
+    ready: mode === 'fuzzy' || !semanticAvailable || settledQuery === query,
+    provider: mode === 'fuzzy' ? 'fuzzy' : searchProvider,
+    status: mode !== 'semantic' ? 'success' : !semanticAvailable ? 'unavailable' : semanticError ? 'error' : 'success',
+    timeFilter: mode === 'semantic' && !!detectedTime,
+    categoryFilter: filter !== 'all' || (mode === 'semantic' && !!detectedCategory),
+  });
 
   const counts = useMemo(() => {
     const c: Record<string, number> = {
@@ -771,6 +797,7 @@ export function Library({
       if (current && current.category !== 'image') contentEditingFor(current.id)(true);
     } else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'i') {
       e.preventDefault();
+      trackFeature('library', 'preview');
       if (previewAllowed) {
         setLocalPreview((p) => (p === 'split' ? 'inline' : 'split'));
       } else if (current) {
@@ -1057,7 +1084,7 @@ export function Library({
                     }
                     variant={previewOverlayOpen ? 'primary' : 'ghost'}
                     size="sm"
-                    onClick={() => setPreviewOverlayOpen((v) => !v)}
+                    onClick={() => { trackFeature('library', 'preview'); setPreviewOverlayOpen((v) => !v); }}
                   />
                 </Tooltip>
               )}

@@ -13,6 +13,7 @@ import {
 } from 'react-icons/lu';
 import { IS_MAC } from '../lib/platform';
 import type { BackfillState } from '../hooks/useAppState';
+import { trackFeature } from '../lib/telemetry';
 
 interface TitleBarProps {
   aiActive: boolean;
@@ -125,6 +126,7 @@ function BackfillPill({ backfill }: { backfill: BackfillState }) {
           type="button"
           onClick={(e) => {
             e.stopPropagation();
+            trackFeature('library', 'retry_embeddings');
             void invoke('retry_embed_backfill');
           }}
           style={{

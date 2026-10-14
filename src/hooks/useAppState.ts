@@ -6,6 +6,7 @@ import { truncate } from "../lib/time";
 import { knownCategory } from "../lib/category";
 import type { ClipItem, SemanticSearchResponse, Toast, ToastKind } from "../lib/types";
 import { evictImageUrl } from "./useImageUrl";
+import { captureUsageReporter, notifyClipUsed, type UsageSurface } from '../lib/telemetry';
 
 export interface BackfillState {
   remaining: number;
@@ -62,7 +63,7 @@ async function fetchItems(): Promise<ClipItem[]> {
   }
 }
 
-export function useAppState(): AppState {
+export function useAppState(surface: UsageSurface = 'library'): AppState {
   const [items, setItems] = useState<ClipItem[]>([]);
   const [toast, setToast] = useState<Toast | null>(null);
   const [backfill, setBackfill] = useState<BackfillState | null>(null);
@@ -152,6 +153,7 @@ export function useAppState(): AppState {
 
   const copyItem = useCallback(
     async (id: string, contentOverride?: string) => {
+      const report = captureUsageReporter();
       const it = itemsRef.current.find((i) => i.id === id);
       if (!it) return false;
       try {
@@ -161,6 +163,7 @@ export function useAppState(): AppState {
           await writeText(contentOverride ?? it.content);
         }
       } catch (err) {
+        report({ name: 'operation_failed', surface, operation: 'copy' });
         console.error("clipboard write failed", err);
         showToast("Copy failed", "info");
         return false;
@@ -170,74 +173,86 @@ export function useAppState(): AppState {
         (err) => console.error("touch_item failed", err),
       );
       showToast(`Copied "${truncate(it.label, 40)}"`, "copy");
+      report({ name: 'feature_used', surface, feature: contentOverride !== undefined && contentOverride !== it.content ? 'copy_edited' : 'copy', category: it.category });
+      notifyClipUsed(id);
       return true;
     },
-    [refresh, showToast],
+    [refresh, showToast, surface],
   );
 
   const pinItem = useCallback(
     (id: string) => {
+      const report = captureUsageReporter();
       invoke<boolean>("pin_item", { id }).then(
         (nowPinned) => {
+          report({ name: 'feature_used', surface, feature: nowPinned ? 'pin' : 'unpin', category: null });
           void refresh();
           showToast(nowPinned ? "Pinned" : "Unpinned", "pin");
         },
-        (err) => console.error("pin_item failed", err),
+        (err) => { report({ name: 'operation_failed', surface, operation: 'pin' }); console.error("pin_item failed", err); },
       );
     },
-    [refresh, showToast],
+    [refresh, showToast, surface],
   );
 
   const deleteItem = useCallback(
     (id: string) => {
+      const report = captureUsageReporter();
       const it = itemsRef.current.find((i) => i.id === id);
       invoke("delete_item", { id }).then(
         () => {
+          report({ name: 'feature_used', surface, feature: 'delete', category: it?.category ?? null });
           if (it?.category === "image") evictImageUrl(id);
           void refresh();
           const undo = () => {
+            const reportUndo = captureUsageReporter();
             invoke("restore_item", { id }).then(
-              () => void refresh(),
-              (err) => console.error("restore_item failed", err),
+              () => { reportUndo({ name: 'feature_used', surface, feature: 'restore', category: null }); void refresh(); },
+              (err) => { reportUndo({ name: 'operation_failed', surface, operation: 'restore' }); console.error("restore_item failed", err); },
             );
           };
           showToast("Deleted", "delete", undo);
         },
-        (err) => console.error("delete_item failed", err),
+        (err) => { report({ name: 'operation_failed', surface, operation: 'delete' }); console.error("delete_item failed", err); },
       );
     },
-    [refresh, showToast],
+    [refresh, showToast, surface],
   );
 
   const updateLabel = useCallback(
     (id: string, label: string) => {
+      const report = captureUsageReporter();
+      const wasLabeled = itemsRef.current.find((item) => item.id === id)?.labelGenerated;
       // Optimistic: show the new title now instead of after the round-trip.
       setItems((prev) =>
         prev.map((it) => (it.id === id ? { ...it, label, labelGenerated: true } : it)),
       );
       invoke("update_label", { id, label }).then(
-        () => void refresh(),
+        () => { report({ name: 'feature_used', surface, feature: wasLabeled ? 'rename_labeled_clip' : 'rename', category: null }); void refresh(); },
         (err) => {
+          report({ name: 'operation_failed', surface, operation: 'rename' });
           console.error("update_label failed", err);
           void refresh();
         },
       );
     },
-    [refresh],
+    [refresh, surface],
   );
 
   const updateContent = useCallback(
     (id: string, content: string) => {
+      const report = captureUsageReporter();
       setItems((prev) => prev.map((it) => (it.id === id ? { ...it, content } : it)));
       invoke("update_content", { id, content }).then(
-        () => void refresh(),
+        () => { report({ name: 'feature_used', surface, feature: 'edit', category: null }); void refresh(); },
         (err) => {
+          report({ name: 'operation_failed', surface, operation: 'edit' });
           console.error("update_content failed", err);
           void refresh();
         },
       );
     },
-    [refresh],
+    [refresh, surface],
   );
 
   const semanticSearch = useCallback(

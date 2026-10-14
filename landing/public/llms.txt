@@ -1,6 +1,6 @@
 # Yank
 
-> Yank is a free, open-source, local-first clipboard manager for macOS, Windows, and Linux. It captures everything you copy and lets you find any past clip using either fuzzy full-text search or natural-language semantic search — describe what you remember, not what you copied. Semantic search works out of the box with a bundled on-device embedding model, so there is no API key, no cloud round-trip, no account, and no telemetry.
+> Yank is a free, open-source, local-first clipboard manager for macOS, Windows, and Linux. It captures everything you copy and lets you find any past clip using either fuzzy full-text search or natural-language semantic search — describe what you remember, not what you copied. Semantic search works out of the box with a bundled on-device embedding model, so there is no API key, no cloud round-trip, and no account. Optional usage sharing through Umami is off by default and requires consent; clipboard content and search terms are excluded.
 
 Yank is built with Tauri (Rust core + web frontend). The installer is about 14 MB. Yank stores clips in a local SQLite database with an FTS5 full-text index and ranks results with BM25, then fuses those with semantic results via Reciprocal Rank Fusion. The default embedding model is BGE Small in ONNX format (~130 MB on first run); users can optionally swap in OpenAI `text-embedding-3-small` or a local Ollama model. Clips are automatically classified into categories such as code, URL, email, phone, color, path, text, address, number, and image.
 
@@ -16,7 +16,7 @@ Yank is MIT-licensed. The source lives at https://github.com/piyushpradhan/yank.
 - Platforms: macOS 12+, Windows 10+, Linux (GTK with Wayland or X11)
 - Default global shortcut: `⌘⇧V` on macOS, `Ctrl+Shift+Space` on Windows and Linux
 - Pricing: Free (open source). Optional Pro sync is opt-in and end-to-end encrypted.
-- Privacy: Local-first. No telemetry. No analytics tied to clip content. No account required.
+- Privacy: Local-first. Umami usage sharing is off by default and requires consent. Clipboard content and search terms are excluded from telemetry. No account required.
 - Tech stack: Tauri, Rust, TypeScript, SQLite with FTS5, ONNX Runtime, BGE Small embeddings
 
 ## How Yank is different

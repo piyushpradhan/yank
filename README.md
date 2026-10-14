@@ -141,10 +141,14 @@ make install && make build
 
 ## Privacy
 
-- All data stored locally in SQLite — never leaves your machine
+- Clipboard history is stored locally in SQLite
 - Fuzzy and default semantic search are fully local; only the opt-in TypeSafe provider sends your query and matching clip contents off-device
-- Network calls only for the one-time model download, or if you configure TypeSafe or Anthropic
-- No telemetry, no analytics, no accounts
+- Network calls support model downloads, updates, optional TypeSafe/Anthropic features, and usage sharing if you enable it
+- Usage sharing through Umami is **off by default**. A one-time prompt asks for permission; change your choice in **Tweaks → shield icon → Privacy & usage**
+- Usage statistics contain feature names, coarse result counts, timings, app version, OS, and a random installation ID. No clipboard content, images, search terms, titles, source apps, file paths, or API keys are sent in telemetry
+- Turning sharing off stops pending telemetry and resets the random ID. No account is required
+
+See [the telemetry guide](docs/telemetry.md) for events, privacy boundaries, and reading desktop insights in Umami.
 
 ## Let's Build Together
 

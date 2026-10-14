@@ -8,6 +8,9 @@ import { Toast } from './components/Toast';
 import { TweaksPanel } from './components/TweaksPanel';
 import { UpdateBanner } from './components/UpdateBanner';
 import { WelcomeModal } from './components/WelcomeModal';
+import { PrivacyPanel } from './components/PrivacyPanel';
+import { useTelemetryPreferences } from './hooks/useTelemetryPreferences';
+import { trackFeature } from './lib/telemetry';
 import { useAppState } from './hooks/useAppState';
 import { isSemanticAvailable, useSettings } from './hooks/useSettings';
 import { useUpdater } from './hooks/useUpdater';
@@ -29,10 +32,12 @@ function App() {
   const [tweaksOpen, setTweaksOpen] = useState(false);
   const [aiOpen, setAiOpen] = useState(false);
   const [keymapOpen, setKeymapOpen] = useState(false);
+  const [privacyOpen, setPrivacyOpen] = useState(false);
   const [shortcut, setShortcut] = useState<ShortcutConfig | null>(null);
   // null = still loading; true = already dismissed; false = show welcome.
   const [hintDismissed, setHintDismissed] = useState<boolean | null>(null);
-  const app = useAppState();
+  const app = useAppState('library');
+  const telemetry = useTelemetryPreferences();
   const { settings, save: saveSettings } = useSettings();
   const updater = useUpdater();
   const { setTheme } = useTheme();
@@ -78,6 +83,7 @@ function App() {
       .then((v) => setHintDismissed(v))
       .catch(() => setHintDismissed(true));
     const onKey = (e: KeyboardEvent) => {
+      if (document.querySelector('dialog[open]')) return;
       if (e.key === '?') {
         const target = e.target as HTMLElement | null;
         if (
@@ -104,8 +110,8 @@ function App() {
       <Stack fullHeight fullWidth>
         <TitleBar
           aiActive={settings.provider !== 'disabled'}
-          onOpenAI={() => setAiOpen(true)}
-          onToggleTweaks={() => setTweaksOpen((v) => !v)}
+          onOpenAI={() => { trackFeature('library', 'ai_settings'); setAiOpen(true); }}
+          onToggleTweaks={() => { trackFeature('library', 'settings'); setTweaksOpen((v) => !v); }}
           backfill={app.backfill}
         />
         <Box grow={1} style={{ minHeight: 0, position: 'relative' }}>
@@ -116,11 +122,12 @@ function App() {
             previewMode={tweaks.previewMode}
             app={app}
             semanticAvailable={semanticAvailable}
+            searchProvider={settings.provider}
             initialMode={tweaks.paletteSemanticDefault && semanticAvailable ? 'semantic' : 'fuzzy'}
             semanticOffMessage={semanticOffMessage}
             anthropicEnabled={anthropicEnabled}
             aiActive={settings.provider !== 'disabled'}
-            onOpenAI={() => setAiOpen(true)}
+            onOpenAI={() => { trackFeature('library', 'ai_settings'); setAiOpen(true); }}
           />
         </Box>
       </Stack>
@@ -129,6 +136,7 @@ function App() {
         <AIPanel
           settings={settings}
           onChange={(next) => {
+            if (next.provider !== settings.provider) trackFeature('library', 'provider_changed');
             void saveSettings(next);
             app.resetProviderHealth();
           }}
@@ -144,6 +152,7 @@ function App() {
           onShortcutChange={setShortcut}
           updater={updater}
           onClose={() => setTweaksOpen(false)}
+          onOpenPrivacy={() => { setTweaksOpen(false); setPrivacyOpen(true); }}
           onAfterClear={() => {
             void app.refresh();
             app.showToast('History cleared', 'delete');
@@ -192,6 +201,18 @@ function App() {
             setTweaks((prev) => ({ ...prev, autostart: autostartEnabled }));
             setHintDismissed(true);
           }}
+        />
+      )}
+
+      {hintDismissed === true && (privacyOpen || telemetry.preferences?.prompt_handled === false) && (
+        <PrivacyPanel
+          consent={!telemetry.preferences?.prompt_handled}
+          preferences={telemetry.preferences}
+          saving={telemetry.saving}
+          error={telemetry.error}
+          onChoose={telemetry.choose}
+          onRetry={telemetry.retry}
+          onClose={() => setPrivacyOpen(false)}
         />
       )}
 

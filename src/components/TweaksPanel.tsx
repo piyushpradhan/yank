@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { openUrl } from '@tauri-apps/plugin-opener';
 import { Box, Button, Card, IconButton, Inline, Kbd, Overline, Stack, Switch, Text } from 'ember-design-system';
-import { LuArrowUpRight, LuMoon, LuSun, LuX } from 'react-icons/lu';
+import { LuArrowUpRight, LuMoon, LuShieldCheck, LuSun, LuX } from 'react-icons/lu';
+import { captureUsageReporter } from '../lib/telemetry';
 import { getKeyIcon } from '../lib/keyIcons';
 import type { Updater } from '../hooks/useUpdater';
 import { IS_LINUX } from '../lib/platform';
@@ -23,6 +24,7 @@ interface TweaksPanelProps {
   onShortcutChange: (next: ShortcutConfig) => void;
   updater: Updater;
   onClose: () => void;
+  onOpenPrivacy: () => void;
   onAfterClear?: () => void;
 }
 
@@ -225,6 +227,7 @@ export function TweaksPanel({
   onShortcutChange,
   updater,
   onClose,
+  onOpenPrivacy,
   onAfterClear,
 }: TweaksPanelProps) {
   const set = <K extends keyof Tweaks>(k: K, v: Tweaks[K]) => onChange({ ...tweaks, [k]: v });
@@ -252,10 +255,12 @@ export function TweaksPanel({
   }, [onClose]);
 
   const clear = async () => {
+    const report = captureUsageReporter();
     setClearing(true);
     setClearError(null);
     try {
       await invoke('clear_history');
+      report({ name: 'feature_used', surface: 'library', feature: 'clear_history', category: null });
       onAfterClear?.();
       setClearArmed(false);
     } catch (err: unknown) {
@@ -516,6 +521,21 @@ export function TweaksPanel({
               {updater.status.kind === 'downloading' ? ' · downloading…' : ''}
             </Text>
           </button>
+          <Inline gap={2} align="center">
+            <Box position="relative" shrink={0} style={{ width: 16, height: 16 }}>
+              <IconButton
+                aria-label="Privacy & usage"
+                title="Privacy & usage"
+                icon={<LuShieldCheck size={13} />}
+                variant="ghost"
+                size="sm"
+                onClick={onOpenPrivacy}
+                style={{
+                  position: 'absolute', top: '50%', left: '50%',
+                  transform: 'translate(-50%, -50%)',
+                }}
+              />
+            </Box>
           <button
             type="button"
             onClick={() => {
@@ -541,6 +561,7 @@ export function TweaksPanel({
             </Text>
             <LuArrowUpRight size={11} aria-hidden />
           </button>
+          </Inline>
         </Inline>
         {updater.status.kind === 'error' && (
           <Text as="div" size={11} tone="danger" style={{ marginTop: 6 }}>

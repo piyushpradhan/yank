@@ -163,12 +163,15 @@ fn insert_text_and_emit(app: &AppHandle, text: &str, source: Option<String>) {
                 &preview,
                 source.as_deref(),
             ) {
-                Ok(id) => id,
+                Ok(id) => {
+                    crate::telemetry::captured(app, category);
+                    id
+                }
                 Err(err) => {
                     eprintln!("[watcher] insert failed: {err}");
                     return;
                 }
-            },
+            }
             Err(err) => {
                 eprintln!("[watcher] dedup check failed: {err}");
                 return;
@@ -194,7 +197,10 @@ fn insert_image_and_emit(app: &AppHandle, img: &ImageData, source: Option<String
     let id = {
         let conn = db.conn();
         match crate::db::insert_image_item(&conn, &png, &preview, source.as_deref()) {
-            Ok(id) => id,
+            Ok(id) => {
+                crate::telemetry::captured(app, "image");
+                id
+            },
             Err(err) => {
                 eprintln!("[watcher] insert image failed: {err}");
                 return;

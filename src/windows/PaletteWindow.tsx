@@ -5,6 +5,7 @@ import { listen } from '@tauri-apps/api/event';
 import { Box, useTheme } from 'ember-design-system';
 import { Palette } from './Palette';
 import { useAppState } from '../hooks/useAppState';
+import { useTelemetryPreferences } from '../hooks/useTelemetryPreferences';
 import { isSemanticAvailable, useSettings } from '../hooks/useSettings';
 import { buildTheme } from '../lib/theme';
 import type { SearchMode, ThemeMode, Tweaks } from '../lib/types';
@@ -21,7 +22,8 @@ export function PaletteWindow() {
   const [tweaks, setTweaks] = useState<Tweaks>(DEFAULT_TWEAKS);
   const [translucent, setTranslucent] = useState(false);
   const [semanticDefault, setSemanticDefault] = useState(false);
-  const app = useAppState();
+  const app = useAppState('palette');
+  useTelemetryPreferences();
   const { settings } = useSettings();
   const { setTheme } = useTheme();
 
@@ -113,6 +115,7 @@ export function PaletteWindow() {
         onClose={close}
         translucent={translucent}
         semanticAvailable={semanticAvailable}
+        searchProvider={settings.provider}
         semanticOffMessage={semanticOffMessage}
         anthropicEnabled={anthropicEnabled}
         initialMode={initialMode}

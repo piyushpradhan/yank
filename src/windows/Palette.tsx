@@ -32,6 +32,8 @@ import { TitleInput, type TitleInputHandle } from '../components/TitleInput';
 import { ContentEditor } from '../components/ContentEditor';
 import { MdKeyboardBackspace, MdKeyboardReturn } from 'react-icons/md';
 import { IS_LINUX } from '../lib/platform';
+import { useSearchTelemetry } from '../hooks/useSearchTelemetry';
+import { captureUsageReporter } from '../lib/telemetry';
 
 // Stable no-op so useImageUrl's effect deps stay stable for non-image rows.
 const NO_IMAGE = (): Promise<Blob | null> => Promise.resolve(null);
@@ -200,6 +202,7 @@ interface PaletteProps {
   onClose: () => void;
   /** Whether semantic search (embedding) provider is active. */
   semanticAvailable: boolean;
+  searchProvider?: 'local' | 'jev' | 'disabled';
   /** Human-readable reason semantic is off (drives the inline empty-state and
    *  the one-shot toast when the user switches to semantic mode). */
   semanticOffMessage: string | null;
@@ -221,6 +224,7 @@ export function Palette({
   app,
   onClose,
   semanticAvailable,
+  searchProvider = 'local',
   semanticOffMessage,
   anthropicEnabled,
   translucent = false,
@@ -234,6 +238,8 @@ export function Palette({
   const [semanticResults, setSemanticResults] = useState<ClipItem[] | null>(null);
   const [semanticError, setSemanticError] = useState<string | null>(null);
   const [semanticLoading, setSemanticLoading] = useState(false);
+  const [settledQuery, setSettledQuery] = useState<string | null>(null);
+  const [searchFilters, setSearchFilters] = useState({ time: false, category: false });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState('');
   const [renamingId, setRenamingId] = useState<string | null>(null);
@@ -340,17 +346,22 @@ export function Palette({
     }
     let cancelled = false;
     setSemanticLoading(true);
+    setSettledQuery(null);
     setSemanticError(null);
     const h = setTimeout(() => {
       app
         .semanticSearch(query, 20)
         .then((resp) => {
           if (cancelled) return;
+          setSettledQuery(query);
           setSemanticResults(resp.items);
+          setSearchFilters({ time: !!resp.timeWindow, category: !!resp.category });
           setSemanticLoading(false);
         })
         .catch((err: unknown) => {
           if (cancelled) return;
+          setSettledQuery(query);
+          setSearchFilters({ time: false, category: false });
           const msg =
             err instanceof Error
               ? err.message
@@ -384,6 +395,16 @@ export function Palette({
     const ordered = [...pinned, ...rest];
     return searchItems(ordered, query);
   }, [app.items, query, mode, semanticResults]);
+
+  useSearchTelemetry({
+    query, mode, surface: 'palette',
+    results: mode === 'semantic' && (semanticError || !semanticAvailable) ? [] : results,
+    ready: mode === 'fuzzy' || !semanticAvailable || settledQuery === query,
+    provider: mode === 'fuzzy' ? 'fuzzy' : searchProvider,
+    status: mode !== 'semantic' ? 'success' : !semanticAvailable ? 'unavailable' : semanticError ? 'error' : 'success',
+    timeFilter: mode === 'semantic' && searchFilters.time,
+    categoryFilter: mode === 'semantic' && searchFilters.category,
+  });
 
   const MAX_VISIBLE = 8;
   const displayResults = results.slice(0, MAX_VISIBLE);
@@ -449,9 +470,11 @@ export function Palette({
   }, [selected]);
 
   const pasteItem = async (item: ClipItem, content = item.content) => {
+    const report = captureUsageReporter();
     if (!(await app.copyItem(item.id, content))) return;
     invoke<string>('paste_to_frontmost_app')
       .then((outcome) => {
+        report({ name: 'paste_completed', outcome: outcome === 'copied' ? 'copied' : 'pasted' });
         if (outcome === 'copied') {
           // The clipboard is set but the compositor refused synthesized input
           // (e.g. GNOME/Mutter Wayland). Keep the palette open briefly so the
@@ -467,6 +490,7 @@ export function Palette({
         }
       })
       .catch((err) => {
+        report({ name: 'paste_completed', outcome: 'failed' });
         console.error('auto-paste failed', err);
         onClose();
       });
