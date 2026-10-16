@@ -4,10 +4,10 @@ mod color_names;
 mod clipboard_privacy;
 #[cfg(target_os = "linux")]
 mod clipboard_privacy_wayland;
-mod commands;
+pub mod commands;
 pub mod db;
 pub mod embed;
-mod embed_queue;
+pub mod embed_queue;
 pub mod jev;
 mod label;
 mod label_queue;
