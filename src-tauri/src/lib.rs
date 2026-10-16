@@ -1,10 +1,10 @@
 mod categorize;
 mod color_intent;
 mod color_names;
-mod commands;
+pub mod commands;
 pub mod db;
 pub mod embed;
-mod embed_queue;
+pub mod embed_queue;
 pub mod jev;
 mod label;
 mod label_queue;

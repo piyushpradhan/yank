@@ -93,6 +93,13 @@ fn snapshot_config(app: &AppHandle) -> EmbedConfig {
 fn load_pending(app: &AppHandle, model_id: &str, limit: i64) -> Vec<(i64, String)> {
     let db = app.state::<Arc<Db>>().inner().clone();
     let conn = db.conn();
+    pending_docs(&conn, model_id, limit)
+}
+
+/// Clips without a current `model_id` embedding, most recently used first,
+/// paired with the document text to embed. Public so the eval indexes its
+/// corpus exactly as the queue does.
+pub fn pending_docs(conn: &rusqlite::Connection, model_id: &str, limit: i64) -> Vec<(i64, String)> {
     let mut stmt = conn
         .prepare(
             "SELECT id, category, COALESCE(label, ''), COALESCE(source, ''), content
@@ -159,6 +166,10 @@ fn build_doc_text(category: &str, label: &str, source: &str, content: &str) -> S
 fn store_embedding(app: &AppHandle, id: i64, vec: &[f32], model_id: &str) {
     let db = app.state::<Arc<Db>>().inner().clone();
     let conn = db.conn();
+    store(&conn, id, vec, model_id);
+}
+
+pub fn store(conn: &rusqlite::Connection, id: i64, vec: &[f32], model_id: &str) {
     let bytes = embed::to_bytes(vec);
     let _ = conn.execute(
         "UPDATE items SET embedding = ?1, embedding_model = ?2 WHERE id = ?3",

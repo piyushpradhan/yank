@@ -460,9 +460,25 @@ pub async fn search_semantic(
     settings: State<'_, crate::settings::SettingsState>,
     local: State<'_, crate::local_embed::LocalState>,
 ) -> Result<SearchResponse, String> {
-    use crate::embed::{EmbedConfig, EmbedTask, Provider};
+    let cfg = settings.0.read().map_err(|e| e.to_string())?.clone();
+    let cache_dir = crate::local_embed::cache_dir(&app);
+    search_core(db.inner(), &cfg, local.inner(), cache_dir, &query, limit.unwrap_or(20)).await
+}
 
-    let cfg: EmbedConfig = settings.0.read().map_err(|e| e.to_string())?.clone();
+/// The whole of `search_semantic` minus Tauri state, so the eval harness
+/// (`examples/eval_semantic.rs`) measures exactly what users get. Date
+/// phrases ("yesterday") resolve against this machine's clock and local
+/// timezone via `Local::now()`.
+pub async fn search_core(
+    db: &Arc<Db>,
+    cfg: &crate::embed::EmbedConfig,
+    local: &crate::local_embed::LocalState,
+    model_cache_dir: std::path::PathBuf,
+    query: &str,
+    limit: usize,
+) -> Result<SearchResponse, String> {
+    use crate::embed::{EmbedTask, Provider};
+
     if !cfg.is_active() {
         return Err("semantic search not configured".into());
     }
@@ -470,7 +486,6 @@ pub async fn search_semantic(
     if q_trimmed.is_empty() {
         return Ok(SearchResponse { items: Vec::new(), time_window: None, category: None });
     }
-    let limit = limit.unwrap_or(20);
 
     // Pull any date phrase out of the query before judging it. The residue
     // ("semantic") is what gets ranked against candidates; the window
@@ -512,13 +527,12 @@ pub async fn search_semantic(
 
     // Jev's noul is a 0–1 probability while RRF tops out near 2/(K+1) ≈ 0.033,
     // so the additive boosts below are scaled to each provider's range.
-    let db: Arc<Db> = db.inner().clone();
     let (mut fused, cat_boost, color_boost): (Scored, f32, f32) = match cfg.provider {
         Provider::Local => {
             // Embed outside the DB lock.
             let q_vec = crate::local_embed::embed_local(
-                local.inner(),
-                crate::local_embed::cache_dir(&app),
+                local,
+                model_cache_dir,
                 &cfg.local_model,
                 &semantic_q,
                 EmbedTask::Query,
@@ -528,7 +542,7 @@ pub async fn search_semantic(
             let scores = rrf_scores(&conn, &q_vec, &cfg.model_id(), &semantic_q, time_bounds)?;
             (scores, 0.010, 0.06)
         }
-        _ => (jev_scores(&db, &cfg, &semantic_q, time_bounds).await?, 0.05, 0.10),
+        _ => (jev_scores(db, cfg, &semantic_q, time_bounds).await?, 0.05, 0.10),
     };
 
     let conn = db.conn();
@@ -629,13 +643,39 @@ fn rrf_scores(
     semantic_q: &str,
     time_bounds: Option<(i64, i64)>,
 ) -> Result<Scored, String> {
-    // Pools are wider than `limit` because RRF re-ranks before we trim.
-    const VEC_POOL: usize = 50;
+    // Pool is wider than `limit` because RRF re-ranks before we trim.
     const FTS_POOL: usize = 50;
-    // Loose floor — RRF does the ranking; this drops clearly orthogonal vectors.
-    const VEC_THRESHOLD: f32 = 0.15;
     // Standard RRF constant; dampens runaway rank differences between pools.
     const RRF_K: f32 = 60.0;
+
+    let vec_pool = vector_pool(conn, q_vec, model_id, time_bounds)?;
+    let fts_pool = bm25_pool(conn, semantic_q, FTS_POOL, time_bounds).unwrap_or_default();
+
+    let mut fused = Scored::new();
+    for pool in [vec_pool, fts_pool] {
+        for (rank, item) in pool.into_iter().enumerate() {
+            let contribution = 1.0 / (RRF_K + rank as f32 + 1.0);
+            fused
+                .entry(item.id.clone())
+                .and_modify(|(s, _)| *s += contribution)
+                .or_insert((contribution, item));
+        }
+    }
+    Ok(fused)
+}
+
+/// Vector half of [`rrf_scores`]: stored embeddings for `model_id` ranked by
+/// cosine to `q_vec`, best first. Public so the eval can score this stage
+/// on its own.
+pub fn vector_pool(
+    conn: &rusqlite::Connection,
+    q_vec: &[f32],
+    model_id: &str,
+    time_bounds: Option<(i64, i64)>,
+) -> Result<Vec<ClipItem>, String> {
+    const VEC_POOL: usize = 50;
+    // Loose floor — RRF does the ranking; this drops clearly orthogonal vectors.
+    const VEC_THRESHOLD: f32 = 0.15;
 
     let (from_ms, to_ms) = time_bounds.unwrap_or((i64::MIN, i64::MAX));
     let mut stmt = conn
@@ -647,7 +687,7 @@ fn rrf_scores(
                AND created_at BETWEEN ?2 AND ?3",
         )
         .map_err(map_err)?;
-    let mut vec_pool: Vec<(f32, ClipItem)> = stmt
+    let mut pool: Vec<(f32, ClipItem)> = stmt
         .query_map(params![model_id, from_ms, to_ms], |row| {
             let item = row_to_item(row)?;
             let bytes: Vec<u8> = row.get("embedding")?;
@@ -657,23 +697,9 @@ fn rrf_scores(
         .filter_map(|r| r.ok())
         .filter(|(score, _)| *score >= VEC_THRESHOLD)
         .collect();
-    vec_pool.sort_by(|a, b| b.0.partial_cmp(&a.0).unwrap_or(std::cmp::Ordering::Equal));
-    vec_pool.truncate(VEC_POOL);
-
-    let fts_pool = bm25_pool(conn, semantic_q, FTS_POOL, time_bounds).unwrap_or_default();
-
-    let mut fused = Scored::new();
-    let vec_items: Vec<ClipItem> = vec_pool.into_iter().map(|(_, item)| item).collect();
-    for pool in [vec_items, fts_pool] {
-        for (rank, item) in pool.into_iter().enumerate() {
-            let contribution = 1.0 / (RRF_K + rank as f32 + 1.0);
-            fused
-                .entry(item.id.clone())
-                .and_modify(|(s, _)| *s += contribution)
-                .or_insert((contribution, item));
-        }
-    }
-    Ok(fused)
+    pool.sort_by(|a, b| b.0.partial_cmp(&a.0).unwrap_or(std::cmp::Ordering::Equal));
+    pool.truncate(VEC_POOL);
+    Ok(pool.into_iter().map(|(_, item)| item).collect())
 }
 
 /// Jev provider: BM25 shortlist re-ranked by TypeSafe's `noul` probability in
@@ -776,7 +802,7 @@ fn items_in_window(
 /// multi-token residues (precision) and falls back to OR-prefix (recall)
 /// to top up the pool. Returns an empty Vec when the tokeniser rejects
 /// the query (rare — usually only-punctuation residues).
-fn bm25_pool(
+pub fn bm25_pool(
     conn: &rusqlite::Connection,
     query: &str,
     limit: usize,
