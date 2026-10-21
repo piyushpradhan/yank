@@ -32,6 +32,34 @@ pub fn spawn(app: AppHandle) {
                 Ok(value) => *value,
                 Err(_) => continue,
             };
+            #[cfg(target_os = "linux")]
+            match crate::clipboard_privacy_wayland::capture(enabled) {
+                crate::clipboard_privacy_wayland::Capture::Unsupported => {}
+                crate::clipboard_privacy_wayland::Capture::Skip => continue,
+                crate::clipboard_privacy_wayland::Capture::Contents { text, image } => {
+                    let Ok(guard) = policy.0.read() else {
+                        continue;
+                    };
+                    if *guard != enabled {
+                        continue;
+                    }
+                    if let Some(img) = image {
+                        let hash = image_hash(&img);
+                        if last_image_hash != Some(hash) {
+                            insert_image_and_emit(&app, &img, active_window_title());
+                            last_image_hash = Some(hash);
+                        }
+                    } else if let Some(text) = text.filter(|text| !text.trim().is_empty()) {
+                        if last_text.as_deref() != Some(text.as_str())
+                            && insert_text_and_emit(&app, &text, active_window_title(), enabled)
+                                == Some(true)
+                        {
+                            last_text = Some(text);
+                        }
+                    }
+                    continue;
+                }
+            }
             let before = match privacy_snapshot(&mut inspector) {
                 Ok(snapshot) => snapshot,
                 Err(_) => {

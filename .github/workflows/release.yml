@@ -234,6 +234,14 @@ jobs:
           # identically on every runner.
           perl -pi -e "s/^version = \"[^\"]*\"/version = \"$VERSION\"/" src-tauri/Cargo.toml
 
+      - name: Wayland clipboard privacy regression tests
+        if: matrix.os == 'ubuntu-22.04'
+        shell: bash
+        run: |
+          export XDG_RUNTIME_DIR=$(mktemp -d)
+          trap 'rm -rf "$XDG_RUNTIME_DIR"' EXIT
+          CARGO_TARGET_DIR="$PWD/src-tauri/target" cargo test --manifest-path src-tauri/vendor/wl-clipboard-rs/Cargo.toml
+
       - name: Build Tauri release bundles
         shell: bash
         env:

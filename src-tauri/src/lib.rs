@@ -2,6 +2,8 @@ mod categorize;
 mod color_intent;
 mod color_names;
 mod clipboard_privacy;
+#[cfg(target_os = "linux")]
+mod clipboard_privacy_wayland;
 mod commands;
 pub mod db;
 pub mod embed;

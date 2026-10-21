@@ -4,15 +4,23 @@ Notable changes for each stable release of Yank. Generated with
 [git-cliff](https://git-cliff.org); existing entries can be edited for clarity.
 Historical entries were backfilled from Git tags and commit messages.
 
-## [0.7.73](https://github.com/piyushpradhan/yank/releases/tag/v0.7.73) - 2026-10-21
+## [0.7.74](https://github.com/piyushpradhan/yank/releases/tag/v0.7.74) - 2026-10-21
 
 ### Added
 
 - Skip sensitive copies before saving clipboard history, with on-device detection enabled by default in Tweaks → Privacy & usage.
-- Recognize card numbers, formatted or labeled US Social Security numbers, labeled credentials, supported token patterns, and private-key headers. Respect confidential clipboard markers on macOS, Windows, and X11.
+- Recognize card numbers, formatted or labeled US Social Security numbers, labeled credentials, supported token patterns, and private-key headers. Respect confidential clipboard markers on macOS, Windows, X11, and supported native Wayland compositors.
 - Document the exact exclusions and detection limits in the [sensitive-copy policy](https://github.com/piyushpradhan/yank/blob/main/docs/sensitive-copies.md). Normal paste still works; existing history is unchanged.
 
-**Full changelog:** [v0.7.72...v0.7.73](https://github.com/piyushpradhan/yank/compare/v0.7.72...v0.7.73)
+### Fixed
+
+- Bind native Wayland privacy checks and text/image reads to the same clipboard offer, preventing a backend mismatch from bypassing sensitive-copy protection.
+
+**Full changelog:** [v0.7.72...v0.7.74](https://github.com/piyushpradhan/yank/compare/v0.7.72...v0.7.74)
+
+## [0.7.73](https://github.com/piyushpradhan/yank/releases/tag/v0.7.73) - 2026-10-21
+
+Release canceled before publication after a Wayland privacy issue was found. Included in 0.7.74.
 
 ## [0.7.72](https://github.com/piyushpradhan/yank/releases/tag/v0.7.72) - 2026-10-14
 

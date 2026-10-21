@@ -7597,8 +7597,6 @@ dependencies = [
 [[package]]
 name = "wl-clipboard-rs"
 version = "0.9.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e9651471a32e87d96ef3a127715382b2d11cc7c8bb9822ded8a7cc94072eb0a3"
 dependencies = [
  "libc",
  "log",
@@ -7735,7 +7733,7 @@ checksum = "7a5a4b21e1a62b67a2970e6831bc091d7b87e119e7f9791aef9702e3bef04448"
 
 [[package]]
 name = "yank"
-version = "0.7.72"
+version = "0.7.73"
 dependencies = [
  "arboard",
  "chrono",
@@ -7764,6 +7762,7 @@ dependencies = [
  "tokio",
  "uuid",
  "windows 0.60.0",
+ "wl-clipboard-rs",
  "x11rb",
 ]
 

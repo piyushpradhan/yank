@@ -60,6 +60,10 @@ enigo = { version = "0.2", default-features = false, features = ["x11rb", "wayla
 # Already pulled in by tauri/wry; named here for gtk::Settings (tray glyph theme).
 gtk = "0.18"
 x11rb = { version = "0.13.2", features = ["xfixes"] }
+wl-clipboard-rs = "0.9.3"
 
 [dev-dependencies]
 tauri = { version = "2", features = ["test"] }
+
+[patch.crates-io]
+wl-clipboard-rs = { path = "vendor/wl-clipboard-rs" }

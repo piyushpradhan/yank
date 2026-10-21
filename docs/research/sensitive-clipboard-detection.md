@@ -60,7 +60,7 @@ These values are documented by [Microsoft][windows-formats] and implemented in [
 - Where the value is accessible, `secret` means skip; `public` is not proof the content is safe.
 - If the hint exists but cannot be read, conservative skip follows wl-clipboard’s behavior, at the cost of possible false positives.
 - Handle `CLIPBOARD` and `PRIMARY` independently if both are supported. Do not silently begin recording selection content as part of this feature.
-- Wayland support depends on the compositor and available clipboard protocols. Yank currently declares `arboard = "3.6.1"` without its optional `wayland-data-control` feature; do not advertise universal Wayland coverage based on an X11 test.
+- Wayland support depends on the compositor and available clipboard protocols. Although Yank declares `arboard = "3.6.1"` without optional features, tauri-plugin-clipboard-manager enables `wayland-data-control` transitively through Cargo feature unification. The implemented policy therefore checks native Wayland offers as well as X11. Do not infer runtime backend selection from a single dependency declaration or advertise universal compositor support from an X11 test.
 
 Sources: [Klipper][klipper], [wl-paste][wl-paste], [arboard feature declarations][arboard-cargo].
 
