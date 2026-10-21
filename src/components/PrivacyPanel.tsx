@@ -1,4 +1,6 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { invoke } from '@tauri-apps/api/core';
+import { listen } from '@tauri-apps/api/event';
 import { Box, Button, Card, IconButton, Inline, Stack, Switch, Text } from 'ember-design-system';
 import { LuShieldCheck, LuX } from 'react-icons/lu';
 import type { TelemetryPreferences } from '../lib/telemetry';
@@ -23,6 +25,43 @@ export function PrivacyPanel({
   onClose,
 }: PrivacyPanelProps) {
   const dialog = useRef<HTMLDialogElement>(null);
+  const [skipSensitive, setSkipSensitive] = useState<boolean | null>(null);
+  const [captureSaving, setCaptureSaving] = useState(false);
+  const [captureError, setCaptureError] = useState<string | null>(null);
+  useEffect(() => {
+    if (consent) return;
+    let active = true;
+    let changed = false;
+    const unlisten = listen<boolean>('capture-privacy-changed', ({ payload }) => {
+      changed = true;
+      if (active) setSkipSensitive(payload);
+    });
+    void unlisten
+      .then(() => invoke<boolean>('get_skip_sensitive_copies'))
+      .then((enabled) => {
+        if (active && !changed) setSkipSensitive(enabled);
+      })
+      .catch(() => {
+        if (active) setCaptureError('Could not load clipboard privacy settings. Reopen to retry.');
+      });
+    return () => {
+      active = false;
+      void unlisten.then((stop) => stop()).catch(() => {});
+    };
+  }, [consent]);
+
+  const chooseCapture = async (enabled: boolean) => {
+    setCaptureSaving(true);
+    setCaptureError(null);
+    try {
+      const saved = await invoke<boolean>('set_skip_sensitive_copies', { enabled });
+      setSkipSensitive(saved);
+    } catch {
+      setCaptureError('Could not save clipboard privacy settings. Try again.');
+    } finally {
+      setCaptureSaving(false);
+    }
+  };
   useEffect(() => {
     const element = dialog.current;
     element?.showModal();
@@ -34,7 +73,7 @@ export function PrivacyPanel({
     }
   };
   const dismiss = () => {
-    if (saving) return;
+    if (saving || captureSaving) return;
     if (consent) void choose(false);
     else onClose();
   };
@@ -60,7 +99,7 @@ export function PrivacyPanel({
               icon={<LuX size={16} />}
               variant="ghost"
               size="sm"
-              disabled={saving}
+              disabled={saving || captureSaving}
               onClick={dismiss}
             />
           </Inline>
@@ -69,10 +108,43 @@ export function PrivacyPanel({
               {consent ? 'Help make Yank better?' : 'Privacy & usage'}
             </Text>
             <Text id="privacy-description" size={13} tone="secondary" leading={1.6}>
-              Share usage statistics to help improve features and search reliability. Sharing is
-              optional and off by default.
+              {consent
+                ? 'Share usage statistics to help improve features and search reliability. Sharing is optional and off by default.'
+                : 'Control what Yank saves and whether to share optional usage statistics.'}
             </Text>
           </Stack>
+          {!consent && (
+            <Stack gap={2} p={4} radius="md" bg="subtle">
+              <Inline justify="between" align="center" gap={3}>
+                <label htmlFor="skip-sensitive-copies">
+                  <Text size={13} weight="medium">
+                    Skip sensitive copies
+                  </Text>
+                </label>
+                <Switch
+                  id="skip-sensitive-copies"
+                  aria-label="Skip sensitive copies"
+                  aria-describedby="capture-privacy-description"
+                  checked={skipSensitive ?? true}
+                  disabled={captureSaving || skipSensitive === null}
+                  onChange={(event) => void chooseCapture(event.currentTarget.checked)}
+                />
+              </Inline>
+              <Text id="capture-privacy-description" size={12} tone="secondary" leading={1.6}>
+                Keep recognized card numbers, Social Security numbers, and credentials out of new
+                clipboard history. Detection runs on this device; normal paste still works.
+              </Text>
+              <Text size={11.5} tone="tertiary" leading={1.6}>
+                Copies marked confidential by their app are always skipped. Some unmarked passwords
+                and images cannot be detected. Existing history is unchanged.
+              </Text>
+              {captureError && (
+                <Text role="alert" size={12} tone="danger">
+                  {captureError}
+                </Text>
+              )}
+            </Stack>
+          )}
           <Stack gap={3} p={4} radius="md" bg="subtle">
             <Text size={12} leading={1.6} tone="secondary">
               <Text as="b" tone="primary">

@@ -4,7 +4,9 @@ use std::time::Duration;
 use tauri::{AppHandle, Emitter, Manager};
 
 use crate::categorize::{categorize, make_preview};
+use crate::clipboard_privacy::{Inspector, Snapshot};
 use crate::db::Db;
+use crate::settings::CapturePrivacyState;
 
 /// Hard cap: skip images larger than this to avoid unbounded memory / storage.
 const MAX_PIXELS: usize = 50_000_000;
@@ -20,16 +22,59 @@ pub fn spawn(app: AppHandle) {
         };
         let mut last_text: Option<String> = None;
         let mut last_image_hash: Option<u64> = None;
+        let mut inspector = None;
+        let mut last_seen = None;
         loop {
             std::thread::sleep(Duration::from_millis(500));
 
+            let policy = app.state::<CapturePrivacyState>();
+            let enabled = match policy.0.read() {
+                Ok(value) => *value,
+                Err(_) => continue,
+            };
+            let before = match privacy_snapshot(&mut inspector) {
+                Ok(snapshot) => snapshot,
+                Err(_) => {
+                    last_seen = None;
+                    continue;
+                }
+            };
+            if last_seen == Some((before, enabled)) {
+                continue;
+            }
+            if before.marked {
+                last_seen = Some((before, enabled));
+                continue;
+            }
+
             if let Ok(img) = cb.get_image() {
+                // Some offers provide both an image and text. Do not let the
+                // preferred image representation bypass a detectable secret.
+                if enabled
+                    && cb
+                        .get_text()
+                        .is_ok_and(|text| crate::sensitive::detect(&text).is_some())
+                {
+                    last_seen = Some((before, enabled));
+                    continue;
+                }
+                if !snapshot_still_public(&mut inspector, before) {
+                    last_seen = None;
+                    continue;
+                }
+                let Ok(guard) = policy.0.read() else {
+                    continue;
+                };
+                if *guard != enabled {
+                    continue;
+                }
                 let hash = image_hash(&img);
                 if last_image_hash != Some(hash) {
                     last_image_hash = Some(hash);
                     let source = active_window_title();
                     insert_image_and_emit(&app, &img, source);
                 }
+                last_seen = Some((before, enabled));
                 continue;
             }
 
@@ -38,17 +83,49 @@ pub fn spawn(app: AppHandle) {
                 Ok(t) => t,
                 Err(_) => continue,
             };
+            if !snapshot_still_public(&mut inspector, before) {
+                last_seen = None;
+                continue;
+            }
             if text.trim().is_empty() {
+                last_seen = Some((before, enabled));
+                continue;
+            }
+            // Enabling protection waits for pending writes using the old policy.
+            let Ok(guard) = policy.0.read() else {
+                continue;
+            };
+            if *guard != enabled {
                 continue;
             }
             if last_text.as_deref() == Some(text.as_str()) {
+                last_seen = Some((before, enabled));
                 continue;
             }
-            last_text = Some(text.clone());
             let source = active_window_title();
-            insert_text_and_emit(&app, &text, source);
+            if let Some(stored) = insert_text_and_emit(&app, &text, source, enabled) {
+                if stored {
+                    last_text = Some(text);
+                }
+                last_seen = Some((before, enabled));
+            }
         }
     });
+}
+
+fn privacy_snapshot(inspector: &mut Option<Inspector>) -> Result<Snapshot, ()> {
+    if inspector.is_none() {
+        *inspector = Some(Inspector::new()?);
+    }
+    let result = inspector.as_mut().ok_or(())?.snapshot();
+    if result.is_err() {
+        *inspector = None;
+    }
+    result
+}
+
+fn snapshot_still_public(inspector: &mut Option<Inspector>, before: Snapshot) -> bool {
+    privacy_snapshot(inspector).is_ok_and(|after| before.unchanged_and_public(after))
 }
 
 /// Samples bytes spread across the image for collision-resistant hashing.
@@ -58,16 +135,14 @@ pub fn spawn(app: AppHandle) {
 fn image_hash(img: &ImageData) -> u64 {
     let b = &img.bytes;
     let n = b.len();
-    let mut h = (img.width as u64)
-        .wrapping_mul(0x9e3779b97f4a7c15)
+    let mut h = (img.width as u64).wrapping_mul(0x9e3779b97f4a7c15)
         ^ (img.height as u64).wrapping_mul(0x6c62272e07bb0142);
     if n == 0 {
         return h;
     }
     let step = (n / 64).max(1);
     for (pos, i) in (0..n).step_by(step).take(64).enumerate() {
-        h ^= (b[i] as u64)
-            .wrapping_mul((pos as u64 + 1).wrapping_mul(0x517cc1b727220a95));
+        h ^= (b[i] as u64).wrapping_mul((pos as u64 + 1).wrapping_mul(0x517cc1b727220a95));
     }
     h
 }
@@ -101,11 +176,8 @@ pub fn encode_as_png(img: &ImageData) -> Result<Vec<u8>, String> {
         .ok_or("ImageBuffer creation failed")?;
 
     let mut png = Vec::new();
-    buf.write_to(
-        &mut std::io::Cursor::new(&mut png),
-        image::ImageFormat::Png,
-    )
-    .map_err(|e| e.to_string())?;
+    buf.write_to(&mut std::io::Cursor::new(&mut png), image::ImageFormat::Png)
+        .map_err(|e| e.to_string())?;
     Ok(png)
 }
 
@@ -137,50 +209,69 @@ fn active_window_title() -> Option<String> {
     None
 }
 
-fn insert_text_and_emit(app: &AppHandle, text: &str, source: Option<String>) {
-    let category = categorize(text);
-    let preview = make_preview(text);
+fn insert_text_and_emit(
+    app: &AppHandle,
+    text: &str,
+    source: Option<String>,
+    skip_sensitive: bool,
+) -> Option<bool> {
     let db: Arc<Db> = app.state::<Arc<Db>>().inner().clone();
-    let id = {
+    let stored = {
         let conn = db.conn();
-
-        // If this exact content already exists (non-deleted), just bump its
-        // last_used_at instead of inserting a duplicate.  This prevents every
-        // paste FROM Yank from creating a second entry in the history.
-        match crate::db::dedup_text(&conn, text) {
-            Ok(Some(existing_id)) => {
-                let now = chrono::Utc::now().timestamp_millis();
-                let _ = conn.execute(
-                    "UPDATE items SET last_used_at = ?1 WHERE id = ?2",
-                    rusqlite::params![now, existing_id],
-                );
-                existing_id
-            }
-            Ok(None) => match crate::db::insert_item(
-                &conn,
-                text,
-                category,
-                &preview,
-                source.as_deref(),
-            ) {
-                Ok(id) => {
-                    crate::telemetry::captured(app, category);
-                    id
-                }
-                Err(err) => {
-                    eprintln!("[watcher] insert failed: {err}");
-                    return;
-                }
-            }
-            Err(err) => {
-                eprintln!("[watcher] dedup check failed: {err}");
-                return;
+        match store_text(&conn, text, source.as_deref(), skip_sensitive) {
+            Ok(Some(item)) => item,
+            Ok(None) => return Some(false),
+            Err(_) => {
+                // SQLite error details can include input data.
+                eprintln!("[watcher] could not store clipboard item");
+                return None;
             }
         }
     };
-    let _ = app.emit("clip-added", id);
+    if stored.inserted {
+        crate::telemetry::captured(app, stored.category);
+    }
+    let _ = app.emit("clip-added", stored.id);
     crate::label_queue::kick(app);
     crate::embed_queue::kick(app);
+    Some(true)
+}
+
+struct StoredText {
+    id: i64,
+    category: &'static str,
+    inserted: bool,
+}
+
+fn store_text(
+    conn: &rusqlite::Connection,
+    text: &str,
+    source: Option<&str>,
+    skip_sensitive: bool,
+) -> rusqlite::Result<Option<StoredText>> {
+    if skip_sensitive && crate::sensitive::detect(text).is_some() {
+        return Ok(None);
+    }
+    let category = categorize(text);
+    let preview = make_preview(text);
+    let (id, inserted) = match crate::db::dedup_text(conn, text)? {
+        Some(id) => {
+            conn.execute(
+                "UPDATE items SET last_used_at = ?1 WHERE id = ?2",
+                rusqlite::params![chrono::Utc::now().timestamp_millis(), id],
+            )?;
+            (id, false)
+        }
+        None => (
+            crate::db::insert_item(conn, text, category, &preview, source)?,
+            true,
+        ),
+    };
+    Ok(Some(StoredText {
+        id,
+        category,
+        inserted,
+    }))
 }
 
 fn insert_image_and_emit(app: &AppHandle, img: &ImageData, source: Option<String>) {
@@ -200,7 +291,7 @@ fn insert_image_and_emit(app: &AppHandle, img: &ImageData, source: Option<String
             Ok(id) => {
                 crate::telemetry::captured(app, "image");
                 id
-            },
+            }
             Err(err) => {
                 eprintln!("[watcher] insert image failed: {err}");
                 return;
@@ -208,4 +299,68 @@ fn insert_image_and_emit(app: &AppHandle, img: &ImageData, source: Option<String
         }
     };
     let _ = app.emit("clip-added", id);
+}
+
+#[cfg(test)]
+mod privacy_tests {
+    use super::*;
+
+    #[test]
+    fn rejected_copies_do_not_enter_history_or_fts_or_touch_existing_rows() {
+        let path = std::env::temp_dir().join(format!("yank-privacy-{}.db", uuid::Uuid::new_v4()));
+        let conn = crate::db::open(&path).unwrap();
+        for value in [
+            "4111111111111111",
+            "123-45-6789",
+            "password=orange",
+            "-----BEGIN PRIVATE KEY-----",
+        ] {
+            assert!(store_text(&conn, value, None, true).unwrap().is_none());
+        }
+        assert_eq!(
+            conn.query_row("SELECT count(*) FROM items", [], |r| r.get::<_, i64>(0))
+                .unwrap(),
+            0
+        );
+        assert_eq!(
+            conn.query_row(
+                "SELECT count(*) FROM items_fts WHERE items_fts MATCH 'orange'",
+                [],
+                |r| r.get::<_, i64>(0)
+            )
+            .unwrap(),
+            0
+        );
+        let stored = store_text(&conn, "password=orange", None, false)
+            .unwrap()
+            .unwrap();
+        conn.execute(
+            "UPDATE items SET last_used_at = 1 WHERE id = ?1",
+            [stored.id],
+        )
+        .unwrap();
+        assert!(store_text(&conn, "password=orange", None, true)
+            .unwrap()
+            .is_none());
+        assert_eq!(
+            conn.query_row(
+                "SELECT last_used_at FROM items WHERE id = ?1",
+                [stored.id],
+                |r| r.get::<_, i64>(0)
+            )
+            .unwrap(),
+            1
+        );
+        assert!(store_text(&conn, "ordinary text", None, true)
+            .unwrap()
+            .is_some());
+        drop(conn);
+        for file in [
+            &path,
+            &path.with_extension("db-wal"),
+            &path.with_extension("db-shm"),
+        ] {
+            let _ = std::fs::remove_file(file);
+        }
+    }
 }

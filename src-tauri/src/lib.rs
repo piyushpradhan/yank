@@ -1,6 +1,7 @@
 mod categorize;
 mod color_intent;
 mod color_names;
+mod clipboard_privacy;
 mod commands;
 pub mod db;
 pub mod embed;
@@ -13,6 +14,7 @@ mod platform_info;
 pub mod query_intent;
 pub mod query_time;
 mod settings;
+mod sensitive;
 mod telemetry;
 mod tray_theme;
 mod watcher;
@@ -436,6 +438,8 @@ pub fn run() {
             commands::paste_to_frontmost_app,
             settings::get_settings,
             settings::set_settings,
+            settings::get_skip_sensitive_copies,
+            settings::set_skip_sensitive_copies,
             settings::test_embed_provider,
             settings::get_hint_dismissed,
             settings::set_hint_dismissed,
@@ -474,6 +478,7 @@ pub fn run() {
 
             let settings_state = settings::init(app.handle());
             app.manage(settings::SettingsState(settings_state));
+            settings::init_capture_privacy(app.handle());
             app.manage(local_embed::LocalState::new());
             telemetry::init(app.handle());
 

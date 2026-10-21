@@ -7,6 +7,8 @@ const mocks = vi.hoisted(() => ({
   preferences: { enabled: false, prompt_handled: false },
   welcomeDone: true,
   failSave: false,
+  skipSensitive: true,
+  failCaptureSave: false,
   invoke: vi.fn(),
   listeners: new Map<string, (event: { payload: unknown }) => void>(),
   setTheme: vi.fn(),
@@ -50,6 +52,8 @@ beforeEach(() => {
   mocks.preferences = { enabled: false, prompt_handled: false };
   mocks.welcomeDone = true;
   mocks.failSave = false;
+  mocks.skipSensitive = true;
+  mocks.failCaptureSave = false;
   mocks.listeners.clear();
   mocks.invoke.mockReset();
   mocks.invoke.mockImplementation(async (cmd: string, args?: { enabled?: boolean }) => {
@@ -65,6 +69,12 @@ beforeEach(() => {
         return;
       case 'get_telemetry_preferences':
         return mocks.preferences;
+      case 'get_skip_sensitive_copies':
+        return mocks.skipSensitive;
+      case 'set_skip_sensitive_copies':
+        if (mocks.failCaptureSave) throw new Error('disk unavailable');
+        mocks.skipSensitive = !!args?.enabled;
+        return mocks.skipSensitive;
       case 'set_telemetry_enabled':
         if (mocks.failSave) throw new Error('disk unavailable');
         mocks.preferences = { enabled: !!args?.enabled, prompt_handled: true };
@@ -87,6 +97,55 @@ beforeEach(() => {
       this.removeAttribute('open');
     },
   });
+});
+
+it('defaults sensitive-copy filtering on, persists a change, and keeps usage sharing independent', async () => {
+  mocks.preferences = { enabled: false, prompt_handled: true };
+  render(<App />);
+  fireEvent.click(await screen.findByRole('button', { name: 'Tweaks' }));
+  fireEvent.click(await screen.findByRole('button', { name: 'Privacy & usage' }));
+  let toggle = await screen.findByRole('switch', { name: 'Skip sensitive copies' });
+  await waitFor(() => expect(toggle).toBeEnabled());
+  expect(toggle).toBeChecked();
+  fireEvent.click(toggle);
+  await waitFor(() => expect(toggle).not.toBeChecked());
+  expect(mocks.invoke).toHaveBeenCalledWith('set_skip_sensitive_copies', { enabled: false });
+  expect(mocks.preferences.enabled).toBe(false);
+  fireEvent.click(screen.getByRole('button', { name: 'Close privacy settings' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Tweaks' }));
+  fireEvent.click(await screen.findByRole('button', { name: 'Privacy & usage' }));
+  toggle = await screen.findByRole('switch', { name: 'Skip sensitive copies' });
+  await waitFor(() => expect(toggle).toBeEnabled());
+  expect(toggle).not.toBeChecked();
+});
+
+it('leaves sensitive-copy filtering on and reports a failed preference save', async () => {
+  mocks.preferences = { enabled: false, prompt_handled: true };
+  mocks.failCaptureSave = true;
+  render(<App />);
+  fireEvent.click(await screen.findByRole('button', { name: 'Tweaks' }));
+  fireEvent.click(await screen.findByRole('button', { name: 'Privacy & usage' }));
+  const toggle = await screen.findByRole('switch', { name: 'Skip sensitive copies' });
+  await waitFor(() => expect(toggle).toBeEnabled());
+  fireEvent.click(toggle);
+  expect(await screen.findByRole('alert')).toHaveTextContent(
+    'Could not save clipboard privacy settings'
+  );
+  expect(toggle).toBeChecked();
+  expect(mocks.skipSensitive).toBe(true);
+});
+
+it('reflects capture privacy changes from another window', async () => {
+  mocks.preferences = { enabled: false, prompt_handled: true };
+  render(<App />);
+  fireEvent.click(await screen.findByRole('button', { name: 'Tweaks' }));
+  fireEvent.click(await screen.findByRole('button', { name: 'Privacy & usage' }));
+  const toggle = await screen.findByRole('switch', { name: 'Skip sensitive copies' });
+  await waitFor(() => expect(toggle).toBeEnabled());
+  await act(async () => {
+    mocks.listeners.get('capture-privacy-changed')?.({ payload: false });
+  });
+  expect(toggle).not.toBeChecked();
 });
 afterEach(() => {
   cleanup();
@@ -196,7 +255,7 @@ it('stops sharing on an opt-out save failure and can retry saving off', async ()
   await screen.findByText(
     'Sharing is off for this session. Retry saving to keep it off after restarting.'
   );
-  expect(screen.getByRole('switch')).not.toBeChecked();
+  expect(screen.getByRole('switch', { name: 'Share usage statistics' })).not.toBeChecked();
   trackFeature('library', 'copy');
   expect(mocks.invoke.mock.calls.filter(([cmd]) => cmd === 'track_usage')).toEqual([]);
   mocks.failSave = false;

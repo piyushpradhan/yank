@@ -7,6 +7,43 @@ use crate::embed::{EmbedConfig, Provider};
 
 pub struct SettingsState(pub Arc<RwLock<EmbedConfig>>);
 
+pub struct CapturePrivacyState(pub RwLock<bool>);
+
+const SKIP_SENSITIVE_KEY: &str = "skipSensitiveCopies";
+
+pub fn init_capture_privacy(app: &AppHandle) {
+    let enabled = app.store(STORE_PATH).ok()
+        .and_then(|store| store.get(SKIP_SENSITIVE_KEY))
+        .and_then(|value| value.as_bool())
+        .unwrap_or(true);
+    app.manage(CapturePrivacyState(RwLock::new(enabled)));
+}
+
+#[tauri::command]
+pub fn get_skip_sensitive_copies(state: State<'_, CapturePrivacyState>) -> Result<bool, String> {
+    state.0.read().map(|value| *value).map_err(|_| "Capture privacy settings unavailable".into())
+}
+
+#[tauri::command]
+pub fn set_skip_sensitive_copies(
+    enabled: bool,
+    app: AppHandle,
+    state: State<'_, CapturePrivacyState>,
+) -> Result<bool, String> {
+    // Captures hold a read guard through persistence. Once this command returns,
+    // no capture using the old policy can still insert a row.
+    let mut current = state.0.write().map_err(|_| "Capture privacy settings unavailable")?;
+    let store = app.store(STORE_PATH).map_err(|_| "Could not open privacy settings")?;
+    store.set(SKIP_SENSITIVE_KEY, serde_json::json!(enabled));
+    if store.save().is_err() {
+        store.set(SKIP_SENSITIVE_KEY, serde_json::json!(*current));
+        return Err("Could not save privacy settings".into());
+    }
+    *current = enabled;
+    let _ = app.emit("capture-privacy-changed", enabled);
+    Ok(enabled)
+}
+
 const STORE_PATH: &str = "settings.json";
 const KEY: &str = "embed";
 
