@@ -7,7 +7,6 @@ import {
   LuMinus,
   LuRefreshCw,
   LuSlidersHorizontal,
-  LuSparkles,
   LuSquare,
   LuX,
 } from 'react-icons/lu';
@@ -17,15 +16,14 @@ import { trackFeature } from '../lib/telemetry';
 
 interface TitleBarProps {
   aiActive: boolean;
-  onOpenAI: () => void;
-  onToggleTweaks: () => void;
+  onOpenSettings: () => void;
   backfill: BackfillState | null;
 }
 
 const HEIGHT = 40;
 const TRAFFIC_LIGHT_RESERVED = 84;
 
-export function TitleBar({ aiActive, onOpenAI, onToggleTweaks, backfill }: TitleBarProps) {
+export function TitleBar({ aiActive, onOpenSettings, backfill }: TitleBarProps) {
   return (
     <Inline
       data-tauri-drag-region
@@ -63,25 +61,30 @@ export function TitleBar({ aiActive, onOpenAI, onToggleTweaks, backfill }: Title
       {backfill && backfill.remaining > 0 && <BackfillPill backfill={backfill} />}
 
       <Inline gap={2} align="center">
-        <Box style={{ paddingRight: IS_MAC ? 0 : 8 }}>
-          <Inline gap={2} align="center">
-            <IconButton
-              aria-label="AI settings"
-              title="AI settings"
-              icon={<LuSparkles size={14} />}
-              variant={aiActive ? 'primary' : 'ghost'}
-              size="sm"
-              onClick={onOpenAI}
+        <Box style={{ paddingRight: IS_MAC ? 0 : 8, position: 'relative' }}>
+          <IconButton
+            aria-label="Settings"
+            title={aiActive ? 'Settings · AI enabled' : 'Settings'}
+            icon={<LuSlidersHorizontal size={14} />}
+            variant="ghost"
+            size="sm"
+            onClick={onOpenSettings}
+          />
+          {aiActive && (
+            <Box
+              aria-hidden="true"
+              position="absolute"
+              radius="pill"
+              style={{
+                width: 5,
+                height: 5,
+                right: IS_MAC ? 1 : 9,
+                bottom: 3,
+                pointerEvents: 'none',
+                background: 'var(--status-success)',
+              }}
             />
-            <IconButton
-              aria-label="Tweaks"
-              title="Tweaks"
-              icon={<LuSlidersHorizontal size={14} />}
-              variant="ghost"
-              size="sm"
-              onClick={onToggleTweaks}
-            />
-          </Inline>
+          )}
         </Box>
         {!IS_MAC && <WindowsControls />}
       </Inline>

@@ -20,6 +20,7 @@ interface AIPanelProps {
   settings: EmbedSettings;
   onChange: (next: EmbedSettings) => void;
   onClose: () => void;
+  embedded?: boolean;
 }
 
 const PROVIDERS: { id: EmbedProvider; label: string }[] = [
@@ -50,7 +51,7 @@ type TestState =
 
 function FieldLabel({ children }: { children: React.ReactNode }) {
   return (
-    <Overline as="div" size={10.5} weight="regular" tracking="wide" tone="secondary">
+    <Overline as="div" size={11} weight="medium" tracking="wide" tone="secondary">
       {children}
     </Overline>
   );
@@ -58,7 +59,7 @@ function FieldLabel({ children }: { children: React.ReactNode }) {
 
 function SectionHeading({ children }: { children: React.ReactNode }) {
   return (
-    <Overline as="div" size={10.5} weight="medium" tracking="wider" tone="accent-ink">
+    <Overline as="div" size={11} weight="semibold" tracking="wider" tone="accent-ink">
       {children}
     </Overline>
   );
@@ -74,7 +75,7 @@ function toErrorMessage(err: unknown): string {
   return 'Unknown error.';
 }
 
-export function AIPanel({ settings, onChange, onClose }: AIPanelProps) {
+export function AIPanel({ settings, onChange, onClose, embedded = false }: AIPanelProps) {
   const [local, setLocal] = useState<EmbedSettings>(settings);
   const [error, setError] = useState<{ field: ErrorField; msg: string } | null>(null);
   const [test, setTest] = useState<TestState>({ kind: 'idle' });
@@ -141,7 +142,7 @@ export function AIPanel({ settings, onChange, onClose }: AIPanelProps) {
     }
 
     onChange(local);
-    onClose();
+    if (!embedded) onClose();
   };
 
   const embedStatus = summariseEmbedStatus(local, test);
@@ -149,6 +150,178 @@ export function AIPanel({ settings, onChange, onClose }: AIPanelProps) {
   const localNote =
     LOCAL_MODELS.find((m) => m.id === local.local_model)?.note ??
     'Runs entirely on your machine via ONNX.';
+
+  const content = (
+    <Stack gap={5}>
+      <Stack gap={2}>
+        <StatusRow kind={embedStatus.kind} label="Semantic search" detail={embedStatus.text} />
+        <StatusRow
+          kind={labelsOn ? 'ok' : 'off'}
+          label="AI labels"
+          detail={
+            labelsOn
+              ? 'On — Claude Haiku generates labels in the background.'
+              : 'Off — items show a content preview as their label.'
+          }
+        />
+      </Stack>
+
+      {local.provider === 'disabled' && (
+        <Box bg="subtle" radius="lg" border="subtle" p={3}>
+          <Stack gap={1}>
+            <Text size={12} weight="medium" tone="primary">
+              Semantic search is turned off.
+            </Text>
+            <Text size={12} tone="secondary" leading="snug">
+              The palette will use fuzzy matching only. Pick Local or TypeSafe to turn semantic
+              search back on.
+            </Text>
+          </Stack>
+        </Box>
+      )}
+
+      <Stack gap={3}>
+        <SectionHeading>Semantic search</SectionHeading>
+
+        <FormField label={<FieldLabel>Provider</FieldLabel>}>
+          <Inline gap={2} wrap>
+            {PROVIDERS.map((p) => (
+              <Button
+                key={p.id}
+                size="sm"
+                variant={local.provider === p.id ? 'primary' : 'secondary'}
+                onClick={() => set('provider', p.id)}
+              >
+                {p.label}
+              </Button>
+            ))}
+          </Inline>
+        </FormField>
+
+        {local.provider === 'local' && (
+          <FormField
+            label={<FieldLabel>Embedding model</FieldLabel>}
+            hint={`${localNote} Runs on your machine; nothing leaves it.`}
+          >
+            <Select
+              value={local.local_model}
+              onChange={(v) => set('local_model', v)}
+              options={LOCAL_MODELS.map((m) => ({ value: m.id, label: m.label }))}
+              aria-label="Embedding model"
+            />
+          </FormField>
+        )}
+
+        {local.provider === 'jev' && (
+          <>
+            <FormField
+              label={<FieldLabel>TypeSafe API key</FieldLabel>}
+              error={error?.field === 'jev_key' ? error.msg : undefined}
+              hint="Optional. Bring your own TypeSafe key — search queries and matching clip contents are sent to TypeSafe to re-rank results."
+            >
+              <Input
+                type="password"
+                value={local.typesafe_api_key}
+                onChange={(e) => set('typesafe_api_key', e.target.value)}
+                placeholder="ts-…"
+              />
+            </FormField>
+            <FormField label={<FieldLabel>Model</FieldLabel>}>
+              <Input
+                value={local.typesafe_model}
+                onChange={(e) => set('typesafe_model', e.target.value)}
+              />
+            </FormField>
+          </>
+        )}
+
+        {needsRemoteProbe(local.provider) && (
+          <Inline gap={3} align="center" wrap>
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => void runTest()}
+              disabled={test.kind === 'running' || saving}
+              loading={test.kind === 'running'}
+            >
+              {test.kind === 'running' ? 'Testing…' : 'Test connection'}
+            </Button>
+            {test.kind === 'ok' && (
+              <Inline gap={2} align="center">
+                <Dot tone="success" size="sm" />
+                <Text size={12} tone="success">
+                  Connected.
+                </Text>
+              </Inline>
+            )}
+            {test.kind === 'err' && (
+              <Text size={12} tone="danger" leading="snug">
+                {test.msg}
+              </Text>
+            )}
+          </Inline>
+        )}
+      </Stack>
+
+      <Divider />
+
+      <Stack gap={3}>
+        <SectionHeading>AI labels</SectionHeading>
+
+        <FormField
+          label={<FieldLabel>Anthropic API key</FieldLabel>}
+          hint="Each clip gets a one-line intent summary (e.g. “Stripe Webhook Debug”). Runs on Claude Haiku in the background. A few hundred clips cost pennies."
+        >
+          <Input
+            type="password"
+            value={local.anthropic_api_key}
+            onChange={(e) => set('anthropic_api_key', e.target.value)}
+            placeholder="sk-ant-…"
+          />
+        </FormField>
+      </Stack>
+    </Stack>
+  );
+
+  if (embedded) {
+    return (
+      <Box display="flex" fullHeight style={{ flexDirection: 'column', minHeight: 0 }}>
+        <Box grow={1} overflow="auto" p={5} style={{ minHeight: 0 }}>
+          {content}
+        </Box>
+        <Box
+          px={5}
+          py={3}
+          style={{ borderTop: '1px solid var(--border-subtle)', background: 'var(--bg-surface)' }}
+        >
+          <Inline justify="between" align="center" gap={3}>
+            <Text size={12} tone="tertiary" role="status" aria-live="polite">
+              {JSON.stringify(local) === JSON.stringify(settings)
+                ? 'AI configuration saved'
+                : 'Unsaved AI changes'}
+            </Text>
+            <Inline gap={2}>
+              <Button
+                variant="secondary"
+                size="sm"
+                disabled={saving || JSON.stringify(local) === JSON.stringify(settings)}
+                onClick={() => {
+                  setLocal(settings);
+                  setError(null);
+                  setTest({ kind: 'idle' });
+                }}
+              >
+                Discard
+              </Button>
+              <Button variant="primary" size="sm" onClick={() => void save()} loading={saving}>
+                {saving ? 'Testing…' : 'Save AI settings'}
+              </Button>
+            </Inline>
+          </Inline>
+        </Box>
+      </Box>
+    );
+  }
 
   return (
     <Modal
@@ -168,135 +341,7 @@ export function AIPanel({ settings, onChange, onClose }: AIPanelProps) {
         </>
       }
     >
-      <Stack gap={5}>
-        <Stack gap={2}>
-          <StatusRow kind={embedStatus.kind} label="Semantic search" detail={embedStatus.text} />
-          <StatusRow
-            kind={labelsOn ? 'ok' : 'off'}
-            label="AI labels"
-            detail={
-              labelsOn
-                ? 'On — Claude Haiku generates labels in the background.'
-                : 'Off — items show a content preview as their label.'
-            }
-          />
-        </Stack>
-
-        {local.provider === 'disabled' && (
-          <Box bg="subtle" radius="lg" border="subtle" p={3}>
-            <Stack gap={1}>
-              <Text size={12} weight="medium" tone="primary">
-                Semantic search is turned off.
-              </Text>
-              <Text size={11.5} tone="secondary" leading="snug">
-                The palette will use fuzzy matching only. Pick Local or TypeSafe to turn semantic
-                search back on.
-              </Text>
-            </Stack>
-          </Box>
-        )}
-
-        <Stack gap={3}>
-          <SectionHeading>Semantic search</SectionHeading>
-
-          <FormField label={<FieldLabel>Provider</FieldLabel>}>
-            <Inline gap={2} wrap>
-              {PROVIDERS.map((p) => (
-                <Button
-                  key={p.id}
-                  size="sm"
-                  variant={local.provider === p.id ? 'primary' : 'secondary'}
-                  onClick={() => set('provider', p.id)}
-                >
-                  {p.label}
-                </Button>
-              ))}
-            </Inline>
-          </FormField>
-
-          {local.provider === 'local' && (
-            <FormField
-              label={<FieldLabel>Embedding model</FieldLabel>}
-              hint={`${localNote} Runs on your machine; nothing leaves it.`}
-            >
-              <Select
-                value={local.local_model}
-                onChange={(v) => set('local_model', v)}
-                options={LOCAL_MODELS.map((m) => ({ value: m.id, label: m.label }))}
-                aria-label="Embedding model"
-              />
-            </FormField>
-          )}
-
-          {local.provider === 'jev' && (
-            <>
-              <FormField
-                label={<FieldLabel>TypeSafe API key</FieldLabel>}
-                error={error?.field === 'jev_key' ? error.msg : undefined}
-                hint="Optional. Bring your own TypeSafe key — search queries and matching clip contents are sent to TypeSafe to re-rank results."
-              >
-                <Input
-                  type="password"
-                  value={local.typesafe_api_key}
-                  onChange={(e) => set('typesafe_api_key', e.target.value)}
-                  placeholder="ts-…"
-                />
-              </FormField>
-              <FormField label={<FieldLabel>Model</FieldLabel>}>
-                <Input
-                  value={local.typesafe_model}
-                  onChange={(e) => set('typesafe_model', e.target.value)}
-                />
-              </FormField>
-            </>
-          )}
-
-          {needsRemoteProbe(local.provider) && (
-            <Inline gap={3} align="center" wrap>
-              <Button
-                size="sm"
-                variant="secondary"
-                onClick={() => void runTest()}
-                disabled={test.kind === 'running' || saving}
-                loading={test.kind === 'running'}
-              >
-                {test.kind === 'running' ? 'Testing…' : 'Test connection'}
-              </Button>
-              {test.kind === 'ok' && (
-                <Inline gap={2} align="center">
-                  <Dot tone="success" size="sm" />
-                  <Text size={11.5} tone="success">
-                    Connected.
-                  </Text>
-                </Inline>
-              )}
-              {test.kind === 'err' && (
-                <Text size={11.5} tone="danger" leading="snug">
-                  {test.msg}
-                </Text>
-              )}
-            </Inline>
-          )}
-        </Stack>
-
-        <Divider />
-
-        <Stack gap={3}>
-          <SectionHeading>AI labels</SectionHeading>
-
-          <FormField
-            label={<FieldLabel>Anthropic API key</FieldLabel>}
-            hint="Each clip gets a one-line intent summary (e.g. “Stripe Webhook Debug”). Runs on Claude Haiku in the background. A few hundred clips cost pennies."
-          >
-            <Input
-              type="password"
-              value={local.anthropic_api_key}
-              onChange={(e) => set('anthropic_api_key', e.target.value)}
-              placeholder="sk-ant-…"
-            />
-          </FormField>
-        </Stack>
-      </Stack>
+      {content}
     </Modal>
   );
 }
@@ -317,10 +362,10 @@ function StatusRow({ kind, label, detail }: StatusRowProps) {
       <Inline gap={3} align="center">
         <Dot tone={tone} size="md" ring />
         <Stack gap={1} grow={1}>
-          <Overline as="span" size="2xs" tone="secondary">
+          <Overline as="span" size={11} weight="medium" tracking="wide" tone="secondary">
             {label}
           </Overline>
-          <Text size={11.5} tone="primary" leading="snug">
+          <Text size={12} tone="primary" leading="snug">
             {detail}
           </Text>
         </Stack>

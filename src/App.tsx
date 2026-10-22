@@ -1,11 +1,10 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { Box, Stack, useTheme } from 'ember-design-system';
-import { AIPanel } from './components/AIPanel';
 import { KeyboardMap } from './components/KeyboardMap';
 import { TitleBar } from './components/TitleBar';
 import { Toast } from './components/Toast';
-import { TweaksPanel } from './components/TweaksPanel';
+import { SettingsWindow, type SettingsPage } from './components/SettingsWindow';
 import { UpdateBanner } from './components/UpdateBanner';
 import { WelcomeModal } from './components/WelcomeModal';
 import { PrivacyPanel } from './components/PrivacyPanel';
@@ -29,10 +28,9 @@ const DEFAULT_TWEAKS: Tweaks = {
 
 function App() {
   const [tweaks, setTweaks] = useState<Tweaks>(DEFAULT_TWEAKS);
-  const [tweaksOpen, setTweaksOpen] = useState(false);
-  const [aiOpen, setAiOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [settingsPage, setSettingsPage] = useState<SettingsPage>('appearance');
   const [keymapOpen, setKeymapOpen] = useState(false);
-  const [privacyOpen, setPrivacyOpen] = useState(false);
   const [shortcut, setShortcut] = useState<ShortcutConfig | null>(null);
   // null = still loading; true = already dismissed; false = show welcome.
   const [hintDismissed, setHintDismissed] = useState<boolean | null>(null);
@@ -41,6 +39,11 @@ function App() {
   const { settings, save: saveSettings } = useSettings();
   const updater = useUpdater();
   const { setTheme } = useTheme();
+  const closeSettings = useCallback(() => setSettingsOpen(false), []);
+  const openSettings = (page: SettingsPage = 'appearance') => {
+    setSettingsPage(page);
+    setSettingsOpen(true);
+  };
 
   // Mirror Tweaks → ember CSS-var theme. data-theme drives all token colors.
   useEffect(() => {
@@ -57,7 +60,7 @@ function App() {
   const semanticOffMessage = !semanticAvailable
     ? settings.provider === 'disabled'
       ? 'Semantic search is turned off. Using fuzzy matching only.'
-      : 'Semantic search is unavailable — finish configuring your provider in AI settings.'
+      : 'Semantic search is unavailable — finish configuring your provider in Settings → AI features.'
     : app.providerHealth.status === 'error'
       ? `Semantic search is unavailable — ${app.providerHealth.error ?? 'provider error'}.`
       : null;
@@ -83,7 +86,7 @@ function App() {
       .then((v) => setHintDismissed(v))
       .catch(() => setHintDismissed(true));
     const onKey = (e: KeyboardEvent) => {
-      if (document.querySelector('dialog[open]')) return;
+      if (document.querySelector('dialog[open], [role="dialog"][aria-modal="true"]')) return;
       if (e.key === '?') {
         const target = e.target as HTMLElement | null;
         if (
@@ -110,8 +113,11 @@ function App() {
       <Stack fullHeight fullWidth>
         <TitleBar
           aiActive={settings.provider !== 'disabled'}
-          onOpenAI={() => { trackFeature('library', 'ai_settings'); setAiOpen(true); }}
-          onToggleTweaks={() => { trackFeature('library', 'settings'); setTweaksOpen((v) => !v); }}
+          onOpenSettings={() => {
+            trackFeature('library', 'settings');
+            if (settingsOpen) closeSettings();
+            else openSettings('appearance');
+          }}
           backfill={app.backfill}
         />
         <Box grow={1} style={{ minHeight: 0, position: 'relative' }}>
@@ -127,35 +133,39 @@ function App() {
             semanticOffMessage={semanticOffMessage}
             anthropicEnabled={anthropicEnabled}
             aiActive={settings.provider !== 'disabled'}
-            onOpenAI={() => { trackFeature('library', 'ai_settings'); setAiOpen(true); }}
+            onOpenAI={() => {
+              trackFeature('library', 'ai_settings');
+              openSettings('ai');
+            }}
           />
         </Box>
       </Stack>
 
-      {aiOpen && (
-        <AIPanel
-          settings={settings}
-          onChange={(next) => {
-            if (next.provider !== settings.provider) trackFeature('library', 'provider_changed');
-            void saveSettings(next);
-            app.resetProviderHealth();
-          }}
-          onClose={() => setAiOpen(false)}
-        />
-      )}
-
-      {tweaksOpen && (
-        <TweaksPanel
+      {settingsOpen && (
+        <SettingsWindow
+          initialPage={settingsPage}
           tweaks={tweaks}
           onChange={setTweaks}
           shortcut={shortcut}
           onShortcutChange={setShortcut}
           updater={updater}
-          onClose={() => setTweaksOpen(false)}
-          onOpenPrivacy={() => { setTweaksOpen(false); setPrivacyOpen(true); }}
+          settings={settings}
+          onAIChange={(next) => {
+            if (next.provider !== settings.provider) trackFeature('library', 'provider_changed');
+            void saveSettings(next);
+            app.resetProviderHealth();
+          }}
+          onClose={closeSettings}
           onAfterClear={() => {
             void app.refresh();
             app.showToast('History cleared', 'delete');
+          }}
+          telemetry={{
+            preferences: telemetry.preferences,
+            saving: telemetry.saving,
+            error: telemetry.error,
+            choose: telemetry.choose,
+            retry: telemetry.retry,
           }}
         />
       )}
@@ -204,7 +214,7 @@ function App() {
         />
       )}
 
-      {hintDismissed === true && (privacyOpen || telemetry.preferences?.prompt_handled === false) && (
+      {hintDismissed === true && telemetry.preferences?.prompt_handled === false && (
         <PrivacyPanel
           consent={!telemetry.preferences?.prompt_handled}
           preferences={telemetry.preferences}
@@ -212,7 +222,7 @@ function App() {
           error={telemetry.error}
           onChoose={telemetry.choose}
           onRetry={telemetry.retry}
-          onClose={() => setPrivacyOpen(false)}
+          onClose={() => {}}
         />
       )}
 

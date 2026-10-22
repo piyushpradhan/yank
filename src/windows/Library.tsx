@@ -75,7 +75,7 @@ interface LibraryProps {
   /** True when any embedding/labeling provider is selected. Drives the sidebar
    *  "Add AI" discovery card so users without a key actually find the feature. */
   aiActive: boolean;
-  /** Opens the AI settings panel; used by the discovery card. */
+  /** Opens the AI features category in Settings; used by the discovery card. */
   onOpenAI: () => void;
   initialQuery?: string;
   initialMode?: SearchMode;
