@@ -9,7 +9,10 @@ pub struct SettingsState(pub Arc<RwLock<EmbedConfig>>);
 
 pub struct CapturePrivacyState(pub RwLock<bool>);
 
-const SKIP_SENSITIVE_KEY: &str = "skipSensitiveCopies";
+// Also covers copies their source app marks confidential. Earlier builds stored
+// a text-detection-only `skipSensitiveCopies`; a fresh key starts that broader
+// policy blocked rather than inheriting an opt-out that never covered markers.
+const SKIP_SENSITIVE_KEY: &str = "blockSensitiveCopies";
 
 pub fn init_capture_privacy(app: &AppHandle) {
     let enabled = app.store(STORE_PATH).ok()

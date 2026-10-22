@@ -1,9 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
-import { invoke } from '@tauri-apps/api/core';
-import { listen } from '@tauri-apps/api/event';
+import { useEffect, useRef } from 'react';
 import { Box, Button, Card, IconButton, Inline, Stack, Switch, Text } from 'ember-design-system';
 import { LuShieldCheck, LuX } from 'react-icons/lu';
 import type { TelemetryPreferences } from '../lib/telemetry';
+import { useSensitiveCopies } from '../hooks/useSensitiveCopies';
 
 interface PrivacyPanelProps {
   consent: boolean;
@@ -25,43 +24,12 @@ export function PrivacyPanel({
   onClose,
 }: PrivacyPanelProps) {
   const dialog = useRef<HTMLDialogElement>(null);
-  const [skipSensitive, setSkipSensitive] = useState<boolean | null>(null);
-  const [captureSaving, setCaptureSaving] = useState(false);
-  const [captureError, setCaptureError] = useState<string | null>(null);
-  useEffect(() => {
-    if (consent) return;
-    let active = true;
-    let changed = false;
-    const unlisten = listen<boolean>('capture-privacy-changed', ({ payload }) => {
-      changed = true;
-      if (active) setSkipSensitive(payload);
-    });
-    void unlisten
-      .then(() => invoke<boolean>('get_skip_sensitive_copies'))
-      .then((enabled) => {
-        if (active && !changed) setSkipSensitive(enabled);
-      })
-      .catch(() => {
-        if (active) setCaptureError('Could not load clipboard privacy settings. Reopen to retry.');
-      });
-    return () => {
-      active = false;
-      void unlisten.then((stop) => stop()).catch(() => {});
-    };
-  }, [consent]);
-
-  const chooseCapture = async (enabled: boolean) => {
-    setCaptureSaving(true);
-    setCaptureError(null);
-    try {
-      const saved = await invoke<boolean>('set_skip_sensitive_copies', { enabled });
-      setSkipSensitive(saved);
-    } catch {
-      setCaptureError('Could not save clipboard privacy settings. Try again.');
-    } finally {
-      setCaptureSaving(false);
-    }
-  };
+  const {
+    blocked: skipSensitive,
+    saving: captureSaving,
+    error: captureError,
+    choose: chooseCapture,
+  } = useSensitiveCopies(!consent);
   useEffect(() => {
     const element = dialog.current;
     element?.showModal();
@@ -118,12 +86,12 @@ export function PrivacyPanel({
               <Inline justify="between" align="center" gap={3}>
                 <label htmlFor="skip-sensitive-copies">
                   <Text size={13} weight="medium">
-                    Skip sensitive copies
+                    Block sensitive copies
                   </Text>
                 </label>
                 <Switch
                   id="skip-sensitive-copies"
-                  aria-label="Skip sensitive copies"
+                  aria-label="Block sensitive copies"
                   aria-describedby="capture-privacy-description"
                   checked={skipSensitive ?? true}
                   disabled={captureSaving || skipSensitive === null}
@@ -131,12 +99,13 @@ export function PrivacyPanel({
                 />
               </Inline>
               <Text id="capture-privacy-description" size={12} tone="secondary" leading={1.6}>
-                Keep recognized card numbers, Social Security numbers, and credentials out of new
-                clipboard history. Detection runs on this device; normal paste still works.
+                Keep recognized card numbers, Social Security numbers, credentials, and copies that
+                apps like password managers mark confidential out of new clipboard history.
+                Detection runs on this device; normal paste still works.
               </Text>
               <Text size={11.5} tone="tertiary" leading={1.6}>
-                Copies marked confidential by their app are always skipped. Some unmarked passwords
-                and images cannot be detected. Existing history is unchanged.
+                Turn off to save sensitive copies like any other clip. Some unmarked passwords and
+                images cannot be detected. Existing history is unchanged.
               </Text>
               {captureError && (
                 <Text role="alert" size={12} tone="danger">

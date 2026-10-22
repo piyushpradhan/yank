@@ -35,7 +35,7 @@ The entire "find → paste" loop takes under five seconds. Semantic search runs 
 ## Features
 
 - **Silent auto-capture** — copied text and images are captured automatically, with sensitive-copy filtering
-- **Skip sensitive copies** — on-device checks for card numbers, Social Security numbers, and recognizable credentials; honors confidential clipboard markers
+- **Block sensitive copies** — on-device checks for card numbers, Social Security numbers, and recognizable credentials; honors confidential clipboard markers. On by default, toggle in Tweaks
 - **Image capture & paste** — screenshots and images captured automatically; full-resolution preview and one-key paste-back
 - **Auto-categorization** — clips sorted into `code`, `url`, `email`, `phone`, `color`, `path`, `text`, `address`, `number`, or `image`
 - **Semantic search** — on-device ONNX embeddings (BGE Small / MiniLM), no key or network needed after the first model download.
@@ -143,7 +143,7 @@ make install && make build
 ## Privacy
 
 - Clipboard history is stored locally in SQLite
-- **Skip sensitive copies** is on by default in **Tweaks → shield icon → Privacy & usage**. It excludes recognized card numbers, formatted or labeled US Social Security numbers, labeled credentials, supported token patterns, and private-key headers before saving. Copies marked confidential or excluded from history by their source app are always skipped, even when text detection is off
+- **Block sensitive copies** is on by default in **Tweaks → Privacy**. It excludes recognized card numbers, formatted or labeled US Social Security numbers, labeled credentials, supported token patterns, and private-key headers before saving, along with copies marked confidential or excluded from history by their source app (for example, password managers). Turn it off to save these like any other clip
 - Normal paste still works. Detection cannot identify every unmarked password or sensitive image, and enabling it does not remove existing history. See [the sensitive-copy policy](docs/sensitive-copies.md) for exact rules, platform support, and limitations
 - Fuzzy and default semantic search are fully local; only the opt-in TypeSafe provider sends your query and matching clip contents off-device
 - Network calls support model downloads, updates, optional TypeSafe/Anthropic features, and usage sharing if you enable it

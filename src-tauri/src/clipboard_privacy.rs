@@ -7,8 +7,10 @@ pub struct Snapshot {
 }
 
 impl Snapshot {
-    pub fn unchanged_and_public(self, after: Self) -> bool {
-        !self.marked && !after.marked && self.generation == after.generation
+    /// The payload read between `self` and `after` belongs to this generation and,
+    /// when `skip_marked` is set, neither inspection saw a retention marker.
+    pub fn still_capturable(self, after: Self, skip_marked: bool) -> bool {
+        self.generation == after.generation && !(skip_marked && (self.marked || after.marked))
     }
 }
 
@@ -103,7 +105,7 @@ mod platform {
                     let _: bool = msg_send![board, setString: empty forType: kind];
                     let snapshot = inspect(board).unwrap();
                     assert!(snapshot.marked);
-                    assert!(!initial.unchanged_and_public(snapshot));
+                    assert!(!initial.still_capturable(snapshot, true));
                 }
                 let _: () = msg_send![board, releaseGlobally];
                 let _: () = msg_send![pool, drain];
@@ -219,19 +221,33 @@ mod tests {
             generation: 10,
             marked: false,
         };
-        assert!(before.unchanged_and_public(before));
-        assert!(!before.unchanged_and_public(Snapshot {
+        let marked = Snapshot {
+            generation: 10,
+            marked: true,
+        };
+        let replaced = Snapshot {
             generation: 11,
-            marked: false
-        }));
-        assert!(!before.unchanged_and_public(Snapshot {
+            marked: false,
+        };
+        assert!(before.still_capturable(before, true));
+        assert!(!before.still_capturable(replaced, true));
+        assert!(!before.still_capturable(marked, true));
+        assert!(!marked.still_capturable(before, true));
+    }
+
+    #[test]
+    fn allowing_sensitive_copies_accepts_markers_but_not_replaced_payloads() {
+        let marked = Snapshot {
             generation: 10,
-            marked: true
-        }));
-        assert!(!Snapshot {
-            generation: 10,
-            marked: true
-        }
-        .unchanged_and_public(before));
+            marked: true,
+        };
+        assert!(marked.still_capturable(marked, false));
+        assert!(!marked.still_capturable(
+            Snapshot {
+                generation: 11,
+                marked: true
+            },
+            false
+        ));
     }
 }

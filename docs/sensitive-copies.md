@@ -1,12 +1,14 @@
 # Sensitive copies
 
-Yank checks copies before retaining them in clipboard history. **Skip sensitive copies** defaults to on and is available in **Tweaks → shield icon → Privacy & usage**. The setting is saved on this device and takes effect without restarting. It is independent of usage sharing and AI settings.
+Yank checks copies before retaining them in clipboard history. **Block sensitive copies** defaults to on and is available in **Tweaks → Privacy** and **Tweaks → shield icon → Privacy & usage**. The setting is saved on this device and takes effect without restarting. It is independent of usage sharing and AI settings.
+
+Turning it off saves sensitive copies like any other clip: both source retention markers and text detection are ignored. Builds before 0.7.75 stored a text-detection-only preference; it is not carried over, so the broader setting starts blocked after upgrading.
 
 This leaves the system clipboard alone: normal paste continues to work. It does not delete or rescan existing history, labels, or embeddings.
 
-## Always excluded: source retention markers
+## Excluded when blocking is on: source retention markers
 
-These checks run before reading text or images, even when the text-detection setting is off:
+These checks run before reading text or images:
 
 | Platform | Markers that cause Yank to skip a copy |
 | --- | --- |
@@ -18,9 +20,9 @@ Transient and auto-generated markers describe retention policy, not necessarily 
 
 On macOS, Windows, and X11, Yank checks metadata again after reading a payload and discards it if the clipboard generation changed or became marked. Failed or inconsistent metadata inspections skip the capture attempt and retry on a later poll; they do not fall back to saving unchecked content. Rejected content is not cached for deduplication or included in diagnostic messages.
 
-On native Wayland, Yank uses ext-data-control or wlr-data-control when available. It checks metadata and requests plain text and PNG from the same immutable offer, so changing the selection between reads cannot substitute unchecked content. A small vendored wl-clipboard-rs patch also guards arboard reads. Compositors without data-control support fall back to X11/XWayland, where XFixes change notifications and a bounded selection-target inspection protect captures. A bridge or intermediary may omit original markers; native Wayland support is not universal. Native Wayland PNG transfers are capped at 200 MB compressed and 50 million pixels.
+On native Wayland, Yank uses ext-data-control or wlr-data-control when available. It checks metadata and requests plain text and PNG from the same immutable offer, so changing the selection between reads cannot substitute unchecked content. A small vendored wl-clipboard-rs patch also guards arboard reads; those always reject marked offers, while the watcher's snapshot read accepts them when blocking is off. Compositors without data-control support fall back to X11/XWayland, where XFixes change notifications and a bounded selection-target inspection protect captures. A bridge or intermediary may omit original markers; native Wayland support is not universal. Native Wayland PNG transfers are capped at 200 MB compressed and 50 million pixels.
 
-## Excluded when text detection is on
+## Excluded when blocking is on: text detection
 
 All detection is local and deterministic. A match rejects the **entire clip** before category/preview generation, SQLite insertion or deduplication updates, FTS indexing, UI events, and label/embedding queue notifications. No classifier service or credential-verification API is called.
 
