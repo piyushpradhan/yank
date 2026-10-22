@@ -15,7 +15,11 @@ pub fn capture(skip_sensitive: bool) -> Capture {
     if std::env::var_os("WAYLAND_DISPLAY").is_none() {
         return Capture::Unsupported;
     }
-    let snapshot = match paste::get_contents_snapshot(ClipboardType::Regular, Seat::Unspecified) {
+    let snapshot = match paste::get_contents_snapshot(
+        ClipboardType::Regular,
+        Seat::Unspecified,
+        !skip_sensitive,
+    ) {
         Ok(snapshot) => snapshot,
         // Match arboard's fallback when the compositor cannot provide data control.
         Err(

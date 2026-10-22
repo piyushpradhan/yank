@@ -8,11 +8,12 @@ feature unification. Checking X11 metadata cannot protect that backend.
 
 Changes in src/paste.rs:
 - Reject offers containing x-kde-passwordManagerHint before any receive request,
-  including reads made through arboard. This marker is honored even with heuristic
-  detection disabled.
+  including reads made through arboard.
 - Add get_contents_snapshot to request PNG and plain text from one immutable offer
   after checking its metadata. This prevents a selection change between separate
-  metadata/text/image reads from bypassing protection.
+  metadata/text/image reads from bypassing protection. Its allow_sensitive flag
+  skips the marker check when the user turns off Block sensitive copies; arboard
+  reads always reject marked offers.
 - Add protocol-level tests with a mock compositor, including zero payload requests
   for confidential offers. Test-server receive counters are test-only.
 

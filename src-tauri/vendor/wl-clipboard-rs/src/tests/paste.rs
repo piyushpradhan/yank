@@ -471,7 +471,12 @@ fn yank_marked_snapshot_never_requests_payload() {
     let socket = server.socket_name().to_owned();
     server.run(state);
     assert!(matches!(
-        get_contents_snapshot_internal(ClipboardType::Regular, Seat::Unspecified, Some(socket)),
+        get_contents_snapshot_internal(
+            ClipboardType::Regular,
+            Seat::Unspecified,
+            false,
+            Some(socket)
+        ),
         Err(Error::Sensitive)
     ));
     assert_eq!(count.load(std::sync::atomic::Ordering::SeqCst), 0);
@@ -500,7 +505,7 @@ fn yank_snapshot_reads_both_representations_from_offer() {
     let socket = server.socket_name().to_owned();
     server.run(state);
     let snapshot =
-        get_contents_snapshot_internal(ClipboardType::Regular, Seat::Unspecified, Some(socket))
+        get_contents_snapshot_internal(ClipboardType::Regular, Seat::Unspecified, false, Some(socket))
             .unwrap();
     let mut text = String::new();
     snapshot.text.unwrap().read_to_string(&mut text).unwrap();
@@ -508,5 +513,20 @@ fn yank_snapshot_reads_both_representations_from_offer() {
     snapshot.image.unwrap().read_to_end(&mut image).unwrap();
     assert_eq!(text, "password=hunter2");
     assert_eq!(image, b"image bytes");
+    assert_eq!(count.load(std::sync::atomic::Ordering::SeqCst), 2);
+}
+
+#[test]
+fn yank_marked_snapshot_reads_payload_when_sensitive_copies_are_allowed() {
+    let (server, state, count) = privacy_test_server(true);
+    let socket = server.socket_name().to_owned();
+    server.run(state);
+    let snapshot =
+        get_contents_snapshot_internal(ClipboardType::Regular, Seat::Unspecified, true, Some(socket))
+            .unwrap();
+    let mut text = String::new();
+    snapshot.text.unwrap().read_to_string(&mut text).unwrap();
+    assert_eq!(text, "password=hunter2");
+    assert!(snapshot.image.is_some());
     assert_eq!(count.load(std::sync::atomic::Ordering::SeqCst), 2);
 }

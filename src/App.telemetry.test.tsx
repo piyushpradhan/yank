@@ -27,7 +27,9 @@ vi.mock('@tauri-apps/api/window', () => ({
 vi.mock('@tauri-apps/api/event', () => ({
   listen: vi.fn(async (name: string, handler: (event: { payload: unknown }) => void) => {
     mocks.listeners.set(name, handler);
-    return () => mocks.listeners.delete(name);
+    return () => {
+      if (mocks.listeners.get(name) === handler) mocks.listeners.delete(name);
+    };
   }),
 }));
 vi.mock('ember-design-system', async (original) => ({
@@ -104,7 +106,7 @@ it('defaults sensitive-copy filtering on, persists a change, and keeps usage sha
   render(<App />);
   fireEvent.click(await screen.findByRole('button', { name: 'Tweaks' }));
   fireEvent.click(await screen.findByRole('button', { name: 'Privacy & usage' }));
-  let toggle = await screen.findByRole('switch', { name: 'Skip sensitive copies' });
+  let toggle = await screen.findByRole('switch', { name: 'Block sensitive copies' });
   await waitFor(() => expect(toggle).toBeEnabled());
   expect(toggle).toBeChecked();
   fireEvent.click(toggle);
@@ -114,9 +116,44 @@ it('defaults sensitive-copy filtering on, persists a change, and keeps usage sha
   fireEvent.click(screen.getByRole('button', { name: 'Close privacy settings' }));
   fireEvent.click(screen.getByRole('button', { name: 'Tweaks' }));
   fireEvent.click(await screen.findByRole('button', { name: 'Privacy & usage' }));
-  toggle = await screen.findByRole('switch', { name: 'Skip sensitive copies' });
+  toggle = await screen.findByRole('switch', { name: 'Block sensitive copies' });
   await waitFor(() => expect(toggle).toBeEnabled());
   expect(toggle).not.toBeChecked();
+});
+
+it('blocks sensitive copies by default and lets Tweaks allow them', async () => {
+  mocks.preferences = { enabled: false, prompt_handled: true };
+  render(<App />);
+  fireEvent.click(await screen.findByRole('button', { name: 'Tweaks' }));
+  let toggle = await screen.findByRole('switch', { name: 'Block sensitive copies' });
+  await waitFor(() => expect(toggle).toBeEnabled());
+  expect(toggle).toBeChecked();
+  fireEvent.click(toggle);
+  await waitFor(() => expect(toggle).not.toBeChecked());
+  expect(mocks.invoke).toHaveBeenCalledWith('set_skip_sensitive_copies', { enabled: false });
+  expect(mocks.skipSensitive).toBe(false);
+  fireEvent.click(screen.getByRole('button', { name: 'Privacy & usage' }));
+  toggle = await screen.findByRole('switch', { name: 'Block sensitive copies' });
+  await waitFor(() => expect(toggle).toBeEnabled());
+  expect(toggle).not.toBeChecked();
+  fireEvent.click(toggle);
+  await waitFor(() => expect(toggle).toBeChecked());
+  expect(mocks.skipSensitive).toBe(true);
+});
+
+it('keeps sensitive copies blocked in Tweaks when the save fails', async () => {
+  mocks.preferences = { enabled: false, prompt_handled: true };
+  mocks.failCaptureSave = true;
+  render(<App />);
+  fireEvent.click(await screen.findByRole('button', { name: 'Tweaks' }));
+  const toggle = await screen.findByRole('switch', { name: 'Block sensitive copies' });
+  await waitFor(() => expect(toggle).toBeEnabled());
+  fireEvent.click(toggle);
+  expect(await screen.findByRole('alert')).toHaveTextContent(
+    'Could not save clipboard privacy settings'
+  );
+  expect(toggle).toBeChecked();
+  expect(mocks.skipSensitive).toBe(true);
 });
 
 it('leaves sensitive-copy filtering on and reports a failed preference save', async () => {
@@ -125,7 +162,7 @@ it('leaves sensitive-copy filtering on and reports a failed preference save', as
   render(<App />);
   fireEvent.click(await screen.findByRole('button', { name: 'Tweaks' }));
   fireEvent.click(await screen.findByRole('button', { name: 'Privacy & usage' }));
-  const toggle = await screen.findByRole('switch', { name: 'Skip sensitive copies' });
+  const toggle = await screen.findByRole('switch', { name: 'Block sensitive copies' });
   await waitFor(() => expect(toggle).toBeEnabled());
   fireEvent.click(toggle);
   expect(await screen.findByRole('alert')).toHaveTextContent(
@@ -140,7 +177,7 @@ it('reflects capture privacy changes from another window', async () => {
   render(<App />);
   fireEvent.click(await screen.findByRole('button', { name: 'Tweaks' }));
   fireEvent.click(await screen.findByRole('button', { name: 'Privacy & usage' }));
-  const toggle = await screen.findByRole('switch', { name: 'Skip sensitive copies' });
+  const toggle = await screen.findByRole('switch', { name: 'Block sensitive copies' });
   await waitFor(() => expect(toggle).toBeEnabled());
   await act(async () => {
     mocks.listeners.get('capture-privacy-changed')?.({ payload: false });

@@ -70,7 +70,7 @@ pub fn spawn(app: AppHandle) {
             if last_seen == Some((before, enabled)) {
                 continue;
             }
-            if before.marked {
+            if enabled && before.marked {
                 last_seen = Some((before, enabled));
                 continue;
             }
@@ -86,7 +86,7 @@ pub fn spawn(app: AppHandle) {
                     last_seen = Some((before, enabled));
                     continue;
                 }
-                if !snapshot_still_public(&mut inspector, before) {
+                if !snapshot_still_capturable(&mut inspector, before, enabled) {
                     last_seen = None;
                     continue;
                 }
@@ -111,7 +111,7 @@ pub fn spawn(app: AppHandle) {
                 Ok(t) => t,
                 Err(_) => continue,
             };
-            if !snapshot_still_public(&mut inspector, before) {
+            if !snapshot_still_capturable(&mut inspector, before, enabled) {
                 last_seen = None;
                 continue;
             }
@@ -152,8 +152,12 @@ fn privacy_snapshot(inspector: &mut Option<Inspector>) -> Result<Snapshot, ()> {
     result
 }
 
-fn snapshot_still_public(inspector: &mut Option<Inspector>, before: Snapshot) -> bool {
-    privacy_snapshot(inspector).is_ok_and(|after| before.unchanged_and_public(after))
+fn snapshot_still_capturable(
+    inspector: &mut Option<Inspector>,
+    before: Snapshot,
+    skip_marked: bool,
+) -> bool {
+    privacy_snapshot(inspector).is_ok_and(|after| before.still_capturable(after, skip_marked))
 }
 
 /// Samples bytes spread across the image for collision-resistant hashing.

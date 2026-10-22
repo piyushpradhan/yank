@@ -7,6 +7,7 @@ import { captureUsageReporter } from '../lib/telemetry';
 import { getKeyIcon } from '../lib/keyIcons';
 import type { Updater } from '../hooks/useUpdater';
 import { IS_LINUX } from '../lib/platform';
+import { useSensitiveCopies } from '../hooks/useSensitiveCopies';
 import {
   DEFAULT_SHORTCUT,
   hasAnyModifier,
@@ -65,10 +66,12 @@ function ToggleRow({
   label,
   checked,
   onChange,
+  disabled,
 }: {
   label: string;
   checked: boolean;
   onChange: (next: boolean) => void;
+  disabled?: boolean;
 }) {
   return (
     <Box
@@ -79,7 +82,7 @@ function ToggleRow({
         justifyContent: 'space-between',
         gap: 12,
         minHeight: 24,
-        cursor: 'pointer',
+        cursor: disabled ? 'default' : 'pointer',
         color: checked ? 'var(--text-primary)' : 'var(--text-secondary)',
         transition: 'color 150ms var(--easing-standard)',
       }}
@@ -90,6 +93,7 @@ function ToggleRow({
       <Switch
         switchSize="sm"
         checked={checked}
+        disabled={disabled}
         onChange={(e) => onChange(e.currentTarget.checked)}
         aria-label={label}
       />
@@ -236,6 +240,7 @@ export function TweaksPanel({
   const [clearing, setClearing] = useState(false);
   const [clearError, setClearError] = useState<string | null>(null);
   const [wayland, setWayland] = useState(false);
+  const sensitive = useSensitiveCopies();
 
   useEffect(() => {
     invoke<PlatformInfo>('platform_info')
@@ -415,6 +420,24 @@ export function TweaksPanel({
             void invoke('set_minimized_on_start', { minimized: next });
           }}
         />
+      </Section>
+
+      <Section title="Privacy">
+        <ToggleRow
+          label="Block sensitive copies"
+          checked={sensitive.blocked ?? true}
+          disabled={sensitive.saving || sensitive.blocked === null}
+          onChange={(next) => void sensitive.choose(next)}
+        />
+        <Text size={11} tone="secondary" style={{ lineHeight: 1.5 }}>
+          Keeps card numbers, credentials, and password-manager copies out of history.
+          Turn off to save them like any other clip.
+        </Text>
+        {sensitive.error && (
+          <Text role="alert" size={11} tone="danger">
+            {sensitive.error}
+          </Text>
+        )}
       </Section>
 
       {IS_LINUX && (

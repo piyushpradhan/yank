@@ -450,29 +450,34 @@ fn reject_sensitive(types: &[String]) -> Result<(), Error> {
     Ok(())
 }
 
-/// Text and PNG representations from one non-confidential clipboard offer.
+/// Text and PNG representations from one clipboard offer.
 pub struct ClipboardSnapshot {
     pub text: Option<PipeReader>,
     pub image: Option<PipeReader>,
 }
 
-/// Checks the offer's metadata before requesting any payloads.
+/// Checks the offer's metadata before requesting any payloads. Confidential
+/// offers are rejected unless `allow_sensitive` is set.
 pub fn get_contents_snapshot(
     clipboard: ClipboardType,
     seat: Seat<'_>,
+    allow_sensitive: bool,
 ) -> Result<ClipboardSnapshot, Error> {
-    get_contents_snapshot_internal(clipboard, seat, None)
+    get_contents_snapshot_internal(clipboard, seat, allow_sensitive, None)
 }
 
 pub(crate) fn get_contents_snapshot_internal(
     clipboard: ClipboardType,
     seat: Seat<'_>,
+    allow_sensitive: bool,
     socket_name: Option<OsString>,
 ) -> Result<ClipboardSnapshot, Error> {
     let (mut queue, mut state, offer) =
         get_offer(clipboard == ClipboardType::Primary, seat, socket_name)?;
     let types = state.offers.remove(&offer).unwrap();
-    reject_sensitive(&types)?;
+    if !allow_sensitive {
+        reject_sensitive(&types)?;
+    }
     let text_type = types
         .iter()
         .find(|x| x.as_str() == "text/plain;charset=utf-8")
