@@ -4,6 +4,18 @@ Notable changes for each stable release of Yank. Generated with
 [git-cliff](https://git-cliff.org); existing entries can be edited for clarity.
 Historical entries were backfilled from Git tags and commit messages.
 
+## [0.7.76](https://github.com/piyushpradhan/yank/releases/tag/v0.7.76) - 2026-10-23
+
+### Added
+
+- Unify Yank settings in B2 preferences window ([3d96bee](https://github.com/piyushpradhan/yank/commit/3d96bee2f51965218706114911c230cf162a06e6))
+
+### Maintenance
+
+- Follow privacy settings in unified window ([cbbc782](https://github.com/piyushpradhan/yank/commit/cbbc7820b4769c84e679087441ad09a0bd659d00))
+
+**Full changelog:** [v0.7.75...v0.7.76](https://github.com/piyushpradhan/yank/compare/v0.7.75...v0.7.76)
+
 ## [0.7.75](https://github.com/piyushpradhan/yank/releases/tag/v0.7.75) - 2026-10-22
 
 ### Added
