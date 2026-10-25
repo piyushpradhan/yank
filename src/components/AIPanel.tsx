@@ -33,12 +33,22 @@ const LOCAL_MODELS: { id: string; label: string; note: string }[] = [
   {
     id: 'bge-small-en-v1.5',
     label: 'BGE Small EN v1.5',
-    note: 'Best quality. ~130 MB download on first use.',
+    note: 'Default. Fast, good quality. ~130 MB download on first use.',
   },
   {
     id: 'all-minilm-l6-v2',
     label: 'All-MiniLM-L6-v2',
     note: 'Smallest, fastest. ~90 MB download on first use.',
+  },
+  {
+    id: 'embeddinggemma-300m',
+    label: 'EmbeddingGemma 300M',
+    note: "Google's on-device model. Best quality, ~3x slower. ~200 MB download on first use.",
+  },
+  {
+    id: 'embeddinggemma-2',
+    label: 'EmbeddingGemma 2',
+    note: "Google's newest (Oct 2026), int8. ~330 MB download on first use.",
   },
 ];
 

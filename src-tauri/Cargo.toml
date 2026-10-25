@@ -35,7 +35,9 @@ tauri-plugin-store = "2.4.2"
 tokio = { version = "1.52.1", features = ["rt", "macros", "sync", "time"] }
 tauri-plugin-autostart = "2"
 tauri-plugin-single-instance = "2"
-fastembed = { version = "4", default-features = false, features = ["ort-download-binaries", "hf-hub-rustls-tls"] }
+fastembed = { version = "7.1", default-features = false, features = ["ort-download-binaries-rustls-tls", "hf-hub-rustls-tls"] }
+# Same hf-hub fastembed uses; fetches models fastembed has no built-in entry for.
+hf-hub = { version = "0.5", default-features = false, features = ["ureq", "rustls-tls"] }
 image = { version = "0.25", default-features = false, features = ["png"] }
 windows = { version = "0.60", features = ["Win32_Foundation", "Win32_UI_WindowsAndMessaging", "Win32_Graphics_Dwm", "Win32_Security", "Win32_System_Registry", "Win32_System_Threading", "Win32_System_DataExchange", "Win32_System_Memory"] }
 

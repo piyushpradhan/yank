@@ -38,7 +38,7 @@ The entire "find → paste" loop takes under five seconds. Semantic search runs 
 - **Block sensitive copies** — on-device checks for card numbers, Social Security numbers, and recognizable credentials; honors confidential clipboard markers. On by default, toggle in Tweaks
 - **Image capture & paste** — screenshots and images captured automatically; full-resolution preview and one-key paste-back
 - **Auto-categorization** — clips sorted into `code`, `url`, `email`, `phone`, `color`, `path`, `text`, `address`, `number`, or `image`
-- **Semantic search** — on-device ONNX embeddings (BGE Small / MiniLM), no key or network needed after the first model download.
+- **Semantic search** — on-device ONNX embeddings (BGE Small, MiniLM, or Google EmbeddingGemma 300M / 2), no key or network needed after the first model download.
 - **TypeSafe Jev (opt-in)** — paste your own TypeSafe API key to re-rank a keyword shortlist with Jev instead.
 - **Fuzzy search** — keystroke-level fast, SQLite FTS5 with BM25 ranking
 - **Hybrid ranking** — vector and BM25 pools fused with reciprocal rank fusion (or Jev scores with TypeSafe)
