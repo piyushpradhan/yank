@@ -12,6 +12,7 @@ pub mod jev;
 mod label;
 mod label_queue;
 pub mod local_embed;
+pub mod model_store;
 mod platform_info;
 pub mod query_intent;
 pub mod query_time;
@@ -443,6 +444,10 @@ pub fn run() {
             settings::get_skip_sensitive_copies,
             settings::set_skip_sensitive_copies,
             settings::test_embed_provider,
+            model_store::list_local_models,
+            model_store::download_local_model,
+            model_store::pause_local_model,
+            model_store::delete_local_model,
             settings::get_hint_dismissed,
             settings::set_hint_dismissed,
             settings::get_shortcut,

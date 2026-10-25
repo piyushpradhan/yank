@@ -462,6 +462,9 @@ pub async fn search_semantic(
 ) -> Result<SearchResponse, String> {
     let cfg = settings.0.read().map_err(|e| e.to_string())?.clone();
     let cache_dir = crate::local_embed::cache_dir(&app);
+    if cfg.provider == crate::embed::Provider::Local {
+        crate::model_store::ensure(&app, cache_dir.clone(), &cfg.local_model);
+    }
     search_core(db.inner(), &cfg, local.inner(), cache_dir, &query, limit.unwrap_or(20)).await
 }
 
@@ -529,7 +532,9 @@ pub async fn search_core(
     // so the additive boosts below are scaled to each provider's range.
     let (mut fused, cat_boost, color_boost): (Scored, f32, f32) = match cfg.provider {
         Provider::Local => {
-            // Embed outside the DB lock.
+            // Embed outside the DB lock. While the model is still
+            // downloading, an empty vector matches nothing, so results come
+            // from the keyword pool alone instead of an error.
             let q_vec = crate::local_embed::embed_local(
                 local,
                 model_cache_dir,
@@ -537,7 +542,11 @@ pub async fn search_core(
                 &semantic_q,
                 EmbedTask::Query,
             )
-            .await?;
+            .await
+            .unwrap_or_else(|e| {
+                eprintln!("[search] {e}; keyword results only");
+                Vec::new()
+            });
             let conn = db.conn();
             let scores = rrf_scores(&conn, &q_vec, &cfg.model_id(), &semantic_q, time_bounds)?;
             (scores, 0.010, 0.06)

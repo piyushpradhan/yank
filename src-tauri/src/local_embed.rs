@@ -132,6 +132,10 @@ pub async fn embed_local(
     text: &str,
     task: EmbedTask,
 ) -> Result<Vec<f32>, String> {
+    // Downloads happen in `model_store`, never inside an embed call.
+    if !crate::model_store::is_ready(&cache_dir, model_name) {
+        return Err(format!("{model_name} is not downloaded yet"));
+    }
     let inner = state.handle();
     let model_name = model_name.to_string();
     let prepped = apply_prompt(&model_name, text, task);

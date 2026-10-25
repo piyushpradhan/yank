@@ -10,11 +10,12 @@ import {
   Input,
   Modal,
   Overline,
-  Select,
   Stack,
   Text,
 } from 'ember-design-system';
 import type { EmbedProvider, EmbedSettings } from '../hooks/useSettings';
+import { useLocalModels, type ModelState } from '../hooks/useLocalModels';
+import { LOCAL_MODELS, ModelPicker } from './ModelPicker';
 
 interface AIPanelProps {
   settings: EmbedSettings;
@@ -29,28 +30,6 @@ const PROVIDERS: { id: EmbedProvider; label: string }[] = [
   { id: 'disabled', label: 'Off' },
 ];
 
-const LOCAL_MODELS: { id: string; label: string; note: string }[] = [
-  {
-    id: 'bge-small-en-v1.5',
-    label: 'BGE Small EN v1.5',
-    note: 'Default. Fast, good quality. ~130 MB download on first use.',
-  },
-  {
-    id: 'all-minilm-l6-v2',
-    label: 'All-MiniLM-L6-v2',
-    note: 'Smallest, fastest. ~90 MB download on first use.',
-  },
-  {
-    id: 'embeddinggemma-300m',
-    label: 'EmbeddingGemma 300M',
-    note: "Google's on-device model. Best quality, ~3x slower. ~200 MB download on first use.",
-  },
-  {
-    id: 'embeddinggemma-2',
-    label: 'EmbeddingGemma 2',
-    note: "Google's newest (Oct 2026), int8. ~330 MB download on first use.",
-  },
-];
 
 type ErrorField = 'jev_key' | 'connection';
 type TestState =
@@ -90,6 +69,7 @@ export function AIPanel({ settings, onChange, onClose, embedded = false }: AIPan
   const [error, setError] = useState<{ field: ErrorField; msg: string } | null>(null);
   const [test, setTest] = useState<TestState>({ kind: 'idle' });
   const [saving, setSaving] = useState(false);
+  const localModels = useLocalModels();
 
   const set = <K extends keyof EmbedSettings>(k: K, v: EmbedSettings[K]) => {
     setLocal((prev) => ({ ...prev, [k]: v }));
@@ -155,11 +135,8 @@ export function AIPanel({ settings, onChange, onClose, embedded = false }: AIPan
     if (!embedded) onClose();
   };
 
-  const embedStatus = summariseEmbedStatus(local, test);
+  const embedStatus = summariseEmbedStatus(local, test, localModels.models[local.local_model]);
   const labelsOn = local.anthropic_api_key.trim().length > 0;
-  const localNote =
-    LOCAL_MODELS.find((m) => m.id === local.local_model)?.note ??
-    'Runs entirely on your machine via ONNX.';
 
   const content = (
     <Stack gap={5}>
@@ -209,15 +186,12 @@ export function AIPanel({ settings, onChange, onClose, embedded = false }: AIPan
         </FormField>
 
         {local.provider === 'local' && (
-          <FormField
-            label={<FieldLabel>Embedding model</FieldLabel>}
-            hint={`${localNote} Runs on your machine; nothing leaves it.`}
-          >
-            <Select
+          <FormField label={<FieldLabel>Embedding model</FieldLabel>}>
+            <ModelPicker
+              {...localModels}
               value={local.local_model}
-              onChange={(v) => set('local_model', v)}
-              options={LOCAL_MODELS.map((m) => ({ value: m.id, label: m.label }))}
-              aria-label="Embedding model"
+              inUse={settings.local_model}
+              onSelect={(id) => set('local_model', id)}
             />
           </FormField>
         )}
@@ -387,12 +361,23 @@ function StatusRow({ kind, label, detail }: StatusRowProps) {
 function summariseEmbedStatus(
   s: EmbedSettings,
   test: TestState,
+  model?: ModelState,
 ): { kind: StatusKind; text: string } {
   if (s.provider === 'disabled') {
     return { kind: 'off', text: 'Off — fuzzy search only.' };
   }
   if (s.provider === 'local') {
-    return { kind: 'ok', text: `Local — ${s.local_model} (offline after first download)` };
+    const name = LOCAL_MODELS.find((m) => m.id === s.local_model)?.label ?? s.local_model;
+    if (model && model.state !== 'ready') {
+      const pct =
+        model.state === 'missing' ? 0 : Math.round((model.done / Math.max(1, model.total)) * 100);
+      const what = model.state === 'downloading' ? 'downloading' : 'not downloaded';
+      return {
+        kind: 'warn',
+        text: `Local — ${name} ${what} (${pct}%). Keyword results until it's ready.`,
+      };
+    }
+    return { kind: 'ok', text: `Local — ${name}, running on this device.` };
   }
   if (!s.typesafe_api_key.trim()) {
     return { kind: 'warn', text: 'TypeSafe selected but no API key yet.' };

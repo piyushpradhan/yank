@@ -38,6 +38,7 @@ use yank_lib::db::{self, Db};
 use yank_lib::embed::{EmbedConfig, EmbedTask, Provider};
 use yank_lib::embed_queue;
 use yank_lib::local_embed::{self, LocalState};
+use yank_lib::model_store;
 use yank_lib::query_intent;
 use yank_lib::query_time;
 
@@ -280,8 +281,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         };
         let model_id = cfg.model_id();
 
-        // Warm-up loads (and on first run downloads) the model, untimed.
+        // First run downloads the model (the app does this in the
+        // background); the warm-up then loads it. Both untimed.
         eprintln!("[{model}] loading...");
+        model_store::download_blocking(&cache_dir, model)?;
         local_embed::embed_local(&state, cache_dir.clone(), model, "warm up", EmbedTask::Query).await?;
 
         eprintln!("[{model}] embedding {} items...", data.items.len());

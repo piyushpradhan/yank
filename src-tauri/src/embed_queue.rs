@@ -48,6 +48,13 @@ pub fn spawn(app: AppHandle) {
             if cfg.provider != Provider::Local {
                 continue;
             }
+            // Fetch the model in the background first; its completion kicks
+            // this loop again.
+            let models = local_embed::cache_dir(&handle);
+            if !crate::model_store::is_ready(&models, &cfg.local_model) {
+                crate::model_store::ensure(&handle, models, &cfg.local_model);
+                continue;
+            }
 
             let pending = load_pending(&handle, &cfg.model_id(), 32);
             if pending.is_empty() {
