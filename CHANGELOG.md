@@ -4,6 +4,20 @@ Notable changes for each stable release of Yank. Generated with
 [git-cliff](https://git-cliff.org); existing entries can be edited for clarity.
 Historical entries were backfilled from Git tags and commit messages.
 
+## [0.7.77](https://github.com/piyushpradhan/yank/releases/tag/v0.7.77) - 2026-10-25
+
+### Added
+
+- Add Google EmbeddingGemma 300M and EmbeddingGemma 2 as local search models ([8a0fc37](https://github.com/piyushpradhan/yank/commit/8a0fc373b4553d5143b66a48190fd6534aab67f4))
+
+- Manage local embedding model downloads in AI settings ([63df43e](https://github.com/piyushpradhan/yank/commit/63df43e27720aa78b503a1b4081b34c8304220a5))
+
+### Maintenance
+
+- **eval:** Evaluate production semantic search ([ec025ea](https://github.com/piyushpradhan/yank/commit/ec025eac96e022b2febad9de54db8acdac0c0145))
+
+**Full changelog:** [v0.7.76...v0.7.77](https://github.com/piyushpradhan/yank/compare/v0.7.76...v0.7.77)
+
 ## [0.7.76](https://github.com/piyushpradhan/yank/releases/tag/v0.7.76) - 2026-10-23
 
 ### Added
