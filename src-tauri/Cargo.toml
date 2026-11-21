@@ -61,6 +61,8 @@ enigo = { version = "0.2", default-features = false }
 enigo = { version = "0.2", default-features = false, features = ["x11rb", "wayland"] }
 # Already pulled in by tauri/wry; named here for gtk::Settings (tray glyph theme).
 gtk = "0.18"
+# Also already pulled in by wry; X server time for palette focus.
+gdkx11 = "0.18"
 x11rb = { version = "0.13.2", features = ["xfixes"] }
 wl-clipboard-rs = "0.9.3"
 

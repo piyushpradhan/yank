@@ -153,9 +153,34 @@ fn focus_palette(window: &tauri::WebviewWindow) {
     }
 }
 
-#[cfg(not(target_os = "macos"))]
+#[cfg(target_os = "windows")]
 fn focus_palette(window: &tauri::WebviewWindow) {
     let _ = window.set_focus();
+}
+
+/// tao's `set_focus` skips windows whose queued `show()` hasn't landed yet,
+/// and otherwise presents with GTK's last-seen event time. The hotkey arrives
+/// on global-hotkey's own X connection, so that time is stale and the window
+/// manager's focus-stealing prevention keeps the previous app focused (#68).
+/// Present on the GTK thread with the X server's current time instead.
+#[cfg(target_os = "linux")]
+fn focus_palette(window: &tauri::WebviewWindow) {
+    let w = window.clone();
+    let _ = window.run_on_main_thread(move || {
+        use gdkx11::X11Window;
+        use gtk::prelude::*;
+
+        let Ok(gtk_window) = w.gtk_window() else { return };
+        // `focus: false` creates the palette unfocusable until its first draw,
+        // which is after this first map.
+        gtk_window.set_accept_focus(true);
+        let time = gtk_window
+            .window()
+            .and_then(|gdk| gdk.downcast::<X11Window>().ok())
+            .map(|x11| gdkx11::functions::x11_get_server_time(&x11))
+            .unwrap_or(0); // GDK_CURRENT_TIME: Wayland, or not realized yet
+        gtk_window.present_with_time(time);
+    });
 }
 
 fn show_palette(app: &tauri::AppHandle, window: &tauri::WebviewWindow) {
