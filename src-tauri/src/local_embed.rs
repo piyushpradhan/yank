@@ -48,6 +48,10 @@ impl LocalState {
     }
 }
 
+/// ONNX Runtime threads per inference. fastembed's default is every core,
+/// which turned each backfill batch into a machine-wide CPU spike (#67).
+const INTRA_THREADS: usize = 1;
+
 /// Load a user-facing model id. fastembed ships BGE, MiniLM and
 /// EmbeddingGemma-300M; EmbeddingGemma 2 (Oct 2026) isn't in its catalogue
 /// yet, so it loads as a user-defined model (see [`load_gemma2`]).
@@ -62,7 +66,8 @@ fn load_model(name: &str, cache_dir: PathBuf) -> Result<TextEmbedding, String> {
     };
     let opts = TextInitOptions::new(kind)
         .with_cache_dir(cache_dir)
-        .with_show_download_progress(false);
+        .with_show_download_progress(false)
+        .with_intra_threads(INTRA_THREADS);
     TextEmbedding::try_new(opts).map_err(|e| format!("local model init: {e}"))
 }
 
@@ -101,8 +106,11 @@ fn load_gemma2(cache_dir: PathBuf) -> Result<TextEmbedding, String> {
         output_key: Some(OutputKey::ByName("sentence_embedding")),
         ..model
     };
-    TextEmbedding::try_new_from_user_defined(model, InitOptionsUserDefined::new())
-        .map_err(|e| format!("local model init: {e}"))
+    TextEmbedding::try_new_from_user_defined(
+        model,
+        InitOptionsUserDefined::new().with_intra_threads(INTRA_THREADS),
+    )
+    .map_err(|e| format!("local model init: {e}"))
 }
 
 /// Retrieval prompts each model was trained with; documents stay raw for
