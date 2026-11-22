@@ -153,9 +153,72 @@ fn focus_palette(window: &tauri::WebviewWindow) {
     }
 }
 
-#[cfg(not(target_os = "macos"))]
+#[cfg(target_os = "windows")]
 fn focus_palette(window: &tauri::WebviewWindow) {
     let _ = window.set_focus();
+}
+
+/// tao's `set_focus` skips windows whose queued `show()` hasn't landed yet,
+/// and otherwise presents with GTK's last-seen event time. The hotkey arrives
+/// on global-hotkey's own X connection, so that time is stale and the window
+/// manager's focus-stealing prevention keeps the previous app focused (#68).
+/// Present on the GTK thread with the X server's current time instead.
+#[cfg(target_os = "linux")]
+fn focus_palette(window: &tauri::WebviewWindow) {
+    let w = window.clone();
+    let _ = window.run_on_main_thread(move || {
+        use gdkx11::X11Window;
+        use gtk::prelude::*;
+
+        let Ok(gtk_window) = w.gtk_window() else { return };
+        // `focus: false` creates the palette unfocusable until its first draw,
+        // which is after this first map.
+        gtk_window.set_accept_focus(true);
+        let time = gtk_window
+            .window()
+            .and_then(|gdk| gdk.downcast::<X11Window>().ok())
+            .map(|x11| gdkx11::functions::x11_get_server_time(&x11))
+            .unwrap_or(0); // GDK_CURRENT_TIME: Wayland, or not realized yet
+        gtk_window.present_with_time(time);
+    });
+}
+
+#[cfg(not(target_os = "linux"))]
+fn hide_palette_on_blur(window: &tauri::WebviewWindow) {
+    let _ = window.hide();
+}
+
+/// On X11 any key grab, our own hotkey's included, blurs the palette while it
+/// stays the active window. Hiding then makes the hotkey reopen the palette it
+/// was pressed to close, so hide only once another window is actually active.
+/// Called on the GTK thread.
+#[cfg(target_os = "linux")]
+fn hide_palette_on_blur(window: &tauri::WebviewWindow) {
+    use gtk::glib::{self, translate::*, ControlFlow};
+    use gtk::prelude::*;
+
+    let Ok(gtk_window) = window.gtk_window() else { return };
+    let w = window.clone();
+    // Polled: the WM updates the active window after the blur, and a grab that
+    // ends on another window (Alt+Tab) sends no second blur.
+    glib::timeout_add_local(std::time::Duration::from_millis(100), move || {
+        if gtk_window.is_active() || !gtk_window.is_visible() {
+            return ControlFlow::Break;
+        }
+        if let Some(own) = gtk_window.window() {
+            // SAFETY: GTK thread, live screen; returns a new reference or null.
+            let active: Option<gtk::gdk::Window> = unsafe {
+                from_glib_full(gtk::gdk::ffi::gdk_screen_get_active_window(
+                    own.screen().to_glib_none().0,
+                ))
+            };
+            if active == Some(own) {
+                return ControlFlow::Continue;
+            }
+        }
+        let _ = w.hide();
+        ControlFlow::Break
+    });
 }
 
 fn show_palette(app: &tauri::AppHandle, window: &tauri::WebviewWindow) {
@@ -720,9 +783,7 @@ pub fn run() {
                         api.prevent_close();
                         let _ = wc.hide();
                     }
-                    WindowEvent::Focused(false) => {
-                        let _ = wc.hide();
-                    }
+                    WindowEvent::Focused(false) => hide_palette_on_blur(&wc),
                     _ => {}
                 });
             }

@@ -7371,13 +7371,14 @@ checksum = "b9cc00251562a284751c9973bace760d86c0276c471b4be569fe6b068ee97a56"
 
 [[package]]
 name = "yank"
-version = "0.7.76"
+version = "0.7.77"
 dependencies = [
  "arboard",
  "chrono",
  "core-graphics 0.25.0",
  "enigo",
  "fastembed",
+ "gdkx11",
  "gtk",
  "hf-hub",
  "image",
