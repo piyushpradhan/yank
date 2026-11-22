@@ -4,6 +4,14 @@ Notable changes for each stable release of Yank. Generated with
 [git-cliff](https://git-cliff.org); existing entries can be edited for clarity.
 Historical entries were backfilled from Git tags and commit messages.
 
+## [0.7.79](https://github.com/piyushpradhan/yank/releases/tag/v0.7.79) - 2026-11-22
+
+### Fixed
+
+- **linux:** Focus the palette on open, paste into the previous app, close with the hotkey (#70) ([1e85667](https://github.com/piyushpradhan/yank/commit/1e85667fb8145a905067e93460ed186817a89f2b))
+
+**Full changelog:** [v0.7.78...v0.7.79](https://github.com/piyushpradhan/yank/compare/v0.7.78...v0.7.79)
+
 ## [0.7.78](https://github.com/piyushpradhan/yank/releases/tag/v0.7.78) - 2026-11-21
 
 ### Fixed
