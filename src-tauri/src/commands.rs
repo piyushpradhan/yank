@@ -317,7 +317,11 @@ fn send_paste_keystroke() -> Result<&'static str, String> {
     Ok(paste_outcome(true))
 }
 
-#[tauri::command]
+// Linux: off the GTK thread. tao only queues `hide()`, so sleeping on that
+// thread would leave the palette focused to swallow the paste keystroke.
+// macOS and Windows hide synchronously and restore focus on the main thread.
+#[cfg_attr(target_os = "linux", tauri::command(async))]
+#[cfg_attr(not(target_os = "linux"), tauri::command)]
 pub fn paste_to_frontmost_app(app: AppHandle) -> Result<String, String> {
     if let Some(window) = app.get_webview_window("palette") {
         window.hide().map_err(map_err)?;
